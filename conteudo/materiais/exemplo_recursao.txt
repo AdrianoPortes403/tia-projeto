@@ -1,0 +1,10 @@
+Recursão é uma técnica de programação em que uma função chama a si mesma
+para resolver um problema, dividindo-o em subproblemas menores e mais
+simples. Toda função recursiva precisa de um caso base — a condição que
+faz a função parar de chamar a si mesma — e de um caso recursivo, que
+reduz o problema a uma versão menor dele mesmo a cada chamada. Sem um
+caso base bem definido, a função entra em um loop infinito de chamadas,
+até esgotar a memória disponível (erro de estouro de pilha, ou
+"stack overflow"). Um exemplo clássico é o cálculo do fatorial de um
+número: fatorial(n) = n vezes fatorial(n-1), com o caso base
+fatorial(0) = 1.

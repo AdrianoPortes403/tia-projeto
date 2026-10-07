@@ -1,0 +1,54 @@
+{
+  "_provisorio": true,
+  "_nota": "PROVISÓRIO: ementa de exemplo criada pela frente de infraestrutura (A3) só para a fatia vertical do Agente 1. Substituir pela ementa oficial da Pessoa 4. Listas de materiais vazias aguardam o material real do curso.",
+  "competencias": [
+    {
+      "id": "variaveis_tipos",
+      "nome": "Variáveis, tipos e expressões",
+      "descricao": "Declarar variáveis, usar tipos básicos (int, float, str, bool) e montar expressões aritméticas e lógicas.",
+      "horas_estimadas": 6,
+      "prerequisitos": [],
+      "materiais": []
+    },
+    {
+      "id": "condicionais",
+      "nome": "Estruturas condicionais",
+      "descricao": "Controlar o fluxo do programa com if, elif e else a partir de condições lógicas.",
+      "horas_estimadas": 4,
+      "prerequisitos": ["variaveis_tipos"],
+      "materiais": []
+    },
+    {
+      "id": "repeticao",
+      "nome": "Laços de repetição",
+      "descricao": "Repetir instruções com for e while, incluindo contadores, acumuladores e condição de parada.",
+      "horas_estimadas": 6,
+      "prerequisitos": ["condicionais"],
+      "materiais": []
+    },
+    {
+      "id": "funcoes",
+      "nome": "Funções e modularização",
+      "descricao": "Definir funções com parâmetros e retorno, entender escopo e dividir o programa em partes reutilizáveis.",
+      "horas_estimadas": 6,
+      "prerequisitos": ["repeticao"],
+      "materiais": []
+    },
+    {
+      "id": "listas_strings",
+      "nome": "Listas e strings",
+      "descricao": "Manipular sequências: indexação, fatiamento, percorrer com laços e métodos comuns de listas e strings.",
+      "horas_estimadas": 8,
+      "prerequisitos": ["repeticao"],
+      "materiais": []
+    },
+    {
+      "id": "recursao",
+      "nome": "Recursão",
+      "descricao": "Resolver problemas com funções que chamam a si mesmas, identificando caso base e caso recursivo.",
+      "horas_estimadas": 6,
+      "prerequisitos": ["funcoes"],
+      "materiais": ["exemplo_recursao.txt"]
+    }
+  ]
+}

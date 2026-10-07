@@ -1,0 +1,45 @@
+"""
+Modelos Pydantic do Agente 1 (Planejador): o que entra (diagnóstico do
+aluno) e o que sai (trilha de estudo em etapas).
+
+Usados tanto pela lógica do agente quanto pela API (validação e /docs).
+
+Não é executável: importar com "from tia.agentes.planejador.modelos import ...".
+
+Pré-requisitos:
+    - pydantic 2
+"""
+
+from typing import Annotated
+
+from pydantic import BaseModel, Field
+
+# R08 (LGPD): aluno_id é um código (letras sem acento, números, "_" e "-"),
+# nunca o nome do aluno. Espaços e acentos são recusados de propósito.
+PADRAO_CODIGO_ALUNO = r"^[A-Za-z0-9_-]{1,32}$"
+CodigoAluno = Annotated[str, Field(pattern=PADRAO_CODIGO_ALUNO, examples=["A2026-001"])]
+Nota = Annotated[float, Field(ge=0.0, le=1.0)]
+
+
+class EntradaPlanejador(BaseModel):
+    aluno_id: CodigoAluno
+    perfil_id: str
+    # nota do diagnóstico (0..1) por id de competência; competência ausente conta como 0
+    diagnostico: dict[str, Nota] = {}
+    horas_semanais: float = Field(gt=0, le=60)
+
+
+class EtapaTrilha(BaseModel):
+    ordem: int
+    competencia_id: str
+    nome: str
+    materiais: list[str] = []
+    horas: float
+    semana_inicio: int
+    justificativa: str
+
+
+class Trilha(BaseModel):
+    aluno_id: str
+    perfil_id: str
+    etapas: list[EtapaTrilha]

@@ -1,0 +1,26 @@
+{
+  "_provisorio": true,
+  "_nota": "PROVISÓRIO: perfis de exemplo para a fatia vertical do Agente 1. Substituir pelos perfis definidos pela Pessoa 4. 'ritmo' multiplica horas_estimadas; 'competencias_dispensaveis' mapeia id da competência -> nota mínima do diagnóstico (0..1) para pular. Competência fora do mapa nunca é pulada.",
+  "perfis": [
+    {
+      "id": "iniciante",
+      "nome": "Iniciante",
+      "ritmo": 1.25,
+      "competencias_dispensaveis": {
+        "variaveis_tipos": 0.9
+      }
+    },
+    {
+      "id": "intermediario",
+      "nome": "Intermediário",
+      "ritmo": 0.8,
+      "competencias_dispensaveis": {
+        "variaveis_tipos": 0.7,
+        "condicionais": 0.7,
+        "repeticao": 0.75,
+        "funcoes": 0.8,
+        "listas_strings": 0.8
+      }
+    }
+  ]
+}
