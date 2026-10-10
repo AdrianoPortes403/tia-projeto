@@ -97,6 +97,16 @@ TUTOR_EXIGE_TERMO_RARO = os.getenv("TUTOR_EXIGE_TERMO_RARO", "0").lower() in ("1
 # quais o aluno conta como inativo e recebe o incentivo (GET /tutor/incentivo).
 INATIVIDADE_DIAS = int(os.getenv("INATIVIDADE_DIAS", "3"))
 
+# --- Agente 3 (Relatório) ---
+# LGPD (R08): o relatório da turma/instituição não mostra grupo com menos de
+# RELATORIO_MIN_GRUPO alunos (nem contagem de alunos abaixo disso).
+RELATORIO_MIN_GRUPO = int(os.getenv("RELATORIO_MIN_GRUPO", "5"))
+# O LLM só redige o parágrafo de interpretação; os números são calculados por código.
+RELATORIO_TIMEOUT_LLM = int(os.getenv("RELATORIO_TIMEOUT_LLM", "120"))
+RELATORIO_MAX_TOKENS = int(os.getenv("RELATORIO_MAX_TOKENS", "250"))
+RELATORIO_TEMPERATURA = float(os.getenv("RELATORIO_TEMPERATURA", "0.2"))
+RELATORIO_SEED = int(os.getenv("RELATORIO_SEED", "42"))
+
 
 if __name__ == "__main__":
     for nome in ("OLLAMA_URL", "CHAT_MODEL", "EMBED_MODEL", "OLLAMA_KEEP_ALIVE", "DB_PATH",
@@ -105,5 +115,6 @@ if __name__ == "__main__":
                  "PLANEJADOR_TIMEOUT_LLM", "BANCO_ITENS_PATH", "TUTOR_TIMEOUT_LLM", "TUTOR_MAX_TOKENS", "TUTOR_TEMPERATURA", "TUTOR_TOP_P", "TUTOR_SEED", "TUTOR_MODO_FEEDBACK",
                  "TUTOR_NUM_TRECHOS",
                  "TUTOR_DISTANCIA_MAXIMA", "TUTOR_COBERTURA_MIN", "TUTOR_EXIGE_TERMO_RARO",
-                 "INATIVIDADE_DIAS"):
+                 "INATIVIDADE_DIAS", "RELATORIO_MIN_GRUPO", "RELATORIO_TIMEOUT_LLM", "RELATORIO_MAX_TOKENS",
+                 "RELATORIO_TEMPERATURA", "RELATORIO_SEED"):
         print(f"{nome} = {globals()[nome]}")

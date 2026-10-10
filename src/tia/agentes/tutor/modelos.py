@@ -101,7 +101,7 @@ class RegistroAuditoria(BaseModel):
     """Uma interação do Tutor (R11). Sem texto livre do aluno."""
     id: int
     ts: str
-    tipo: Literal["resposta_item", "dialogo", "incentivo"]
+    tipo: Literal["resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma"]
     # id da linha na tabela de origem (historico_respostas, tutor_dialogo) ou,
     # no incentivo, a competência da próxima etapa citada
     referencia_id: str | None

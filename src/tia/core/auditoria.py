@@ -1,8 +1,9 @@
 """
 Trilha de auditoria das interações do Tutor (requisito R11).
 
-Cada interação (resposta de item, pergunta do diálogo, incentivo) grava uma
-linha na tabela auditoria: quando, qual aluno (código, nunca nome; R08),
+Cada interação (resposta de item, pergunta do diálogo, incentivo) e cada
+relatório gerado (Agente 3) grava uma linha na tabela auditoria: quando,
+qual aluno (código, nunca nome; R08; vazio no relatório da turma),
 tipo, referência à linha da tabela de origem, origem da resposta (LLM,
 guarda, fallback, template) e fontes citadas. Não guarda texto livre do
 aluno: ele fica só na tabela de origem (ex.: tutor_dialogo).
@@ -24,10 +25,10 @@ from datetime import datetime
 from tia.core.database import obter_conexao
 
 # tipos de interação registrados
-TIPOS = ("resposta_item", "dialogo", "incentivo")
+TIPOS = ("resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma")
 
 
-def registrar(conexao: sqlite3.Connection, aluno_id: str, tipo: str, referencia_id: str | int | None,
+def registrar(conexao: sqlite3.Connection, aluno_id: str | None, tipo: str, referencia_id: str | int | None,
               origem: str, fontes: list[str], ts: str | None = None):
     """Grava uma linha de auditoria (dentro da transação de quem chama)."""
     if tipo not in TIPOS:

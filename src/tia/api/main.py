@@ -20,6 +20,7 @@ from fastapi import FastAPI
 
 from tia.api.rotas_auditoria import router as rotas_auditoria
 from tia.api.rotas_planejador import router as rotas_planejador
+from tia.api.rotas_relatorio import router as rotas_relatorio
 from tia.api.rotas_tutor import router as rotas_tutor
 from tia.core.database import criar_tabelas
 
@@ -36,6 +37,7 @@ app = FastAPI(title="Sistema TIA — API", version="0.1.0", lifespan=ciclo_de_vi
 app.include_router(rotas_planejador)
 app.include_router(rotas_tutor)
 app.include_router(rotas_auditoria)
+app.include_router(rotas_relatorio)
 
 
 @app.get("/health")
