@@ -91,7 +91,7 @@ def responder(resposta: RespostaAluno, modo: str | None = None) -> Feedback:
     tempo_ms = round((time.perf_counter() - inicio) * 1000)
 
     if not repositorio.registrar_resposta(resposta.sessao_id, resposta.aluno_id, item, novo,
-                                          acertou, resultado.fontes, tempo_ms):
+                                          acertou, resultado.fontes, tempo_ms, resultado.origem):
         raise RespostaForaDeOrdem("A resposta não corresponde à pergunta atual da sessão.")
 
     proxima = None if novo.concluida else _pergunta(_item_por_id(itens, novo.item_atual_id))

@@ -18,6 +18,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from tia.api.rotas_auditoria import router as rotas_auditoria
 from tia.api.rotas_planejador import router as rotas_planejador
 from tia.api.rotas_tutor import router as rotas_tutor
 from tia.core.database import criar_tabelas
@@ -34,6 +35,7 @@ async def ciclo_de_vida(app: FastAPI):
 app = FastAPI(title="Sistema TIA — API", version="0.1.0", lifespan=ciclo_de_vida)
 app.include_router(rotas_planejador)
 app.include_router(rotas_tutor)
+app.include_router(rotas_auditoria)
 
 
 @app.get("/health")

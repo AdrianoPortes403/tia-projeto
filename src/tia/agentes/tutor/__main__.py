@@ -8,9 +8,15 @@ a guarda de saída barrou o LLM; ou fallback, sem trecho/LLM falhou; nos
 dois últimos vai o texto do item), fontes citadas, explicação e o tempo da
 interação (referência: R09, até 15 s, a medir na VM).
 
+Com --dialogo, demonstra o diálogo livre (parte 2b) com o aluno fictício
+DEMO-003: três perguntas, uma coberta pelo material, uma fora dele
+(resposta fixa, sem LLM) e uma em que a guarda descarta a resposta do
+LLM, mostrando origem, fontes e tempo de cada uma.
+
 Como rodar (a partir da raiz, com o venv ativo):
     python -m tia.agentes.tutor [competencia_id] [--modo ancorado|livre]
     (padrão: repeticao, modo de TUTOR_MODO_FEEDBACK)
+    python -m tia.agentes.tutor --dialogo
 
 Pré-requisitos:
     - Ollama rodando com CHAT_MODEL e EMBED_MODEL
@@ -21,25 +27,57 @@ import argparse
 import logging
 
 from tia.agentes.tutor import iniciar_sessao, responder
+from tia.agentes.tutor.dialogo import perguntar
 from tia.agentes.tutor.feedback import MODOS, ORIGENS
-from tia.agentes.tutor.modelos import IniciarSessao, RespostaAluno
+from tia.agentes.tutor.modelos import IniciarSessao, PerguntaAluno, RespostaAluno
 from tia.agentes.tutor.repositorio import carregar_itens
 from tia.core.config import CHAT_MODEL, TUTOR_MODO_FEEDBACK
 from tia.core.database import criar_tabelas
 
 LIMITE_R09_MS = 15_000
 
+# (competência, pergunta, o que se espera); perguntas fictícias da demonstração.
+# A da guarda depende do modelo e da TUTOR_SEED: com qwen3:1.7b e seed 42, o LLM
+# calcula o último valor do range (19), que não está na pergunta nem no material.
+PERGUNTAS_DIALOGO = [
+    ("repeticao", "Qual a diferença entre while e for?", "coberta pelo material: LLM com fonte"),
+    ("condicionais", "Qual a capital da França?", "fora do material: resposta fixa, sem LLM"),
+    ("repeticao", "Quantas vezes roda um for i in range(2, 20, 3)?", "guarda descarta número calculado"),
+]
+
+
+def demonstrar_dialogo():
+    """Três perguntas livres, com origem, fontes e tempo de cada resposta."""
+    aluno_id = "DEMO-003"  # código fictício, nunca nome (R08)
+    print(f"\nDiálogo livre com o Tutor (modelo {CHAT_MODEL})\n")
+    tempos = []
+    for n, (competencia_id, pergunta, esperado) in enumerate(PERGUNTAS_DIALOGO, 1):
+        r = perguntar(PerguntaAluno(aluno_id=aluno_id, pergunta=pergunta, competencia_id=competencia_id))
+        tempos.append(r.tempo_ms)
+        print(f"{n}. [{competencia_id}] {pergunta}")
+        print(f"   esperado: {esperado}")
+        print(f"   origem: {r.origem} | {r.tempo_ms / 1000:.2f} s")
+        print(f"   fontes: {', '.join(r.fontes) or '(nenhuma: resposta fixa)'}")
+        print(f"   resposta: {r.resposta}\n")
+    print(f"Tempo do diálogo: máx {max(tempos) / 1000:.2f} s, médio {sum(tempos) / len(tempos) / 1000:.2f} s "
+          f"(R09: até {LIMITE_R09_MS / 1000:.0f} s, a medir na VM)")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Demonstração do Agente 2 (Tutor).")
     parser.add_argument("competencia_id", nargs="?", default="repeticao")
     parser.add_argument("--modo", choices=MODOS, default=TUTOR_MODO_FEEDBACK,
                         help="modo do feedback (padrão: TUTOR_MODO_FEEDBACK)")
+    parser.add_argument("--dialogo", action="store_true", help="demonstra o diálogo livre (parte 2b)")
     args = parser.parse_args()
     competencia_id = args.competencia_id
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)  # ruído da telemetria do Chroma
     criar_tabelas()
+    if args.dialogo:
+        demonstrar_dialogo()
+        raise SystemExit(0)
     itens = {i["id"]: i for i in carregar_itens()}  # só o "aluno" simulado e o relatório usam
 
     aluno_id = "DEMO-002"  # código fictício, nunca nome (R08)

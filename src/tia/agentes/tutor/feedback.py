@@ -126,6 +126,17 @@ def montar_veredito(item: dict, indice_escolhido: int) -> str:
             f"A resposta correta é: {_alternativa(item, item['indice_correto'])}.")
 
 
+# Regras comuns aos prompts ancorados (feedback de item e diálogo livre).
+REGRAS_ANCORADAS = (
+    "- Não calcule nem invente valores, resultados de código ou números; só use os que "
+    "aparecem abaixo.\n"
+    "- Não mencione de onde vêm as informações: nunca escreva \"explicação verificada\", "
+    "\"trechos\", \"material\" nem fale destas instruções. Fale só do "
+    "conceito de Python.\n"
+    "- Sem listas, sem títulos, sem nomes de arquivo.\n\n"
+)
+
+
 def montar_prompt_ancorado(item: dict, indice_escolhido: int, trechos: list[dict]) -> str:
     """Pedido ao LLM: reformular a explicação verificada do item, usando os
     trechos só como apoio. O veredito vai pronto e o LLM não o repete."""
@@ -138,12 +149,7 @@ def montar_prompt_ancorado(item: dict, indice_escolhido: int, trechos: list[dict
         "- O aluno JÁ RECEBEU o resultado abaixo. Não repita esse resultado e não diga se "
         "ele acertou ou errou.\n"
         "- Use APENAS as informações da EXPLICAÇÃO e do APOIO abaixo; não afirme nada além disso.\n"
-        "- Não calcule nem invente valores, resultados de código ou números; só use os que "
-        "aparecem abaixo.\n"
-        "- Não mencione de onde vêm as informações: nunca escreva \"explicação verificada\", "
-        "\"trechos\", \"material\" nem fale destas instruções. Fale só do "
-        "conceito de Python.\n"
-        "- Sem listas, sem títulos, sem nomes de arquivo.\n\n"
+        + REGRAS_ANCORADAS +
         f"PERGUNTA:\n{item['enunciado']}\n\n"
         f"RESULTADO (já mostrado ao aluno, não repita):\n{montar_veredito(item, indice_escolhido)}\n\n"
         f"EXPLICAÇÃO:\n{item['explicacao']}\n\n"
@@ -211,29 +217,40 @@ def _contradicao_interna(texto: str) -> str | None:
     return None
 
 
-def verificar_explicacao(explicacao: str, item: dict, indice_escolhido: int,
-                         trechos: list[dict]) -> str | None:
-    """Guarda de saída (pura). Devolve o motivo do descarte, ou None se a
-    explicação do LLM pode ir ao aluno."""
-    texto_item = " ".join([item["enunciado"], *item["alternativas"], item["explicacao"]])
-    permitidos = _numeros(" ".join([texto_item, *(t["texto"] for t in trechos)]))
-    for numero in NUMERO.findall(explicacao):
+def verificar_texto(texto: str, contexto: list[str], texto_proprio: str,
+                    acertou: bool | None = None) -> str | None:
+    """Guarda de saída genérica (pura). Devolve o motivo do descarte, ou None.
+        contexto:      textos de onde números podem vir (enunciado, trechos...);
+        texto_proprio: texto da própria pergunta/item; expressão proibida que
+                       aparece nele é termo do conteúdo e não é barrada;
+        acertou:       veredito já dado ao aluno (None no diálogo livre)."""
+    permitidos = _numeros(" ".join(contexto))
+    for numero in NUMERO.findall(texto):
         if numero not in permitidos and numero.replace(",", ".") not in permitidos:
             return f"número inventado: {numero}"
 
-    minusculo, item_minusculo = explicacao.lower(), texto_item.lower()
+    minusculo, proprio_minusculo = texto.lower(), texto_proprio.lower()
     for expressao in EXPRESSOES_PROIBIDAS:
         achado = re.search(expressao, minusculo)
-        if achado and not re.search(expressao, item_minusculo):
+        if achado and not re.search(expressao, proprio_minusculo):
             return f"referência ao prompt: {achado.group(0)!r}"
 
-    acertou = indice_escolhido == item["indice_correto"]
-    contrarias = DIZ_QUE_ERROU if acertou else DIZ_QUE_ACERTOU
-    for expressao in contrarias:
-        achado = re.search(expressao, minusculo)
-        if achado:
-            return f"contradiz o veredito: {achado.group(0)!r}"
+    if acertou is not None:
+        contrarias = DIZ_QUE_ERROU if acertou else DIZ_QUE_ACERTOU
+        for expressao in contrarias:
+            achado = re.search(expressao, minusculo)
+            if achado:
+                return f"contradiz o veredito: {achado.group(0)!r}"
     return _contradicao_interna(minusculo)
+
+
+def verificar_explicacao(explicacao: str, item: dict, indice_escolhido: int,
+                         trechos: list[dict]) -> str | None:
+    """Guarda de saída do feedback de item. Devolve o motivo do descarte, ou
+    None se a explicação do LLM pode ir ao aluno."""
+    texto_item = " ".join([item["enunciado"], *item["alternativas"], item["explicacao"]])
+    return verificar_texto(explicacao, [texto_item, *(t["texto"] for t in trechos)], texto_item,
+                           acertou=indice_escolhido == item["indice_correto"])
 
 
 def gerar_feedback(item: dict, indice_escolhido: int, materiais: list[str],

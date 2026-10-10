@@ -118,6 +118,43 @@ def criar_tabelas():
         )
     """)
 
+    # Diálogo livre com o Tutor (parte 2b). A pergunta do aluno é texto livre:
+    # fica só aqui no banco, nunca em log (R08). vetada/correcao_docente: veto
+    # docente (R12); a resposta original é preservada.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tutor_dialogo (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            aluno_id TEXT,
+            ts DATETIME,
+            competencia_id TEXT,
+            pergunta TEXT,
+            resposta TEXT,
+            fontes TEXT,
+            origem TEXT,
+            tempo_ms INTEGER,
+            vetada INTEGER NOT NULL DEFAULT 0,
+            correcao_docente TEXT,
+            FOREIGN KEY (aluno_id) REFERENCES alunos(id)
+        )
+    """)
+
+    # Auditoria (R11): uma linha por interação do Tutor (resposta de item,
+    # diálogo, incentivo). Sem texto livre: só o tipo, a referência à linha
+    # da tabela de origem, a origem da resposta e as fontes citadas.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS auditoria (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts DATETIME,
+            aluno_id TEXT,
+            tipo TEXT,
+            referencia_id TEXT,
+            origem TEXT,
+            fontes TEXT,
+            FOREIGN KEY (aluno_id) REFERENCES alunos(id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_auditoria_aluno ON auditoria (aluno_id, ts)")
+
     conexao.commit()
     conexao.close()
     print(f"Tabelas criadas/confirmadas em: {DB_PATH}")

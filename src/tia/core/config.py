@@ -82,6 +82,10 @@ TUTOR_NUM_TRECHOS = int(os.getenv("TUTOR_NUM_TRECHOS", "4"))
 # distâncias de trechos relevantes e sem relação e ajustar este valor.
 TUTOR_DISTANCIA_MAXIMA = float(os.getenv("TUTOR_DISTANCIA_MAXIMA", "400"))
 
+# Dias sem interação com o Tutor (respostas, sessões, diálogo) a partir dos
+# quais o aluno conta como inativo e recebe o incentivo (GET /tutor/incentivo).
+INATIVIDADE_DIAS = int(os.getenv("INATIVIDADE_DIAS", "3"))
+
 
 if __name__ == "__main__":
     for nome in ("OLLAMA_URL", "CHAT_MODEL", "EMBED_MODEL", "OLLAMA_KEEP_ALIVE", "DB_PATH",
@@ -89,5 +93,5 @@ if __name__ == "__main__":
                  "CHUNK_SIZE", "CHUNK_OVERLAP", "EMENTA_PATH", "PERFIS_PATH",
                  "PLANEJADOR_TIMEOUT_LLM", "BANCO_ITENS_PATH", "TUTOR_TIMEOUT_LLM", "TUTOR_MAX_TOKENS", "TUTOR_TEMPERATURA", "TUTOR_TOP_P", "TUTOR_SEED", "TUTOR_MODO_FEEDBACK",
                  "TUTOR_NUM_TRECHOS",
-                 "TUTOR_DISTANCIA_MAXIMA"):
+                 "TUTOR_DISTANCIA_MAXIMA", "INATIVIDADE_DIAS"):
         print(f"{nome} = {globals()[nome]}")
