@@ -143,11 +143,14 @@ def test_justificativas_usam_um_unico_prompt(monkeypatch):
 
     assert len(chamadas) == 1
     prompt, kwargs = chamadas[0]
-    assert kwargs["think"] is False and kwargs["timeout"] <= 15
+    # timeout da config (decisão de 10/10: alto em desenvolvimento; R09 medido na VM)
+    assert kwargs["think"] is False and kwargs["timeout"] == justificar.PLANEJADOR_TIMEOUT_LLM
     assert "T-001" not in prompt  # nenhum identificador do aluno vai ao LLM
     frases = [e.justificativa for e in justificada.etapas]
     assert frases[:3] == ["Base de tudo.", "Depende de A.", "Fecha o ciclo."]
     assert frases[3] == trilha.etapas[3].justificativa  # etapa 4 sem frase: texto padrão
+    assert [e.origem_justificativa for e in justificada.etapas] == ["LLM", "LLM", "LLM", "fallback"]
+    assert justificada.falha_llm == "formato"  # uma etapa ficou sem frase válida
 
 
 def test_falha_do_llm_nao_bloqueia_trilha(monkeypatch):
@@ -156,7 +159,24 @@ def test_falha_do_llm_nao_bloqueia_trilha(monkeypatch):
 
     monkeypatch.setattr(justificar, "chamar_llm", llm_fora_do_ar)
     trilha = gerar_trilha(entrada(), EMENTA, PERFIS)
-    assert justificar_trilha(trilha, {}) == trilha
+    justificada = justificar_trilha(trilha, {})
+    assert [e.justificativa for e in justificada.etapas] == [e.justificativa for e in trilha.etapas]
+    assert {e.origem_justificativa for e in justificada.etapas} == {"fallback"}
+    assert justificada.falha_llm == "timeout"  # avisa que foi o tempo do LLM
+
+
+def test_llm_justifica_tudo_sem_falha(monkeypatch):
+    monkeypatch.setattr(justificar, "chamar_llm",
+                        lambda prompt, **kwargs: "\n".join(f"{n}. Frase {n}." for n in range(1, 5)))
+    justificada = justificar_trilha(gerar_trilha(entrada(), EMENTA, PERFIS), {})
+    assert justificada.falha_llm is None and {e.origem_justificativa for e in justificada.etapas} == {"LLM"}
+
+
+def test_descrever_falha():
+    from tia.core.llm_client import descrever_falha
+    assert descrever_falha(requests.Timeout("x")) == "timeout"
+    assert descrever_falha(requests.ReadTimeout("x")) == "timeout"
+    assert descrever_falha(requests.ConnectionError("x")) == "ConnectionError"
 
 
 # --- banco ---

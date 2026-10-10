@@ -266,3 +266,18 @@ def criacao_da_trilha(aluno_id: str) -> datetime | None:
     finally:
         conexao.close()
     return datetime.fromisoformat(linha["criado"]) if linha["criado"] else None
+
+
+def sessao_aberta(aluno_id: str, competencia_id: str) -> str | None:
+    """Id da sessão não concluída mais recente do aluno na competência (usado
+    pela orquestração para "continuar sessão"); None se não houver."""
+    conexao = obter_conexao()
+    try:
+        linha = conexao.execute(
+            """SELECT id FROM tutor_sessoes WHERE aluno_id = ? AND competencia_id = ? AND NOT concluida
+               ORDER BY atualizado_em DESC, criado_em DESC LIMIT 1""",
+            (aluno_id, competencia_id),
+        ).fetchone()
+    finally:
+        conexao.close()
+    return linha["id"] if linha else None

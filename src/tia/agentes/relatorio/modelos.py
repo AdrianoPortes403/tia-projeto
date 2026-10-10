@@ -124,6 +124,7 @@ class Narrativa(BaseModel):
     texto: str
     origem: OrigemNarrativa
     motivo_descarte: str = ""
+    falha_llm: str | None = None  # fallback por falha do LLM: "timeout" ou outro erro
 
 
 class RelatorioAluno(BaseModel):

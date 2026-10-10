@@ -27,7 +27,7 @@ from tia.agentes.relatorio.modelos import Narrativa, RelatorioAluno, RelatorioTu
 from tia.agentes.tutor.feedback import limpar_explicacao, verificar_texto
 from tia.core.config import (INATIVIDADE_DIAS, RELATORIO_MAX_TOKENS, RELATORIO_SEED, RELATORIO_TEMPERATURA,
                              RELATORIO_TIMEOUT_LLM)
-from tia.core.llm_client import chamar_llm
+from tia.core.llm_client import chamar_llm, descrever_falha
 
 log = logging.getLogger(__name__)
 
@@ -110,8 +110,9 @@ def redigir(resumo: str, publico: str) -> Narrativa:
         bruta = chamar_llm(montar_prompt(resumo, publico), think=False, timeout=RELATORIO_TIMEOUT_LLM,
                            max_tokens=RELATORIO_MAX_TOKENS, temperatura=RELATORIO_TEMPERATURA, seed=RELATORIO_SEED)
     except Exception as erro:
-        log.warning("LLM indisponível no relatório (%s); texto fixo.", type(erro).__name__)
-        return Narrativa(texto=fallback, origem="fallback")
+        falha = descrever_falha(erro)
+        log.warning("LLM indisponível no relatório (%s); texto fixo.", falha)
+        return Narrativa(texto=fallback, origem="fallback", falha_llm=falha)
     texto = limpar_explicacao(bruta)
     if not texto:
         return Narrativa(texto=fallback, origem="fallback")

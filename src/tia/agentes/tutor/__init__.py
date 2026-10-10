@@ -1,9 +1,10 @@
 """
 Agente 2 (Tutor), parte 2a: questionário adaptativo com feedback e fonte citada.
 
-Pontos de entrada (usados pela API e pela demonstração):
-    iniciar_sessao(IniciarSessao) -> SessaoIniciada
-    responder(RespostaAluno)      -> Feedback
+Pontos de entrada (usados pela API, pela orquestração e pela demonstração):
+    iniciar_sessao(IniciarSessao)        -> SessaoIniciada
+    responder(RespostaAluno)             -> Feedback
+    pergunta_atual(sessao_id, aluno_id)  -> Pergunta | None (para continuar uma sessão)
 
 Módulos:
     adaptativo.py  máquina de estados pura (nível, item, fim da competência)
@@ -70,6 +71,15 @@ def iniciar_sessao(entrada: IniciarSessao) -> SessaoIniciada:
                           pergunta=_pergunta(_item_por_id(itens, estado.item_atual_id)))
 
 
+def pergunta_atual(sessao_id: str, aluno_id: str) -> Pergunta | None:
+    """Pergunta em aberto da sessão (sem gabarito); None se a sessão não existe,
+    é de outro aluno ou já foi concluída."""
+    estado = repositorio.ler_sessao(sessao_id, aluno_id)
+    if estado is None or estado.concluida:
+        return None
+    return _pergunta(_item_por_id(repositorio.carregar_itens(), estado.item_atual_id))
+
+
 def responder(resposta: RespostaAluno, modo: str | None = None) -> Feedback:
     """Corrige a resposta, gera o feedback, avança o estado e grava tudo.
     modo: "ancorado" ou "livre"; None usa TUTOR_MODO_FEEDBACK."""
@@ -96,6 +106,6 @@ def responder(resposta: RespostaAluno, modo: str | None = None) -> Feedback:
 
     proxima = None if novo.concluida else _pergunta(_item_por_id(itens, novo.item_atual_id))
     return Feedback(acertou=acertou, indice_correto=item["indice_correto"], veredito=resultado.veredito,
-                    explicacao=resultado.explicacao, origem=resultado.origem,
+                    explicacao=resultado.explicacao, origem=resultado.origem, falha_llm=resultado.falha_llm,
                     fontes=resultado.fontes, nivel_atual=novo.nivel, concluida=novo.concluida,
                     proxima_pergunta=proxima, tempo_ms=tempo_ms)

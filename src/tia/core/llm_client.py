@@ -103,6 +103,15 @@ def chamar_llm_com_historico(mensagens: list[dict], model: str = None, think: bo
     return resposta.json()["message"]["content"]
 
 
+def descrever_falha(erro: Exception) -> str:
+    """Rótulo curto da falha de uma chamada ao Ollama, para mostrar ao usuário
+    e nas respostas da API: "timeout" quando estourou o tempo; senão, o nome do
+    tipo do erro (ex.: "ConnectionError")."""
+    if isinstance(erro, (requests.Timeout, TimeoutError)):
+        return "timeout"
+    return type(erro).__name__
+
+
 def gerar_embedding(texto: str, model: str = None, timeout: int = 60) -> list[float]:
     """Transforma um texto em um vetor numérico (embedding), usado pelo RAG
     para medir o quão parecidos dois textos são.

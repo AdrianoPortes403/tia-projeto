@@ -35,6 +35,7 @@ COLUNAS_NOVAS_TRILHA = {
     "materiais": "TEXT",  # lista de nomes de arquivo, em JSON
     "justificativa": "TEXT",
     "criado_em": "DATETIME",
+    "origem_justificativa": "TEXT",  # "LLM" ou "fallback"; NULL nas trilhas antigas
 }
 
 
@@ -47,6 +48,12 @@ COLUNAS_NOVAS_HISTORICO = {
     # item e tendência por sessão); respostas anteriores a esta coluna ficam NULL
     "item_id": "TEXT",
     "sessao_id": "TEXT",
+}
+
+
+# Coluna acrescentada à auditoria pela orquestração: o motivo de cada decisão (R11).
+COLUNAS_NOVAS_AUDITORIA = {
+    "motivo": "TEXT",
 }
 
 
@@ -158,6 +165,59 @@ def criar_tabelas():
         )
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_auditoria_aluno ON auditoria (aluno_id, ts)")
+    _acrescentar_colunas(cursor, "auditoria", COLUNAS_NOVAS_AUDITORIA)
+
+    # Orquestração (EAP 1.3.5). Matrícula no fluxo: guarda o que o Planejador
+    # precisa para REPLANEJAR (perfil, horas e diagnóstico, que o Planejador não
+    # grava). O diagnóstico é atualizado a cada replanejamento.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS orquestrador_matriculas (
+            aluno_id TEXT PRIMARY KEY,
+            perfil_id TEXT,
+            horas_semanais REAL,
+            diagnostico TEXT,
+            criado_em DATETIME,
+            atualizado_em DATETIME,
+            FOREIGN KEY (aluno_id) REFERENCES alunos(id)
+        )
+    """)
+    # Eventos recebidos (idempotência): o mesmo evento_id devolve o resultado
+    # gravado, sem processar de novo.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS orquestrador_eventos (
+            evento_id TEXT PRIMARY KEY,
+            aluno_id TEXT,
+            tipo TEXT,
+            recebido_em DATETIME,
+            resultado TEXT,
+            FOREIGN KEY (aluno_id) REFERENCES alunos(id)
+        )
+    """)
+    # Decisões do orquestrador (planejar, replanejar ou nada), com regra e motivo;
+    # cada uma também vai para a auditoria.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS orquestrador_decisoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            aluno_id TEXT,
+            ts DATETIME,
+            regra TEXT,
+            acao TEXT,
+            competencia_id TEXT,
+            motivo TEXT,
+            replanejou INTEGER,
+            evento_id TEXT,
+            sessao_id TEXT,
+            FOREIGN KEY (aluno_id) REFERENCES alunos(id)
+        )
+    """)
+    _acrescentar_colunas(cursor, "orquestrador_decisoes", {
+        "sessao_id": "TEXT",
+        # quando o Planejador foi acionado: origem das justificativas ("LLM",
+        # "parcial" ou "fallback"), motivo da falha ("timeout"...) e tempo gasto
+        "origem_justificativas": "TEXT",
+        "falha_llm": "TEXT",
+        "tempo_planejador_ms": "INTEGER",
+    })
 
     conexao.commit()
     conexao.close()

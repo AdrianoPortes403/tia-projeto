@@ -300,7 +300,7 @@ def llm(monkeypatch):
 def test_relatorio_do_aluno_completo_com_narrativa_do_llm(demo, llm):
     rel = gerar_relatorio_aluno("DEMO-R02", agora=AGORA)
     assert rel.narrativa.model_dump() == {"texto": "Seu progresso está indo bem.", "origem": "LLM",
-                                          "motivo_descarte": ""}
+                                          "motivo_descarte": "", "falha_llm": None}
     assert (rel.progresso.concluidas, rel.progresso.etapas) == (1, 6)
     assert (rel.desempenho.geral.acertos, rel.desempenho.geral.respostas) == (9, 13)
     t = rel.desempenho.tendencia
@@ -337,6 +337,7 @@ def test_relatorio_funciona_completo_sem_llm(demo, llm):
     llm["resposta"] = TimeoutError("Ollama fora do ar")
     rel = gerar_relatorio_aluno("DEMO-R02", agora=AGORA)
     assert (rel.narrativa.texto, rel.narrativa.origem) == (narrativa.FALLBACK_ALUNO, "fallback")
+    assert rel.narrativa.falha_llm == "timeout"  # TimeoutError: avisa que foi o tempo
     assert rel.desempenho.geral.respostas == 13 and rel.progresso.etapas == 6  # indicadores intactos
     turma = gerar_relatorio_turma(agora=AGORA)
     assert (turma.narrativa.texto, turma.narrativa.origem) == (narrativa.FALLBACK_TURMA, "fallback")

@@ -1,0 +1,213 @@
+"""
+Demonstração da Orquestração (EAP 1.3.5): um aluno fictício (DEMO-O01,
+perfil intermediário; código, nunca nome, R08) do início ao fim, num banco
+TEMPORÁRIO (não toca em data/tia.db):
+
+    1. matrícula: o Planejador gera a trilha (o perfil dispensa variáveis,
+       condicionais e repetição, pelo diagnóstico alto);
+    2. acertos: conclui Funções -> replanejamento por conclusão (R1);
+    3. queda: erra 3 vezes em Listas e strings -> replanejamento por queda
+       (R2): o pré-requisito Repetição, que o perfil tinha dispensado, volta;
+    4. inatividade: o tempo "passa" INATIVIDADE_DIAS + 2 dias (os horários do
+       banco temporário são recuados) -> replanejamento por inatividade (R3);
+    5. retoma e estuda até concluir a trilha; relatórios do aluno e da turma.
+
+Imprime cada resposta (com a origem do feedback: LLM, guarda ou fallback, e
+o motivo do fallback, ex.: timeout), cada decisão (com o motivo e a origem
+das justificativas do Planejador) e, no fim, o tempo de cada etapa
+separado em Tutor, Planejador, Relatório e o restante (orquestração, banco,
+regras). R09 a medir na VM.
+
+Como rodar (a partir da raiz, com o venv ativo):
+    python -m tia.orquestrador --demo [--sem-llm]
+
+Pré-requisitos:
+    - Ollama rodando com CHAT_MODEL e EMBED_MODEL (com --sem-llm, não precisa:
+      todos os agentes usam os textos fixos)
+    - Material indexado: python -m tia.rag.ingest (sem ele, feedback com o texto do item)
+"""
+
+import argparse
+import itertools
+import logging
+import tempfile
+import time
+from datetime import timedelta
+from pathlib import Path
+
+import requests
+
+import tia.core.database as database
+import tia.core.llm_client as llm_client
+from tia import orquestrador
+from tia.agentes.relatorio import gerar_relatorio_aluno, gerar_relatorio_turma
+from tia.agentes.relatorio.narrativa import formatar_texto_aluno
+from tia.agentes.tutor import iniciar_sessao, pergunta_atual
+from tia.agentes.tutor.modelos import IniciarSessao
+from tia.agentes.tutor.repositorio import carregar_itens
+from tia.core.config import CHAT_MODEL, INATIVIDADE_DIAS
+from tia.orquestrador.modelos import EventoTutor, Matricula
+
+ALUNO = "DEMO-O01"
+MATRICULA = Matricula(perfil_id="intermediario", horas_semanais=6, diagnostico={
+    "variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
+    "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0})
+# (colunas, tabela) recuadas para simular dias sem atividade
+HORARIOS = [("timestamp", "historico_respostas"), ("criado_em", "tutor_sessoes"), ("atualizado_em", "tutor_sessoes"),
+            ("ts", "tutor_dialogo"), ("criado_em", "trilha_estudo"), ("ts", "orquestrador_decisoes"),
+            ("ts", "auditoria")]
+
+contador = itertools.count(1)
+gabarito = {i["id"]: i["indice_correto"] for i in carregar_itens()}
+# tempos por etapa: total e partes (s); falhas do LLM por agente
+tempos: dict[str, dict[str, float]] = {}
+falhas: dict[str, int] = {"Tutor": 0, "Planejador": 0, "Relatório": 0}
+
+
+def falha(texto: str | None) -> str:
+    if not texto:
+        return ""
+    return " (TIMEOUT do LLM)" if texto == "timeout" else f" ({texto})"
+
+
+def somar(etapa: str, parte: str, segundos: float):
+    tempos.setdefault(etapa, {"total": 0.0, "Tutor": 0.0, "Planejador": 0.0, "Relatório": 0.0})[parte] += segundos
+
+
+def imprimir_decisoes(decisoes, etapa: str):
+    for d in decisoes:
+        marca = "REPLANEJOU" if d.replanejou else "sem replanejar"
+        print(f"   >>> DECISÃO [{d.regra}] {d.acao} ({marca}): {d.motivo}")
+        if d.replanejou:
+            segundos = (d.tempo_planejador_ms or 0) / 1000
+            somar(etapa, "Planejador", segundos)
+            falhas["Planejador"] += d.falha_llm == "timeout"
+            print(f"       Planejador: justificativas {d.origem_justificativas}{falha(d.falha_llm)} | {segundos:.1f} s")
+
+
+def estudar(acertos: str, etapa: str) -> float:
+    """Segue a próxima ação do orquestrador: abre/continua a sessão e responde
+    ("1" acerta, "0" erra; depois do fim da sequência, acerta). Para quando a
+    competência conclui ou um replanejamento muda a competência atual."""
+    inicio = time.perf_counter()
+    proxima = orquestrador.proxima(ALUNO)
+    competencia = proxima.competencia_id
+    if proxima.acao == "iniciar_sessao":
+        sessao = iniciar_sessao(IniciarSessao(aluno_id=ALUNO, competencia_id=competencia))
+        sessao_id, pergunta = sessao.sessao_id, sessao.pergunta
+    else:  # continuar_sessao
+        sessao_id = proxima.sessao_id
+        pergunta = pergunta_atual(sessao_id, ALUNO)
+    print(f"\n-- {proxima.acao} em '{competencia}' ({proxima.motivo})")
+    for n in itertools.count():
+        acerta = n >= len(acertos) or acertos[n] == "1"
+        correto = gabarito[pergunta.item_id]
+        resultado = orquestrador.processar_evento(ALUNO, EventoTutor(
+            evento_id=f"evt-{next(contador):04d}", tipo="resposta", sessao_id=sessao_id, item_id=pergunta.item_id,
+            indice_escolhido=correto if acerta else (correto + 1) % 4))
+        fb = resultado.feedback
+        somar(etapa, "Tutor", fb.tempo_ms / 1000)
+        falhas["Tutor"] += fb.falha_llm == "timeout"
+        print(f"   {pergunta.item_id}: {'ACERTOU' if fb.acertou else 'errou'} -> nível {fb.nivel_atual} "
+              f"| feedback {fb.origem}{falha(fb.falha_llm)} | {fb.tempo_ms / 1000:.1f} s")
+        imprimir_decisoes(resultado.decisoes, etapa)
+        if fb.concluida or resultado.proxima.competencia_id != competencia:
+            break
+        pergunta = fb.proxima_pergunta
+    segundos = time.perf_counter() - inicio
+    somar(etapa, "total", segundos)
+    return segundos
+
+
+def imprimir_tempos(total: float):
+    print("\nTempo por etapa (s): total = Tutor + Planejador + Relatório + resto (orquestração, banco, regras)")
+    print(f"   {'etapa':<12} {'total':>8} {'Tutor':>8} {'Planej.':>8} {'Relat.':>8} {'resto':>8}")
+    for etapa, t in tempos.items():
+        resto = t["total"] - t["Tutor"] - t["Planejador"] - t["Relatório"]
+        print(f"   {etapa:<12} {t['total']:8.1f} {t['Tutor']:8.1f} {t['Planejador']:8.1f} {t['Relatório']:8.1f} "
+              f"{resto:8.1f}")
+    soma = {parte: sum(t[parte] for t in tempos.values()) for parte in ("Tutor", "Planejador", "Relatório")}
+    print(f"   {'TOTAL':<12} {total:8.1f} {soma['Tutor']:8.1f} {soma['Planejador']:8.1f} {soma['Relatório']:8.1f} "
+          f"{total - sum(soma.values()):8.1f}")
+    print("Fallbacks por TIMEOUT do LLM: " + ", ".join(f"{agente} {n}" for agente, n in falhas.items()))
+    print("(R09: até 15 s por interação, a medir na VM)")
+
+
+def recuar_horarios(dias: int):
+    """Simula a passagem do tempo no banco TEMPORÁRIO da demonstração."""
+    conexao = database.obter_conexao()
+    with conexao:
+        for coluna, tabela in HORARIOS:
+            conexao.execute(f"UPDATE {tabela} SET {coluna} = strftime('%Y-%m-%dT%H:%M:%S', {coluna}, ?) "
+                            f"WHERE {coluna} IS NOT NULL", (f"-{dias} days",))
+    conexao.close()
+
+
+def sem_llm():
+    """Toda chamada ao Ollama (chat e embedding) falha na hora: os agentes usam os textos fixos."""
+    def falha(*args, **kwargs):
+        raise requests.ConnectionError("demonstração com --sem-llm")
+    llm_client.requests.post = falha
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Demonstração da orquestração.")
+    parser.add_argument("--demo", action="store_true", help="executa o aluno fictício do início ao fim")
+    parser.add_argument("--sem-llm", action="store_true", help="não chama o Ollama (textos fixos)")
+    args = parser.parse_args()
+    if not args.demo:
+        parser.print_help()
+        raise SystemExit(0)
+
+    logging.basicConfig(level=logging.ERROR, format="%(levelname)s %(name)s: %(message)s")
+    logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)
+    if args.sem_llm:
+        sem_llm()
+    pasta = tempfile.mkdtemp(prefix="tia_orquestrador_demo_")
+    database.DB_PATH = str(Path(pasta) / "demo.db")
+    database.criar_tabelas()
+    print(f"\nBanco temporário: {database.DB_PATH} | modelo {CHAT_MODEL}{' (sem LLM)' if args.sem_llm else ''}")
+    inicio_total = inicio = time.perf_counter()
+    matricula = orquestrador.iniciar(ALUNO, MATRICULA)
+    somar("matrícula", "total", time.perf_counter() - inicio)
+    print(f"\n1. MATRÍCULA: trilha {' -> '.join(e.competencia_id for e in matricula.trilha.etapas)}")
+    for e in matricula.trilha.etapas:
+        print(f"   - {e.competencia_id}: [{e.origem_justificativa}] {e.justificativa}")
+    imprimir_decisoes([matricula.decisao], "matrícula")
+
+    print("\n2. ACERTOS")
+    estudar("1111", "acertos")
+    print("\n3. QUEDA")
+    estudar("000", "queda")
+
+    print(f"\n4. INATIVIDADE: {INATIVIDADE_DIAS + 2} dias sem atividade")
+    recuar_horarios(INATIVIDADE_DIAS + 2)
+    print(f"   próximo: {orquestrador.proxima(ALUNO).acao}")
+    inicio = time.perf_counter()
+    resultado = orquestrador.processar_evento(ALUNO, EventoTutor(evento_id=f"evt-{next(contador):04d}",
+                                                                 tipo="inatividade"))
+    imprimir_decisoes(resultado.decisoes, "inatividade")
+    repetido = orquestrador.processar_evento(ALUNO, EventoTutor(evento_id=resultado.evento_id, tipo="inatividade"))
+    print(f"   mesmo evento reenviado: repetido={repetido.repetido}, sem nova decisão")
+    somar("inatividade", "total", time.perf_counter() - inicio)
+
+    print("\n5. RETOMADA ATÉ O FIM")
+    while orquestrador.proxima(ALUNO).acao != "concluido":
+        estudar("", "retomada")
+
+    estado = orquestrador.estado(ALUNO)
+    print(f"\nEstado final: concluído={estado.concluido}, etapas "
+          f"{', '.join(e.competencia_id for e in estado.etapas)}, replanejamentos={estado.replanejamentos}")
+
+    inicio = time.perf_counter()
+    relatorio = gerar_relatorio_aluno(ALUNO, com_narrativa=not args.sem_llm)
+    turma = gerar_relatorio_turma(com_narrativa=not args.sem_llm)
+    segundos = time.perf_counter() - inicio
+    somar("relatórios", "total", segundos)
+    somar("relatórios", "Relatório", segundos)
+    falhas["Relatório"] += relatorio.narrativa.falha_llm == "timeout"
+    print("\n" + formatar_texto_aluno(relatorio))
+    print(f"   (interpretação: {relatorio.narrativa.origem}{falha(relatorio.narrativa.falha_llm)})")
+    print(f"\nRelatório da turma: alunos {turma.alunos.texto}, suprimido={turma.suprimido} (grupo mínimo LGPD)")
+
+    imprimir_tempos(time.perf_counter() - inicio_total)

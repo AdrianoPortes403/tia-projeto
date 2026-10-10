@@ -25,20 +25,21 @@ from datetime import datetime
 from tia.core.database import obter_conexao
 
 # tipos de interação registrados
-TIPOS = ("resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma")
+TIPOS = ("resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma", "decisao_orquestrador")
 
 
 def registrar(conexao: sqlite3.Connection, aluno_id: str | None, tipo: str, referencia_id: str | int | None,
-              origem: str, fontes: list[str], ts: str | None = None):
-    """Grava uma linha de auditoria (dentro da transação de quem chama)."""
+              origem: str, fontes: list[str], ts: str | None = None, motivo: str | None = None):
+    """Grava uma linha de auditoria (dentro da transação de quem chama).
+    motivo: por que a decisão foi tomada (decisões do orquestrador)."""
     if tipo not in TIPOS:
         raise ValueError(f"Tipo de auditoria inválido: {tipo!r}.")
     conexao.execute(
-        """INSERT INTO auditoria (ts, aluno_id, tipo, referencia_id, origem, fontes)
-           VALUES (?, ?, ?, ?, ?, ?)""",
+        """INSERT INTO auditoria (ts, aluno_id, tipo, referencia_id, origem, fontes, motivo)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
         (ts or datetime.now().isoformat(timespec="seconds"), aluno_id, tipo,
          None if referencia_id is None else str(referencia_id), origem,
-         json.dumps(fontes, ensure_ascii=False)),
+         json.dumps(fontes, ensure_ascii=False), motivo),
     )
 
 
@@ -53,4 +54,4 @@ def listar(aluno_id: str) -> list[dict]:
         conexao.close()
     return [{"id": linha["id"], "ts": linha["ts"], "tipo": linha["tipo"],
              "referencia_id": linha["referencia_id"], "origem": linha["origem"],
-             "fontes": json.loads(linha["fontes"] or "[]")} for linha in linhas]
+             "fontes": json.loads(linha["fontes"] or "[]"), "motivo": linha["motivo"]} for linha in linhas]

@@ -21,7 +21,7 @@ import re
 
 from tia.agentes.planejador.modelos import Trilha
 from tia.core.config import PLANEJADOR_TIMEOUT_LLM
-from tia.core.llm_client import chamar_llm
+from tia.core.llm_client import chamar_llm, descrever_falha
 
 log = logging.getLogger(__name__)
 
@@ -73,21 +73,26 @@ def _sem_prefixo_do_nome(frase: str, nome: str) -> str:
 def justificar_trilha(trilha: Trilha, diagnostico: dict[str, float],
                       timeout: int = PLANEJADOR_TIMEOUT_LLM) -> Trilha:
     """Devolve uma cópia da trilha com as justificativas do LLM onde houver;
-    nas demais etapas mantém o texto padrão."""
+    nas demais etapas mantém o texto padrão. Marca a origem de cada etapa e,
+    se alguma caiu no texto padrão, o motivo em trilha.falha_llm."""
     if not trilha.etapas:
         return trilha
+    padrao = [e.model_copy(update={"origem_justificativa": "fallback"}) for e in trilha.etapas]
     try:
         resposta = chamar_llm(montar_prompt(trilha, diagnostico), think=False, timeout=timeout)
         frases = extrair_frases(resposta, len(trilha.etapas))
     except Exception as erro:  # qualquer falha do LLM: segue com o texto padrão
-        log.warning("Justificativas do LLM indisponíveis (%s); usando texto padrão.", type(erro).__name__)
-        return trilha
+        falha = descrever_falha(erro)
+        log.warning("Justificativas do LLM indisponíveis (%s); usando texto padrão.", falha)
+        return trilha.model_copy(update={"etapas": padrao, "falha_llm": falha})
 
     if len(frases) < len(trilha.etapas):
         log.info("LLM justificou %d de %d etapas; restante com texto padrão.", len(frases), len(trilha.etapas))
     etapas = [
-        etapa.model_copy(update={"justificativa": _sem_prefixo_do_nome(frases[etapa.ordem], etapa.nome)})
-        if etapa.ordem in frases else etapa
-        for etapa in trilha.etapas
+        etapa.model_copy(update={"justificativa": _sem_prefixo_do_nome(frases[etapa.ordem], etapa.nome),
+                                 "origem_justificativa": "LLM"})
+        if etapa.ordem in frases else sem_frase
+        for etapa, sem_frase in zip(trilha.etapas, padrao)
     ]
-    return trilha.model_copy(update={"etapas": etapas})
+    falha = None if len(frases) == len(trilha.etapas) else "formato"
+    return trilha.model_copy(update={"etapas": etapas, "falha_llm": falha})

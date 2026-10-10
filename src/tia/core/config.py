@@ -47,7 +47,9 @@ CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "150"))
 EMENTA_PATH = os.getenv("EMENTA_PATH", "conteudo/ementa/ementa.json")
 PERFIS_PATH = os.getenv("PERFIS_PATH", "conteudo/perfis/perfis.json")
 # Tempo máximo (s) para o LLM escrever as justificativas; abaixo do limite de 15 s do R09
-PLANEJADOR_TIMEOUT_LLM = int(os.getenv("PLANEJADOR_TIMEOUT_LLM", "12"))
+# Decisão de 10/10 (CLAUDE.md): alto em desenvolvimento; o R09 será medido na VM.
+# Com 12 s, as justificativas estouravam em CPU (ReadTimeout) e caíam no texto padrão.
+PLANEJADOR_TIMEOUT_LLM = int(os.getenv("PLANEJADOR_TIMEOUT_LLM", "120"))
 
 # --- Agente 2 (Tutor) ---
 # Banco de itens do questionário (PROVISÓRIO até a entrega da Pessoa 4)
@@ -106,6 +108,23 @@ RELATORIO_TIMEOUT_LLM = int(os.getenv("RELATORIO_TIMEOUT_LLM", "120"))
 RELATORIO_MAX_TOKENS = int(os.getenv("RELATORIO_MAX_TOKENS", "250"))
 RELATORIO_TEMPERATURA = float(os.getenv("RELATORIO_TEMPERATURA", "0.2"))
 RELATORIO_SEED = int(os.getenv("RELATORIO_SEED", "42"))
+# Tendência do acerto (indicador 2 e regra de queda do orquestrador). PROVISÓRIO.
+# Sem sessao_id: últimas RELATORIO_TENDENCIA_JANELA respostas x anteriores.
+RELATORIO_TENDENCIA_JANELA = int(os.getenv("RELATORIO_TENDENCIA_JANELA", "5"))
+# Mínimo de respostas em cada lado da comparação para haver tendência.
+RELATORIO_TENDENCIA_MIN_RESPOSTAS = int(os.getenv("RELATORIO_TENDENCIA_MIN_RESPOSTAS", "3"))
+# Variação da taxa de acerto que conta como subida/queda (0.15 = 15 pontos).
+RELATORIO_TENDENCIA_LIMIAR = float(os.getenv("RELATORIO_TENDENCIA_LIMIAR", "0.15"))
+
+# --- Orquestração (EAP 1.3.5): regras de replanejamento. Todas PROVISÓRIAS. ---
+# Queda: depois de um replanejamento por queda, só replaneja de novo por queda
+# após pelo menos estas respostas novas (evita replanejar a cada resposta).
+ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS = int(os.getenv("ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "5"))
+# Queda: nota dada no diagnóstico aos pré-requisitos diretos (não concluídos) da
+# competência em queda; abaixo do limiar de dispensa do perfil, eles voltam à trilha.
+ORQ_NOTA_PREREQ_REFORCO = float(os.getenv("ORQ_NOTA_PREREQ_REFORCO", "0.0"))
+# Inatividade: usa INATIVIDADE_DIAS (acima); replaneja no máximo uma vez por
+# período sem atividade.
 
 
 if __name__ == "__main__":
@@ -116,5 +135,7 @@ if __name__ == "__main__":
                  "TUTOR_NUM_TRECHOS",
                  "TUTOR_DISTANCIA_MAXIMA", "TUTOR_COBERTURA_MIN", "TUTOR_EXIGE_TERMO_RARO",
                  "INATIVIDADE_DIAS", "RELATORIO_MIN_GRUPO", "RELATORIO_TIMEOUT_LLM", "RELATORIO_MAX_TOKENS",
-                 "RELATORIO_TEMPERATURA", "RELATORIO_SEED"):
+                 "RELATORIO_TEMPERATURA", "RELATORIO_SEED", "RELATORIO_TENDENCIA_JANELA",
+                 "RELATORIO_TENDENCIA_MIN_RESPOSTAS", "RELATORIO_TENDENCIA_LIMIAR",
+                 "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_NOTA_PREREQ_REFORCO"):
         print(f"{nome} = {globals()[nome]}")

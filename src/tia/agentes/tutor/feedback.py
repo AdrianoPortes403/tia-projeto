@@ -48,7 +48,7 @@ from dataclasses import dataclass
 
 from tia.core.config import (TUTOR_DISTANCIA_MAXIMA, TUTOR_MAX_TOKENS, TUTOR_MODO_FEEDBACK, TUTOR_NUM_TRECHOS,
                              TUTOR_SEED, TUTOR_TEMPERATURA, TUTOR_TIMEOUT_LLM, TUTOR_TOP_P)
-from tia.core.llm_client import chamar_llm
+from tia.core.llm_client import chamar_llm, descrever_falha
 from tia.rag.retrieve import buscar_contexto
 
 log = logging.getLogger(__name__)
@@ -95,6 +95,7 @@ class ResultadoFeedback:
     origem: str            # um de ORIGENS
     motivo_descarte: str = ""     # só com origem "guarda"
     explicacao_descartada: str = ""  # texto do LLM barrado (para revisão; não vai ao aluno)
+    falha_llm: str | None = None  # fallback por falha: "timeout", outro erro, ou "rag: <erro>"
 
 
 def buscar_trechos(item: dict, materiais: list[str], k: int = TUTOR_NUM_TRECHOS,
@@ -266,6 +267,7 @@ def gerar_feedback(item: dict, indice_escolhido: int, materiais: list[str],
         trechos = buscar_trechos(item, materiais)
     except Exception as erro:  # Chroma ou embedding indisponível
         log.warning("Busca no RAG falhou (%s); usando explicação do item.", type(erro).__name__)
+        padrao.falha_llm = f"rag: {descrever_falha(erro)}"
         return padrao
     if not trechos:
         log.info("Nenhum trecho relevante para o item %s; usando explicação do item.", item["id"])
@@ -277,7 +279,9 @@ def gerar_feedback(item: dict, indice_escolhido: int, materiais: list[str],
                               timeout=timeout, max_tokens=TUTOR_MAX_TOKENS, temperatura=TUTOR_TEMPERATURA,
                               top_p=TUTOR_TOP_P, seed=TUTOR_SEED)
     except Exception as erro:
-        log.warning("Feedback do LLM indisponível (%s); usando explicação do item.", type(erro).__name__)
+        falha = descrever_falha(erro)
+        log.warning("Feedback do LLM indisponível (%s); usando explicação do item.", falha)
+        padrao.falha_llm = falha
         return padrao
     explicacao = limpar_explicacao(resposta)
     if not explicacao:

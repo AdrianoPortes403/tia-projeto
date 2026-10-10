@@ -10,7 +10,7 @@ Pré-requisitos:
     - pydantic 2
 """
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -37,9 +37,15 @@ class EtapaTrilha(BaseModel):
     horas: float
     semana_inicio: int
     justificativa: str
+    # "LLM": frase do LLM; "fallback": texto padrão (LLM falhou ou não deu frase
+    # válida para a etapa); None: trilha lida do banco (origem não é gravada)
+    origem_justificativa: Literal["LLM", "fallback"] | None = None
 
 
 class Trilha(BaseModel):
     aluno_id: str
     perfil_id: str
     etapas: list[EtapaTrilha]
+    # por que as justificativas caíram no texto padrão: "timeout", outro erro
+    # (ex.: "ConnectionError") ou "formato" (resposta sem frase válida); None se não caíram
+    falha_llm: str | None = None

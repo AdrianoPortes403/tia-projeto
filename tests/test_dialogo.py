@@ -133,6 +133,7 @@ def test_llm_falho_ou_vazio_resposta_fixa_sem_fonte(monkeypatch, resposta_llm):
     mockar(monkeypatch, [TRECHO], resposta_llm)
     r = perguntar().json()
     assert (r["resposta"], r["fontes"], r["origem"]) == (dialogo.MENSAGEM_SEM_RESPOSTA, [], "fallback")
+    assert r["falha_llm"] == ("timeout" if isinstance(resposta_llm, Exception) else None)
 
 
 @pytest.mark.parametrize("resposta_llm, motivo", [

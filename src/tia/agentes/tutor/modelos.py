@@ -61,6 +61,8 @@ class Feedback(BaseModel):
     # "LLM": explicação do LLM aprovada pela guarda; "guarda": a guarda barrou a
     # do LLM; "fallback": sem trecho ou LLM falhou (nos dois, texto do item)
     origem: Literal["LLM", "guarda", "fallback"]
+    # com origem "fallback" por falha: "timeout", outro erro, ou "rag: <erro>"
+    falha_llm: str | None = None
     # arquivos do material usados na explicação (R03); vazio quando a
     # explicação é o texto fixo do item
     fontes: list[str] = []
@@ -94,6 +96,7 @@ class RespostaDialogo(BaseModel):
     # "LLM": ancorada nos trechos e aprovada pela guarda; "guarda": a guarda barrou
     # a do LLM; "fallback": sem trecho relevante, LLM falhou ou o material não cobre
     origem: Origem
+    falha_llm: str | None = None  # "timeout", outro erro, ou "rag: <erro>"
     tempo_ms: int
 
 
@@ -101,12 +104,14 @@ class RegistroAuditoria(BaseModel):
     """Uma interação do Tutor (R11). Sem texto livre do aluno."""
     id: int
     ts: str
-    tipo: Literal["resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma"]
+    tipo: Literal["resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma",
+                  "decisao_orquestrador"]
     # id da linha na tabela de origem (historico_respostas, tutor_dialogo) ou,
     # no incentivo, a competência da próxima etapa citada
     referencia_id: str | None
     origem: str
     fontes: list[str] = []
+    motivo: str | None = None  # decisões do orquestrador
 
 
 class Veto(BaseModel):

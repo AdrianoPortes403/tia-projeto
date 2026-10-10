@@ -173,7 +173,9 @@ def test_feedback_competencia_sem_material_nem_busca(monkeypatch):
 @pytest.mark.parametrize("resposta_llm", [requests.Timeout("demorou"), "<think>só pensou</think>  "])
 def test_feedback_llm_falho_ou_vazio_usa_texto_do_item(monkeypatch, resposta_llm):
     mockar(monkeypatch, [TRECHO], resposta_llm)
-    assert feedback.gerar_feedback(ITENS[0], 0, ["mat_c.txt"]) == FALLBACK
+    falha = "timeout" if isinstance(resposta_llm, Exception) else None  # vazio não é falha do LLM
+    assert feedback.gerar_feedback(ITENS[0], 0, ["mat_c.txt"]) == feedback.ResultadoFeedback(
+        FALLBACK.veredito, FALLBACK.explicacao, [], "fallback", falha_llm=falha)
 
 
 def test_feedback_rag_fora_do_ar_usa_texto_do_item(monkeypatch):
@@ -181,7 +183,9 @@ def test_feedback_rag_fora_do_ar_usa_texto_do_item(monkeypatch):
         raise requests.ConnectionError("sem Ollama")
 
     monkeypatch.setattr(feedback, "buscar_contexto", quebrado)
-    assert feedback.gerar_feedback(ITENS[0], 0, ["mat_c.txt"]) == FALLBACK
+    resultado = feedback.gerar_feedback(ITENS[0], 0, ["mat_c.txt"])
+    assert (resultado.explicacao, resultado.origem, resultado.falha_llm) == (
+        FALLBACK.explicacao, "fallback", "rag: ConnectionError")
 
 
 def test_prompt_livre_informa_acerto_ou_erro_sem_dado_do_aluno():

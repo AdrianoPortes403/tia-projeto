@@ -54,7 +54,7 @@ from tia.agentes.tutor.feedback import REGRAS_ANCORADAS, limpar_explicacao, veri
 from tia.agentes.tutor.modelos import PerguntaAluno, RespostaDialogo
 from tia.core.config import (TUTOR_COBERTURA_MIN, TUTOR_DISTANCIA_MAXIMA, TUTOR_EXIGE_TERMO_RARO, TUTOR_MAX_TOKENS,
                              TUTOR_NUM_TRECHOS, TUTOR_SEED, TUTOR_TEMPERATURA, TUTOR_TIMEOUT_LLM, TUTOR_TOP_P)
-from tia.core.llm_client import chamar_llm
+from tia.core.llm_client import chamar_llm, descrever_falha
 from tia.rag.retrieve import buscar_contexto, listar_trechos
 
 log = logging.getLogger(__name__)
@@ -214,6 +214,7 @@ class ResultadoDialogo:
     origem: str            # "LLM", "guarda" ou "fallback"
     motivo_descarte: str = ""
     cobertura: float | None = None  # fração do portão (None se nem chegou a ele)
+    falha_llm: str | None = None    # fallback por falha: "timeout", outro erro, ou "rag: <erro>"
 
 
 def buscar_trechos_dialogo(pergunta: str, materiais: list[str] | None) -> list[dict]:
@@ -273,7 +274,7 @@ def gerar_resposta(pergunta: str, materiais: list[str] | None, sinonimos: list[l
         genericos = termos_genericos() if trechos else frozenset()
     except Exception as erro:  # Chroma ou embedding indisponível
         log.warning("Busca no RAG falhou no diálogo (%s); resposta fixa.", type(erro).__name__)
-        return ResultadoDialogo(MENSAGEM_SEM_RESPOSTA, [], "fallback")
+        return ResultadoDialogo(MENSAGEM_SEM_RESPOSTA, [], "fallback", falha_llm=f"rag: {descrever_falha(erro)}")
     if not trechos:
         log.info("Diálogo sem trecho relevante; resposta fixa sem chamar o LLM.")
         return sem_material
@@ -291,8 +292,9 @@ def gerar_resposta(pergunta: str, materiais: list[str] | None, sinonimos: list[l
                            max_tokens=TUTOR_MAX_TOKENS, temperatura=TUTOR_TEMPERATURA,
                            top_p=TUTOR_TOP_P, seed=TUTOR_SEED)
     except Exception as erro:
-        log.warning("LLM indisponível no diálogo (%s); resposta fixa.", type(erro).__name__)
-        return ResultadoDialogo(MENSAGEM_SEM_RESPOSTA, [], "fallback", cobertura=cobertura.fracao)
+        falha = descrever_falha(erro)
+        log.warning("LLM indisponível no diálogo (%s); resposta fixa.", falha)
+        return ResultadoDialogo(MENSAGEM_SEM_RESPOSTA, [], "fallback", cobertura=cobertura.fracao, falha_llm=falha)
     if SINAL_SEM_RESPOSTA in bruta:
         log.info("O LLM indicou que os trechos não respondem à pergunta; resposta fixa.")
         return ResultadoDialogo(MENSAGEM_SEM_MATERIAL, [], "fallback", cobertura=cobertura.fracao)
@@ -325,4 +327,4 @@ def perguntar(entrada: PerguntaAluno) -> RespostaDialogo:
     dialogo_id = repositorio.registrar_dialogo(entrada.aluno_id, entrada.competencia_id, entrada.pergunta,
                                                resultado.resposta, resultado.fontes, resultado.origem, tempo_ms)
     return RespostaDialogo(dialogo_id=dialogo_id, resposta=resultado.resposta, fontes=resultado.fontes,
-                           origem=resultado.origem, tempo_ms=tempo_ms)
+                           origem=resultado.origem, falha_llm=resultado.falha_llm, tempo_ms=tempo_ms)

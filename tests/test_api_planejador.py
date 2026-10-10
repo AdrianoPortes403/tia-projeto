@@ -33,10 +33,14 @@ def test_post_gera_salva_e_get_le():
     assert trilha["aluno_id"] == "A2026-001"
     assert "variaveis_tipos" not in [e["competencia_id"] for e in trilha["etapas"]]
     assert trilha["etapas"][0]["justificativa"] == "Frase do LLM."
+    assert trilha["etapas"][0]["origem_justificativa"] == "LLM"
+    assert {e["origem_justificativa"] for e in trilha["etapas"][1:]} == {"fallback"}
+    assert trilha["falha_llm"] == "formato"  # o LLM falso só deu a frase da etapa 1
 
     lida = client.get("/alunos/A2026-001/trilha")
     assert lida.status_code == 200
-    assert lida.json() == trilha
+    # a origem por etapa é gravada; o motivo da falha (falha_llm) só vem na geração
+    assert lida.json() == {**trilha, "falha_llm": None}
 
 
 def test_post_de_novo_substitui_trilha_anterior():

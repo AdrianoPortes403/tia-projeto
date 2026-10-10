@@ -30,12 +30,14 @@ from tia.agentes.relatorio.modelos import (AlertaTurma, Contagem, Desempenho, En
                                            GrupoTaxa, ItemFraco, Progresso, ProgressoCompetencia, PontoFraco,
                                            QualidadeFeedback, Taxa, Tendencia)
 from tia.agentes.relatorio.repositorio import DadosAluno
-from tia.core.config import INATIVIDADE_DIAS
+from tia.core.config import (INATIVIDADE_DIAS, RELATORIO_TENDENCIA_JANELA, RELATORIO_TENDENCIA_LIMIAR,
+                             RELATORIO_TENDENCIA_MIN_RESPOSTAS)
 
 # PROVISÓRIO: critérios a validar com a Pessoa 4.
-JANELA_TENDENCIA = 5            # sem sessao_id: últimas N respostas x todas as anteriores
-MIN_RESPOSTAS_TENDENCIA = 3     # mínimo em cada lado para haver tendência (sessão ou janela)
-LIMIAR_TENDENCIA = 0.15         # variação de taxa que conta como subida/queda
+# tendência: limiares em core/config.py (também usados pela regra de queda do orquestrador)
+JANELA_TENDENCIA = RELATORIO_TENDENCIA_JANELA
+MIN_RESPOSTAS_TENDENCIA = RELATORIO_TENDENCIA_MIN_RESPOSTAS
+LIMIAR_TENDENCIA = RELATORIO_TENDENCIA_LIMIAR
 PONTO_FRACO_MIN_ERROS = 2       # erros na competência para contar como recorrente...
 PONTO_FRACO_TAXA_ERRO = 0.5     # ...com taxa de erro de pelo menos isto
 TURMA_TAXA_ERRO_ALTO = 0.5      # alerta: acerto agregado da competência abaixo de 1 - isto
