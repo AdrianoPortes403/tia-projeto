@@ -1,6 +1,7 @@
 """
 Testes do llm_client sem Ollama: confere o corpo enviado nas requisições
-(keep_alive em chat e embedding, /nothink automático, limite de tokens).
+(keep_alive em chat e embedding, /nothink automático, limite de tokens,
+opções de amostragem por chamada).
 
 Como rodar:
     ./run_tests.sh tests/test_llm_client.py
@@ -42,3 +43,20 @@ def test_corpo_das_requisicoes(monkeypatch):
     assert chat["messages"][-1]["content"].endswith("/nothink")
     assert "options" not in chat  # sem limite, o Ollama usa o padrão dele
     assert chat_limitado["options"] == {"num_predict": 50}
+
+
+def test_opcoes_de_amostragem_chegam_ao_corpo_so_quando_pedidas(monkeypatch):
+    enviados = []
+
+    def post_falso(url, json, timeout):
+        enviados.append(json)
+        return RespostaFalsa({"message": {"content": "oi"}})
+
+    monkeypatch.setattr(llm_client.requests, "post", post_falso)
+    llm_client.chamar_llm("Diga oi", max_tokens=200, temperatura=0.2, top_p=0.9, seed=42)
+    llm_client.chamar_llm("Diga oi", temperatura=0.0, seed=0)  # zero também é enviado
+    llm_client.chamar_llm("Diga oi")  # padrão: outras chamadas (ex.: Planejador) não mudam
+
+    assert enviados[0]["options"] == {"num_predict": 200, "temperature": 0.2, "top_p": 0.9, "seed": 42}
+    assert enviados[1]["options"] == {"temperature": 0.0, "seed": 0}
+    assert "options" not in enviados[2]

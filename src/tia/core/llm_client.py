@@ -15,6 +15,9 @@ Quando think=False (padrão), o sufixo /nothink é acrescentado
 automaticamente à última mensagem do usuário (requisito R09 — resposta em
 até 15 segundos). Quem chama não precisa escrevê-lo no prompt.
 
+Amostragem (temperatura, top_p, seed) pode ser passada por chamada; quem
+não passa fica com o padrão do Ollama (ex.: justificativa do Planejador).
+
 Toda chamada envia "keep_alive" (OLLAMA_KEEP_ALIVE, padrão "30m"), para o
 modelo continuar carregado na memória entre interações.
 
@@ -47,7 +50,8 @@ def _aplicar_nothink(mensagens: list[dict]) -> list[dict]:
 
 
 def chamar_llm(prompt: str, model: str = None, think: bool = False, timeout: int = 120,
-               max_tokens: int | None = None) -> str:
+               max_tokens: int | None = None, temperatura: float | None = None,
+               top_p: float | None = None, seed: int | None = None) -> str:
     """Envia um prompt ao modelo local e retorna a resposta em texto.
 
     Parâmetros:
@@ -62,15 +66,20 @@ def chamar_llm(prompt: str, model: str = None, think: bool = False, timeout: int
         max_tokens: limite de tokens gerados (opção num_predict do Ollama).
                Em CPU, a geração é o que mais pesa no tempo; limitar evita
                estourar o R09. None = sem limite. O texto pode vir cortado.
+        temperatura, top_p, seed: opções de amostragem do Ollama
+               (options.temperature, options.top_p, options.seed). None =
+               não envia e o Ollama usa o padrão dele. Temperatura baixa e
+               seed fixa deixam a resposta mais estável entre execuções.
     """
     return chamar_llm_com_historico(
         [{"role": "user", "content": prompt}], model=model, think=think, timeout=timeout,
-        max_tokens=max_tokens,
+        max_tokens=max_tokens, temperatura=temperatura, top_p=top_p, seed=seed,
     )
 
 
 def chamar_llm_com_historico(mensagens: list[dict], model: str = None, think: bool = False, timeout: int = 120,
-                             max_tokens: int | None = None) -> str:
+                             max_tokens: int | None = None, temperatura: float | None = None,
+                             top_p: float | None = None, seed: int | None = None) -> str:
     """Igual a chamar_llm, mas aceita um histórico de conversa (multi-turno),
     no formato [{"role": "user"/"assistant", "content": "..."}].
     Necessário para o Agente 2 (Tutor), que mantém contexto entre perguntas.
@@ -85,8 +94,10 @@ def chamar_llm_com_historico(mensagens: list[dict], model: str = None, think: bo
         "stream": False,
         "keep_alive": OLLAMA_KEEP_ALIVE,
     }
-    if max_tokens is not None:
-        corpo["options"] = {"num_predict": max_tokens}
+    opcoes = {"num_predict": max_tokens, "temperature": temperatura, "top_p": top_p, "seed": seed}
+    opcoes = {nome: valor for nome, valor in opcoes.items() if valor is not None}
+    if opcoes:
+        corpo["options"] = opcoes
     resposta = requests.post(f"{OLLAMA_URL}/api/chat", json=corpo, timeout=timeout)
     resposta.raise_for_status()
     return resposta.json()["message"]["content"]

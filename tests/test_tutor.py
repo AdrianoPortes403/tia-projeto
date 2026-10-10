@@ -143,6 +143,9 @@ def test_feedback_com_trecho_cita_fonte_dos_metadados(monkeypatch):
     assert TRECHO["texto"] in prompt
     assert kwargs["think"] is False
     assert kwargs["timeout"] == feedback.TUTOR_TIMEOUT_LLM and kwargs["max_tokens"] == feedback.TUTOR_MAX_TOKENS
+    # amostragem do feedback vem da config (padrões 0.2 / 0.9 / 42 no .env.example)
+    assert (kwargs["temperatura"], kwargs["top_p"], kwargs["seed"]) == (
+        feedback.TUTOR_TEMPERATURA, feedback.TUTOR_TOP_P, feedback.TUTOR_SEED)
 
 
 def test_feedback_sem_trecho_usa_texto_do_item_sem_fonte(monkeypatch):
@@ -200,7 +203,7 @@ def test_modo_ancorado_envia_explicacao_verificada_e_veredito_pronto(monkeypatch
     assert "não diga se ele acertou ou errou" in prompt
     assert "Não calcule nem invente valores, resultados de código ou números" in prompt
     assert "de 2 a 3 frases" in prompt
-    for proibida in ('"explicação verificada"', '"trechos"', '"material"', '"bloco"'):
+    for proibida in ('"explicação verificada"', '"trechos"', '"material"'):
         assert proibida in prompt
     assert "[Trecho" not in prompt and "(o aluno errou)" not in prompt
 
@@ -267,7 +270,9 @@ def test_guarda_aceita_decimal_com_virgula_se_o_numero_existe():
     "Segundo os trechos, o range para antes do limite.",
     "O trecho 2 mostra que o range para antes do limite.",
     "Como diz o material, o range para antes do limite.",
-    "Nesses blocos, vemos que o range para antes do limite.",
+    "Pelo trecho do material, o range para antes do limite.",
+    "No material fornecido, o range para antes do limite.",
+    "Conforme o prompt, o range para antes do limite.",
     "Pelas informações acima, o range para antes do limite.",
 ])
 def test_guarda_descarta_vazamento_do_prompt(texto):
@@ -276,9 +281,54 @@ def test_guarda_descarta_vazamento_do_prompt(texto):
 
 
 def test_guarda_aceita_termo_que_esta_no_proprio_item():
-    item = {**ITEM_RANGE, "enunciado": "Em um if, quando o bloco indentado é executado?"}
-    assert feedback.verificar_explicacao("O bloco só roda se a condição for True.", item, 1, []) is None
-    assert feedback.verificar_explicacao("O bloco só roda se a condição for True.", ITEM_RANGE, 1, []) is not None
+    item = {**ITEM_RANGE, "enunciado": "O que faz o trecho de código abaixo?"}
+    assert feedback.verificar_explicacao("O trecho repete até o limite.", item, 1, []) is None
+    assert feedback.verificar_explicacao("O trecho repete até o limite.", ITEM_RANGE, 1, []) is not None
+
+
+def test_guarda_aceita_bloco_vocabulario_de_programacao():
+    assert verificar("O break sai do laço sem executar o resto do bloco.") is None
+
+
+def item_do_banco(item_id: str) -> dict:
+    return next(i for i in carregar_itens() if i["id"] == item_id)
+
+
+def test_guarda_aceita_texto_real_de_repeticao_n2b():
+    # texto do LLM que a versão anterior da guarda barrava só por "bloco"
+    texto = ("O comando `break` sai do laço imediatamente, interrompendo a execução do resto do bloco. "
+             "Isso é útil quando você quer interromper o laço em um momento específico, como quando "
+             "um condição é atendida.")
+    item = item_do_banco("repeticao_n2b")
+    assert feedback.verificar_explicacao(texto, item, 3, []) is None
+
+
+def test_guarda_descarta_contradicao_interna_real_de_condicionais_n3a():
+    texto = ("A ordem das condições importa porque as avaliações são feitas de cima para baixo. "
+             "A primeira condição verdadeira é executada, e as restantes são ignoradas. Por isso, a "
+             "resposta \"ótimo\" é incorreta, pois a nota 9.5 é maior que 7, mas a condição "
+             "\"nota >= 9\" é verdadeira, então o código imprime \"ótimo\" corretamente.")
+    item = item_do_banco("condicionais_n3a")
+    motivo = feedback.verificar_explicacao(texto, item, 0, [])
+    assert motivo and motivo.startswith("contradição interna") and "ótimo" in motivo
+
+
+@pytest.mark.parametrize("texto", [
+    "A alternativa C) é incorreta. A alternativa A) está correta porque range para antes do limite.",
+    "A resposta \"3\" é errada; o laço termina corretamente antes do limite.",
+    "O código roda corretamente e mostra 0, 1 e 2.",
+])
+def test_contradicao_interna_exige_o_mesmo_sujeito(texto):
+    assert verificar(texto) is None
+
+
+@pytest.mark.parametrize("texto", [
+    "A alternativa B) é incorreta, porque o range para antes. Mesmo assim, B) está correta.",
+    "O valor \"0 1 2 3\" está errado, pois o 3 não entra. Ainda assim, \"0 1 2 3\" está correto.",
+])
+def test_contradicao_interna_com_letra_ou_aspas(texto):
+    motivo = verificar(texto)
+    assert motivo and motivo.startswith("contradição interna")
 
 
 @pytest.mark.parametrize("texto, indice", [
@@ -333,10 +383,13 @@ def test_sem_modo_usa_o_da_config(monkeypatch):
 def test_config_padrao_do_modo_e_ancorado(monkeypatch):
     import importlib
     import tia.core.config as config
-    monkeypatch.delenv("TUTOR_MODO_FEEDBACK", raising=False)
+    for nome in ("TUTOR_MODO_FEEDBACK", "TUTOR_TEMPERATURA", "TUTOR_TOP_P", "TUTOR_SEED"):
+        monkeypatch.delenv(nome, raising=False)
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
     try:
-        assert importlib.reload(config).TUTOR_MODO_FEEDBACK == "ancorado"
+        recarregado = importlib.reload(config)
+        assert recarregado.TUTOR_MODO_FEEDBACK == "ancorado"
+        assert (recarregado.TUTOR_TEMPERATURA, recarregado.TUTOR_TOP_P, recarregado.TUTOR_SEED) == (0.2, 0.9, 42)
     finally:
         monkeypatch.undo()
         importlib.reload(config)

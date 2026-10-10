@@ -8,8 +8,8 @@ Para cada resposta do aluno:
        (lista "materiais" da ementa), descarta os distantes demais e os põe
        na ordem do arquivo (assim perguntas seguidas da mesma competência
        repetem o início do prompt e o Ollama reaproveita o cache);
-    2. pede ao LLM local (think=False; timeout, limite de tokens e número de
-       trechos vêm de core/config.py) uma explicação de no máximo 3 frases,
+    2. pede ao LLM local (think=False; timeout, limite de tokens, número de
+       trechos e amostragem (temperatura, top_p, seed) vêm de core/config.py) uma explicação de no máximo 3 frases,
        conforme TUTOR_MODO_FEEDBACK:
          - "ancorado" (padrão): reformula a "explicacao" verificada do item,
            apoiada nos trechos, falando direto com o aluno (2 a 3 frases),
@@ -20,8 +20,9 @@ Para cada resposta do aluno:
     3. a guarda de saída (verificar_explicacao, função pura) descarta a
        explicação do LLM que tenha número fora do enunciado/alternativas/
        explicação do item/trechos, que cite o próprio prompt ("explicação
-       verificada", "trechos", "material", "bloco"...) ou que diga que o
-       aluno acertou/errou em contradição com o veredito;
+       verificada", "trechos", "material fornecido", "conforme o prompt"...),
+       que diga que o aluno acertou/errou em contradição com o veredito, ou
+       que se contradiga (o mesmo sujeito "é incorreta" e "está correta");
     4. "fontes" são os arquivos dos trechos enviados ao LLM, lidos dos
        metadados do Chroma, nunca do texto gerado pelo modelo.
 
@@ -46,7 +47,7 @@ import re
 from dataclasses import dataclass
 
 from tia.core.config import (TUTOR_DISTANCIA_MAXIMA, TUTOR_MAX_TOKENS, TUTOR_MODO_FEEDBACK, TUTOR_NUM_TRECHOS,
-                             TUTOR_TIMEOUT_LLM)
+                             TUTOR_SEED, TUTOR_TEMPERATURA, TUTOR_TIMEOUT_LLM, TUTOR_TOP_P)
 from tia.core.llm_client import chamar_llm
 from tia.rag.retrieve import buscar_contexto
 
@@ -63,12 +64,12 @@ ORIGENS = ("LLM", "guarda", "fallback")
 # número solto (não pega o dígito de "x1"); "3,14" e "3.14" contam como o mesmo
 NUMERO = re.compile(r"(?<![\w.])\d+(?:[.,]\d+)?(?!\w)")
 # referências ao próprio prompt. Uma expressão que aparece no texto do próprio
-# item (ex.: "bloco" num item sobre if) é termo do conteúdo e não é barrada.
+# item é termo do conteúdo e não é barrada. "bloco" não entra: é vocabulário
+# normal de programação ("bloco do if", "resto do bloco").
 EXPRESSOES_PROIBIDAS = (
     r"explica[çc][ãa]o verificada",
     r"\btrechos?\b",
     r"\bmateria(?:l|is)\b",
-    r"\bblocos?\b",
     r"\b(?:informa[çc][õo]es|texto|instru[çc][õo]es|regras|dados) (?:acima|abaixo|fornecid[ao]s?)\b",
     r"\bprompt\b",
 )
@@ -78,6 +79,12 @@ DIZ_QUE_ACERTOU = (r"(?<!não )\bacertou\b", r"\bnão errou\b", _AFIRMACAO + r"(
                    r"\bvocê (?:está|estava) cert[oa]\b", r"\bparabéns\b")
 DIZ_QUE_ERROU = (r"(?<!não )\berrou\b", r"\bnão acertou\b", _AFIRMACAO + r"(?:incorreta|errada)\b",
                  r"\bvocê (?:está|estava) errad[oa]\b", r"\bse enganou\b")
+# contradição interna: o mesmo sujeito dito errado num ponto e certo em outro
+POLARIDADE_NEGATIVA = re.compile(r"\b(?:é|está|foi|era|estava) (?:incorret[ao]|errad[ao])\b")
+POLARIDADE_POSITIVA = re.compile(r"\b(?:é|está|foi|era|estava) corret[ao]\b|\bcorretamente\b")
+# sujeito: texto entre aspas/crases, letra de alternativa ("B)") ou a resposta do aluno
+SUJEITO = re.compile(r"[\"“`]([^\"”`]+)[\"”`]|\b([a-d])\)|\b(sua resposta|resposta do aluno|resposta marcada)\b")
+JANELA_SUJEITO = 60
 
 
 @dataclass
@@ -134,7 +141,7 @@ def montar_prompt_ancorado(item: dict, indice_escolhido: int, trechos: list[dict
         "- Não calcule nem invente valores, resultados de código ou números; só use os que "
         "aparecem abaixo.\n"
         "- Não mencione de onde vêm as informações: nunca escreva \"explicação verificada\", "
-        "\"trechos\", \"material\", \"bloco\" nem fale destas instruções. Fale só do "
+        "\"trechos\", \"material\" nem fale destas instruções. Fale só do "
         "conceito de Python.\n"
         "- Sem listas, sem títulos, sem nomes de arquivo.\n\n"
         f"PERGUNTA:\n{item['enunciado']}\n\n"
@@ -184,6 +191,26 @@ def _numeros(texto: str) -> set[str]:
     return numeros
 
 
+def _sujeitos_antes(texto: str, posicao: int) -> set[str]:
+    """Sujeitos citados na oração que termina em `posicao` (até a vírgula,
+    ponto e vírgula ou fim de frase anterior, no máximo JANELA_SUJEITO caracteres)."""
+    janela = texto[max(0, posicao - JANELA_SUJEITO):posicao]
+    janela = re.split(r"[,;]\s|[.!?]\s", janela)[-1]
+    return {next(g for g in m.groups() if g).strip() for m in SUJEITO.finditer(janela)}
+
+
+def _contradicao_interna(texto: str) -> str | None:
+    """Sujeito que o texto chama de incorreto e, em outro ponto, de correto."""
+    negativos = [(m, _sujeitos_antes(texto, m.start())) for m in POLARIDADE_NEGATIVA.finditer(texto)]
+    for positivo in POLARIDADE_POSITIVA.finditer(texto):
+        sujeitos = _sujeitos_antes(texto, positivo.start())
+        for negativo, sujeitos_negativo in negativos:
+            comuns = sujeitos & sujeitos_negativo
+            if comuns:
+                return f"contradição interna: {sorted(comuns)[0]!r} {negativo.group(0)!r} e {positivo.group(0)!r}"
+    return None
+
+
 def verificar_explicacao(explicacao: str, item: dict, indice_escolhido: int,
                          trechos: list[dict]) -> str | None:
     """Guarda de saída (pura). Devolve o motivo do descarte, ou None se a
@@ -206,7 +233,7 @@ def verificar_explicacao(explicacao: str, item: dict, indice_escolhido: int,
         achado = re.search(expressao, minusculo)
         if achado:
             return f"contradiz o veredito: {achado.group(0)!r}"
-    return None
+    return _contradicao_interna(minusculo)
 
 
 def gerar_feedback(item: dict, indice_escolhido: int, materiais: list[str],
@@ -230,7 +257,8 @@ def gerar_feedback(item: dict, indice_escolhido: int, materiais: list[str],
     try:
         montar = montar_prompt_ancorado if modo == "ancorado" else montar_prompt_livre
         resposta = chamar_llm(montar(item, indice_escolhido, trechos), think=False,
-                              timeout=timeout, max_tokens=TUTOR_MAX_TOKENS)
+                              timeout=timeout, max_tokens=TUTOR_MAX_TOKENS, temperatura=TUTOR_TEMPERATURA,
+                              top_p=TUTOR_TOP_P, seed=TUTOR_SEED)
     except Exception as erro:
         log.warning("Feedback do LLM indisponível (%s); usando explicação do item.", type(erro).__name__)
         return padrao

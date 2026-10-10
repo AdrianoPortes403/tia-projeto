@@ -59,6 +59,14 @@ TUTOR_TIMEOUT_LLM = int(os.getenv("TUTOR_TIMEOUT_LLM", "120"))
 # Limite de tokens gerados no feedback: folga para até 3 frases completas, de
 # modo que o descarte de frase cortada (feedback.limpar_explicacao) seja raro.
 TUTOR_MAX_TOKENS = int(os.getenv("TUTOR_MAX_TOKENS", "200"))
+# Amostragem do LLM só nas chamadas de FEEDBACK do Tutor (options.temperature,
+# options.top_p e options.seed do Ollama). Temperatura baixa e seed fixa deixam
+# o feedback estável entre execuções: o mesmo item e a mesma resposta tendem a
+# gerar o mesmo texto, que pode ser revisado. As outras chamadas (Planejador,
+# demo do RAG) continuam com o padrão do Ollama.
+TUTOR_TEMPERATURA = float(os.getenv("TUTOR_TEMPERATURA", "0.2"))
+TUTOR_TOP_P = float(os.getenv("TUTOR_TOP_P", "0.9"))
+TUTOR_SEED = int(os.getenv("TUTOR_SEED", "42"))
 # Como o LLM escreve o feedback:
 #   "ancorado" (padrão): reformula a explicação verificada do item, apoiada nos
 #              trechos do RAG; proibido calcular ou inventar valores e resultados;
@@ -79,7 +87,7 @@ if __name__ == "__main__":
     for nome in ("OLLAMA_URL", "CHAT_MODEL", "EMBED_MODEL", "OLLAMA_KEEP_ALIVE", "DB_PATH",
                  "MATERIAIS_DIR", "CHROMA_DIR", "COLLECTION_NAME",
                  "CHUNK_SIZE", "CHUNK_OVERLAP", "EMENTA_PATH", "PERFIS_PATH",
-                 "PLANEJADOR_TIMEOUT_LLM", "BANCO_ITENS_PATH", "TUTOR_TIMEOUT_LLM", "TUTOR_MAX_TOKENS", "TUTOR_MODO_FEEDBACK",
+                 "PLANEJADOR_TIMEOUT_LLM", "BANCO_ITENS_PATH", "TUTOR_TIMEOUT_LLM", "TUTOR_MAX_TOKENS", "TUTOR_TEMPERATURA", "TUTOR_TOP_P", "TUTOR_SEED", "TUTOR_MODO_FEEDBACK",
                  "TUTOR_NUM_TRECHOS",
                  "TUTOR_DISTANCIA_MAXIMA"):
         print(f"{nome} = {globals()[nome]}")
