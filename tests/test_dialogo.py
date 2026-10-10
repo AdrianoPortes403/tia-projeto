@@ -25,9 +25,16 @@ from tia.core.database import obter_conexao
 client = TestClient(app)
 
 ALUNO = "A2026-011"
-TRECHO = {"texto": "O break interrompe o laço imediatamente; o continue pula para a próxima repetição.",
-          "fonte": "provisorio_repeticao.txt", "indice": 2, "distancia": 210.0}
+TRECHO = {"texto": "No for ou no while, o break interrompe o laço imediatamente; o continue pula para a "
+                   "próxima repetição.", "fonte": "provisorio_repeticao.txt", "indice": 2, "distancia": 210.0}
 PERGUNTA = "Para que serve o break dentro de um for?"
+DO_MATERIAL = "Do material: " + TRECHO["texto"]
+
+
+@pytest.fixture(autouse=True)
+def sem_indice_real(monkeypatch):
+    """Termos genéricos sem ler o Chroma de verdade (cada teste define os seus)."""
+    monkeypatch.setattr(dialogo, "termos_genericos", lambda: frozenset())
 
 
 def mockar(monkeypatch, trechos: list[dict], resposta_llm="O break encerra o laço na hora."):
@@ -132,12 +139,59 @@ def test_llm_falho_ou_vazio_resposta_fixa_sem_fonte(monkeypatch, resposta_llm):
     ("Segundo o material, o break encerra o laço.", "referência ao prompt"),
     ("O \"break\" é incorreto aqui, mas o \"break\" funciona corretamente.", "contradição interna"),
 ])
-def test_guarda_aplicada_no_dialogo(monkeypatch, resposta_llm, motivo):
+def test_guarda_aplicada_no_dialogo_devolve_trecho_transcrito(monkeypatch, resposta_llm, motivo):
     mockar(monkeypatch, [TRECHO], resposta_llm)
     resultado = dialogo.gerar_resposta(PERGUNTA, None)
-    assert (resultado.resposta, resultado.fontes, resultado.origem) == (dialogo.MENSAGEM_SEM_RESPOSTA, [], "guarda")
+    assert (resultado.resposta, resultado.fontes, resultado.origem) == (
+        DO_MATERIAL, ["provisorio_repeticao.txt"], "guarda")
     assert motivo in resultado.motivo_descarte
-    assert perguntar().json()["origem"] == "guarda"
+    r = perguntar().json()
+    assert (r["resposta"], r["fontes"], r["origem"]) == (DO_MATERIAL, ["provisorio_repeticao.txt"], "guarda")
+
+
+@pytest.mark.parametrize("texto, esperado", [
+    ("nício ou o fim da lista. Listas são mutáveis. Strings não po", "Listas são mutáveis."),
+    ("O for percorre a lista.\n  O while repete.", "O for percorre a lista. O while repete."),
+    ("Começo sem fim", "Começo sem fim"),       # nenhuma frase inteira: vai tudo
+])
+def test_trecho_transcrito_so_com_frases_inteiras(texto, esperado):
+    assert dialogo.frases_inteiras(texto) == esperado
+
+
+def test_guarda_transcreve_o_trecho_mais_relevante(monkeypatch):
+    longe = {"texto": "O while repete\n  enquanto a condição for verdadeira.", "fonte": "a.txt", "indice": 0,
+             "distancia": 300.0}
+    perto = {"texto": "O break   interrompe o for\nna hora.", "fonte": "b.txt", "indice": 5, "distancia": 150.0}
+    mockar(monkeypatch, [longe, perto], "O break usa `sys.exit()` para sair.")
+    resultado = dialogo.gerar_resposta(PERGUNTA, None, [])
+    # menor distância, espaços normalizados, só a fonte dele, sem segunda chamada ao LLM
+    assert (resultado.resposta, resultado.fontes) == ("Do material: O break interrompe o for na hora.", ["b.txt"])
+
+
+@pytest.mark.parametrize("resposta_llm, nome", [
+    ("Use `psycopg2.connect()` para abrir a conexão.", "psycopg2"),
+    ("Chame requests.get(url) e leia o resultado.", "requests"),
+    ("Depois use cursor.execute(sql) no laço.", "cursor"),
+    ("O `break` chama `encerrar_laco()` por baixo.", "encerrar_laco"),
+    ("Instale a biblioteca psycopg2 antes.", "psycopg2"),
+])
+def test_guarda_descarta_identificador_fora_do_material(monkeypatch, resposta_llm, nome):
+    mockar(monkeypatch, [TRECHO], resposta_llm)
+    resultado = dialogo.gerar_resposta(PERGUNTA, None, [])
+    assert resultado.origem == "guarda" and resultado.resposta == DO_MATERIAL
+    assert resultado.motivo_descarte == f"identificador fora do material: {nome}"
+
+
+@pytest.mark.parametrize("resposta", [
+    "O `break` interrompe o `for` na hora.",                 # nomes que estão no trecho
+    "Num `for i in range(5)`, o break para o laço.",        # palavra reservada e nome de uma letra
+    "O `print(\"fim\")` não roda depois do break.",         # literal entre aspas não conta
+    "O break interrompe o laço, por exemplo no for.",        # prosa sem código
+    "Em range(5), o break para o for antes do fim.",         # range está na pergunta
+])
+def test_guarda_de_identificadores_aceita_nomes_do_contexto(resposta):
+    contexto = ["Para que serve o break em range(5)?", TRECHO["texto"] + " Exemplo: print(x)."]
+    assert dialogo.identificador_inventado(resposta, contexto) is None
 
 
 def test_guarda_aceita_numero_que_veio_da_pergunta(monkeypatch):
@@ -147,8 +201,9 @@ def test_guarda_aceita_numero_que_veio_da_pergunta(monkeypatch):
 
 def test_pergunta_limitada_a_500_caracteres(monkeypatch):
     _, prompts = mockar(monkeypatch, [TRECHO])
-    assert perguntar("x" * 500).status_code == 200
-    assert perguntar("x" * 501).status_code == 422
+    longa = PERGUNTA + " break" * 100  # coberta pelo trecho, para chegar ao LLM
+    assert perguntar(longa[:500]).status_code == 200
+    assert perguntar(longa[:501]).status_code == 422
     assert perguntar("   ").status_code == 422  # vazia depois de tirar espaços
     assert len(prompts) == 1 and len(linhas_dialogo()) == 1  # recusadas não chegam ao LLM nem ao banco
 
@@ -390,3 +445,111 @@ def test_rota_de_incentivo_sem_llm_e_auditada(monkeypatch):
     # consultar o incentivo não conta como atividade do aluno
     assert incentivo.verificar_inatividade(ALUNO, agora=datetime.now() + timedelta(days=3, minutes=1)).inativo
     assert client.get("/tutor/incentivo/Maria Souza").status_code == 422
+
+
+
+# --- portão de cobertura lexical ---
+
+def test_normalizar_tira_acento_pontuacao_e_plural():
+    assert dialogo.normalizar("Funções, Listas e EXCEÇÕES; valores (materiais)!") == [
+        "funcao", "lista", "e", "excecao", "valor", "material"]
+
+
+def test_termos_genericos_por_idf():
+    textos = ["o laço for repete", "o while repete", "o if decide", "a função retorna"]
+    # "o" está em 3 de 4 (> metade); "repete" em 2 de 4 (= metade, não passa de metade)
+    assert dialogo.calcular_termos_genericos(textos) == {"o"}
+
+
+@pytest.mark.parametrize("pergunta, passou, fracao", [
+    ("Para que serve o break dentro de um for?", True, 1.0),     # break e for nos trechos
+    ("O que é um dicionário em Python?", False, 0.0),             # só "dicionario" sobra
+    ("Como faço um SELECT no banco de dados com o for?", False, 1 / 4),
+    ("Como funciona?", False, 0.0),                               # sem termo de conteúdo
+    ("O que é isso em Python?", False, 0.0),
+])
+def test_portao_de_cobertura(pergunta, passou, fracao):
+    cobertura = dialogo.avaliar_cobertura(pergunta, [TRECHO["texto"]], set(), [], minimo=0.42)
+    assert (cobertura.passou, round(cobertura.fracao, 2)) == (passou, round(fracao, 2))
+
+
+def test_portao_ignora_termos_genericos_do_indice():
+    trecho = ["o laço repete"]
+    assert dialogo.avaliar_cobertura("laço e variável", trecho, set(), [], 0.6).passou is False  # 1/2
+    assert dialogo.avaliar_cobertura("laço e variável", trecho, {"variavel"}, [], 0.6).passou is True  # 1/1
+
+
+def test_portao_aceita_sinonimo_da_ementa():
+    grupos = [["laço", "loop"], ["caso base", "parada"]]
+    assert dialogo.avaliar_cobertura("Como sair de um loop?", ["o break encerra o laço"], set(), grupos, 0.5).passou
+    assert not dialogo.avaliar_cobertura("Como sair de um loop?", ["o break encerra"], set(), grupos, 0.5).passou
+    # membro de várias palavras: todas precisam estar nos trechos
+    assert dialogo.avaliar_cobertura("Qual a parada?", ["todo caso base"], set(), grupos, 1.0).passou
+    assert not dialogo.avaliar_cobertura("Qual a parada?", ["todo caso"], set(), grupos, 1.0).passou
+
+
+def test_portao_barrado_nao_chama_llm_e_responde_fixo(monkeypatch):
+    _, prompts = mockar(monkeypatch, [TRECHO])
+    r = perguntar("Como conecto o Python a um banco de dados PostgreSQL?").json()
+    assert (r["resposta"], r["fontes"], r["origem"]) == (
+        "Não encontrei isso no material disponível; vale perguntar ao professor.", [], "fallback")
+    assert prompts == []
+
+
+def test_portao_usa_sinonimos_da_competencia_da_pergunta(monkeypatch):
+    _, prompts = mockar(monkeypatch, [{**TRECHO, "texto": "O laço for percorre a lista."}])
+    assert perguntar("O loop percorre o quê?", competencia_id="repeticao").json()["origem"] == "LLM"
+    assert perguntar("O loop percorre o quê?", competencia_id="funcoes").json()["origem"] == "fallback"
+    assert len(prompts) == 1  # funcoes não tem "loop" como sinônimo de "laço": barrado antes do LLM
+
+
+# --- conjunto de avaliação (instantâneo do RAG real, LLM mockado) ---
+
+with open("tests/dados/perguntas_avaliacao.json", encoding="utf-8") as _arquivo:
+    AVALIACAO = json.load(_arquivo)["perguntas"]
+with open("tests/dados/trechos_avaliacao.json", encoding="utf-8") as _arquivo:
+    INSTANTANEO = json.load(_arquivo)
+
+# Erros conhecidos, medidos na VALIDAÇÃO em 10/10 (não usados para ajustar nada).
+# strict=True: se o portão passar a acertar, o teste avisa para tirar daqui.
+ERROS_CONHECIDOS = {
+    "fora_09": "'list' casa com o sinônimo 'lista' e 'comprehension' não: cobertura 0,50, igual à "
+               "de uma pergunta coberta de dois termos (cob_11)",
+}
+
+
+def _com_marca(pergunta: dict):
+    motivo = ERROS_CONHECIDOS.get(pergunta["id"])
+    marcas = [pytest.mark.xfail(strict=True, reason=motivo)] if motivo else []
+    return pytest.param(pergunta, id=pergunta["id"], marks=marcas)
+
+
+def responder_do_instantaneo(monkeypatch, pergunta: dict):
+    from tia.agentes.tutor.repositorio import materiais_da_competencia, palavras_chave
+    monkeypatch.setattr(dialogo, "termos_genericos", lambda: frozenset(INSTANTANEO["termos_genericos"]))
+    monkeypatch.setattr(dialogo, "TUTOR_DISTANCIA_MAXIMA", INSTANTANEO["distancia_maxima"])
+    _, prompts = mockar(monkeypatch, INSTANTANEO["trechos"][pergunta["id"]])
+    materiais = materiais_da_competencia(pergunta["competencia_id"]) if pergunta["competencia_id"] else None
+    return dialogo.gerar_resposta(pergunta["pergunta"], materiais, palavras_chave(pergunta["competencia_id"])), prompts
+
+
+@pytest.mark.parametrize("pergunta", [_com_marca(p) for p in AVALIACAO if not p["coberta"]])
+def test_pergunta_fora_do_material_nao_chama_o_llm(monkeypatch, pergunta):
+    resultado, prompts = responder_do_instantaneo(monkeypatch, pergunta)
+    assert prompts == []
+    assert (resultado.resposta, resultado.fontes, resultado.origem) == (dialogo.MENSAGEM_SEM_MATERIAL, [], "fallback")
+
+
+def test_perguntas_cobertas_chegam_ao_llm(monkeypatch):
+    cobertas = [p for p in AVALIACAO if p["coberta"]]
+    chegaram = [p["id"] for p in cobertas if responder_do_instantaneo(monkeypatch, p)[1]]
+    assert len(chegaram) / len(cobertas) >= 0.8, chegaram
+    assert len(chegaram) == len(cobertas)  # medido em 10/10: todas as 14
+
+
+def test_conjunto_de_avaliacao_e_validacao_separada():
+    assert len(AVALIACAO) == 30 and len({p["id"] for p in AVALIACAO}) == 30
+    assert sum(p["coberta"] for p in AVALIACAO) == 14
+    validacao = [p for p in AVALIACAO if p["conjunto"] == "validacao"]
+    assert len(validacao) == 10 and {p["coberta"] for p in validacao} == {True, False}
+    assert set(INSTANTANEO["trechos"]) == {p["id"] for p in AVALIACAO}

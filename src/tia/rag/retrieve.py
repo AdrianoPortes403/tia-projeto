@@ -53,6 +53,16 @@ def buscar_contexto(pergunta: str, k: int = 3, fontes: list[str] | None = None) 
     return trechos
 
 
+def listar_trechos() -> list[dict]:
+    """Todos os trechos indexados (texto e fonte), sem busca. Usado para
+    estatísticas sobre o índice, como os termos genéricos do diálogo do Tutor."""
+    cliente = chromadb.PersistentClient(path=CHROMA_DIR)
+    colecao = cliente.get_or_create_collection(COLLECTION_NAME)
+    resultado = colecao.get(include=["documents", "metadatas"])
+    return [{"texto": texto, "fonte": meta.get("fonte", "desconhecida")}
+            for texto, meta in zip(resultado.get("documents") or [], resultado.get("metadatas") or [])]
+
+
 if __name__ == "__main__":
     pergunta_teste = "O que é recursão?"
     resultados = buscar_contexto(pergunta_teste)

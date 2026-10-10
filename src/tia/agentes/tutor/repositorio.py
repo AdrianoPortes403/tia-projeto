@@ -46,6 +46,16 @@ def materiais_da_competencia(competencia_id: str) -> list[str] | None:
     return None
 
 
+def palavras_chave(competencia_id: str | None) -> list[list[str]]:
+    """Grupos de sinônimos (campo opcional "palavras_chave" da ementa,
+    PROVISÓRIO) da competência; com None, os de todas as competências."""
+    grupos = []
+    for competencia in carregar_ementa():
+        if competencia_id is None or competencia["id"] == competencia_id:
+            grupos += competencia.get("palavras_chave", [])
+    return grupos
+
+
 def _agora() -> str:
     return datetime.now().isoformat(timespec="seconds")
 

@@ -1,0 +1,215 @@
+{
+  "_nota": "Conjunto de avaliação do portão de cobertura do diálogo do Tutor. 'coberta': a resposta está no material PROVISÓRIO de conteudo/materiais. 'conjunto': a divisão foi fixada antes de qualquer medição (em cada grupo, toda terceira pergunta vai para validação; nas cobertas, também a última). A validação NÃO pode ser usada para ajustar limites, stopwords nem palavras-chave. competencia_id null = busca em todo o material. Rever quando o material real (Pessoa 4) chegar.",
+  "perguntas": [
+    {
+      "id": "cob_01",
+      "competencia_id": "repeticao",
+      "pergunta": "Qual a diferença entre while e for?",
+      "coberta": true,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "cob_02",
+      "competencia_id": "repeticao",
+      "pergunta": "Para que serve o range no for?",
+      "coberta": true,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "cob_03",
+      "competencia_id": "repeticao",
+      "pergunta": "Para que serve o break?",
+      "coberta": true,
+      "conjunto": "validacao"
+    },
+    {
+      "id": "cob_04",
+      "competencia_id": "repeticao",
+      "pergunta": "O que o continue faz?",
+      "coberta": true,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "cob_05",
+      "competencia_id": "condicionais",
+      "pergunta": "Como funciona o elif?",
+      "coberta": true,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "cob_06",
+      "competencia_id": "condicionais",
+      "pergunta": "Quando o else é executado?",
+      "coberta": true,
+      "conjunto": "validacao"
+    },
+    {
+      "id": "cob_07",
+      "competencia_id": "funcoes",
+      "pergunta": "O que o return faz?",
+      "coberta": true,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "cob_08",
+      "competencia_id": "funcoes",
+      "pergunta": "Qual a diferença entre print e return?",
+      "coberta": true,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "cob_09",
+      "competencia_id": "variaveis_tipos",
+      "pergunta": "O que é um float?",
+      "coberta": true,
+      "conjunto": "validacao"
+    },
+    {
+      "id": "cob_10",
+      "competencia_id": "listas_strings",
+      "pergunta": "Como acessar o último elemento de uma lista?",
+      "coberta": true,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "cob_11",
+      "competencia_id": "listas_strings",
+      "pergunta": "Strings podem ser alteradas?",
+      "coberta": true,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "cob_12",
+      "competencia_id": "recursao",
+      "pergunta": "O que é caso base?",
+      "coberta": true,
+      "conjunto": "validacao"
+    },
+    {
+      "id": "cob_13",
+      "competencia_id": null,
+      "pergunta": "O que é recursão?",
+      "coberta": true,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "cob_14",
+      "competencia_id": null,
+      "pergunta": "Como funciona o fatiamento de strings?",
+      "coberta": true,
+      "conjunto": "validacao"
+    },
+    {
+      "id": "fora_01",
+      "competencia_id": null,
+      "pergunta": "Como eu conecto o Python a um banco de dados PostgreSQL?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "fora_02",
+      "competencia_id": null,
+      "pergunta": "Como faço uma requisição HTTP com a biblioteca requests?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "fora_03",
+      "competencia_id": null,
+      "pergunta": "Como crio uma classe em Python?",
+      "coberta": false,
+      "conjunto": "validacao"
+    },
+    {
+      "id": "fora_04",
+      "competencia_id": null,
+      "pergunta": "O que é um dicionário em Python?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "fora_05",
+      "competencia_id": null,
+      "pergunta": "Como ler um arquivo CSV?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "fora_06",
+      "competencia_id": null,
+      "pergunta": "Qual a capital da França?",
+      "coberta": false,
+      "conjunto": "validacao"
+    },
+    {
+      "id": "fora_07",
+      "competencia_id": "variaveis_tipos",
+      "pergunta": "Me indica uma receita de bolo de cenoura?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "fora_08",
+      "competencia_id": "funcoes",
+      "pergunta": "O que é um decorator?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "fora_09",
+      "competencia_id": "listas_strings",
+      "pergunta": "Como uso list comprehension?",
+      "coberta": false,
+      "conjunto": "validacao"
+    },
+    {
+      "id": "fora_10",
+      "competencia_id": null,
+      "pergunta": "Como tratar exceções com try e except?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "fora_11",
+      "competencia_id": "funcoes",
+      "pergunta": "Como crio uma thread para rodar uma função em paralelo?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "fora_12",
+      "competencia_id": null,
+      "pergunta": "Qual a diferença entre thread e processo?",
+      "coberta": false,
+      "conjunto": "validacao"
+    },
+    {
+      "id": "fora_13",
+      "competencia_id": "repeticao",
+      "pergunta": "Como percorro as linhas de uma consulta ao banco de dados SQLite?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "fora_14",
+      "competencia_id": null,
+      "pergunta": "Como faço um SELECT em um banco de dados?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    },
+    {
+      "id": "fora_15",
+      "competencia_id": "funcoes",
+      "pergunta": "Como defino um método dentro de uma classe?",
+      "coberta": false,
+      "conjunto": "validacao"
+    },
+    {
+      "id": "fora_16",
+      "competencia_id": null,
+      "pergunta": "O que é herança entre classes em programação orientada a objetos?",
+      "coberta": false,
+      "conjunto": "ajuste"
+    }
+  ]
+}

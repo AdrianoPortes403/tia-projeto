@@ -8,7 +8,16 @@
       "descricao": "Declarar variáveis, usar tipos básicos (int, float, str, bool) e montar expressões aritméticas e lógicas.",
       "horas_estimadas": 6,
       "prerequisitos": [],
-      "materiais": ["provisorio_variaveis_tipos.txt"]
+      "materiais": ["provisorio_variaveis_tipos.txt"],
+      "palavras_chave": [
+        ["variavel", "variable"],
+        ["inteiro", "int"],
+        ["decimal", "float", "real"],
+        ["texto", "string", "str"],
+        ["booleano", "bool", "logico"],
+        ["atribuicao", "atribuir"],
+        ["divisao", "dividir"]
+      ]
     },
     {
       "id": "condicionais",
@@ -16,7 +25,14 @@
       "descricao": "Controlar o fluxo do programa com if, elif e else a partir de condições lógicas.",
       "horas_estimadas": 4,
       "prerequisitos": ["variaveis_tipos"],
-      "materiais": ["provisorio_condicionais.txt"]
+      "materiais": ["provisorio_condicionais.txt"],
+      "palavras_chave": [
+        ["condicional", "condicao", "if"],
+        ["senao", "else"],
+        ["elif", "senao se"],
+        ["verdadeiro", "true"],
+        ["falso", "false"]
+      ]
     },
     {
       "id": "repeticao",
@@ -24,7 +40,14 @@
       "descricao": "Repetir instruções com for e while, incluindo contadores, acumuladores e condição de parada.",
       "horas_estimadas": 6,
       "prerequisitos": ["condicionais"],
-      "materiais": ["provisorio_repeticao.txt"]
+      "materiais": ["provisorio_repeticao.txt"],
+      "palavras_chave": [
+        ["laco", "loop", "repeticao", "repetir", "iteracao"],
+        ["break", "interromper", "sair"],
+        ["continue", "pular"],
+        ["while", "enquanto"],
+        ["for", "para cada", "percorrer"]
+      ]
     },
     {
       "id": "funcoes",
@@ -32,7 +55,13 @@
       "descricao": "Definir funções com parâmetros e retorno, entender escopo e dividir o programa em partes reutilizáveis.",
       "horas_estimadas": 6,
       "prerequisitos": ["repeticao"],
-      "materiais": ["provisorio_funcoes.txt"]
+      "materiais": ["provisorio_funcoes.txt"],
+      "palavras_chave": [
+        ["funcao", "def"],
+        ["retorno", "return", "retornar", "devolver"],
+        ["parametro", "argumento"],
+        ["chamar", "chamada"]
+      ]
     },
     {
       "id": "listas_strings",
@@ -40,7 +69,14 @@
       "descricao": "Manipular sequências: indexação, fatiamento, percorrer com laços e métodos comuns de listas e strings.",
       "horas_estimadas": 8,
       "prerequisitos": ["repeticao"],
-      "materiais": ["provisorio_listas_strings.txt"]
+      "materiais": ["provisorio_listas_strings.txt"],
+      "palavras_chave": [
+        ["lista", "list", "vetor", "array"],
+        ["string", "str", "texto"],
+        ["fatiamento", "fatia", "fatiar", "slice"],
+        ["indice", "posicao"],
+        ["imutavel", "alterar", "modificar"]
+      ]
     },
     {
       "id": "recursao",
@@ -48,7 +84,12 @@
       "descricao": "Resolver problemas com funções que chamam a si mesmas, identificando caso base e caso recursivo.",
       "horas_estimadas": 6,
       "prerequisitos": ["funcoes"],
-      "materiais": ["exemplo_recursao.txt"]
+      "materiais": ["exemplo_recursao.txt"],
+      "palavras_chave": [
+        ["recursao", "recursiva", "recursivo"],
+        ["caso base", "parada", "parar"]
+      ]
     }
-  ]
+  ],
+  "_nota_palavras_chave": "PROVISÓRIO (A3): 'palavras_chave' são grupos de sinônimos por competência, usados pelo portão de cobertura do diálogo do Tutor; a Pessoa 4 deve revisar."
 }
