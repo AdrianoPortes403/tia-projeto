@@ -1,6 +1,6 @@
 {
   "_provisorio": true,
-  "_nota": "PROVISÓRIO: ementa de exemplo criada pela frente de infraestrutura (A3) só para a fatia vertical do Agente 1. Substituir pela ementa oficial da Pessoa 4. Listas de materiais vazias aguardam o material real do curso.",
+  "_nota": "PROVISÓRIO: ementa de exemplo criada pela frente de infraestrutura (A3) para a fatia vertical dos Agentes 1 e 2. Substituir pela ementa oficial da Pessoa 4. Materiais 'provisorio_*.txt' são textos curtos de exemplo, a trocar pelo material real do curso.",
   "competencias": [
     {
       "id": "variaveis_tipos",
@@ -8,7 +8,7 @@
       "descricao": "Declarar variáveis, usar tipos básicos (int, float, str, bool) e montar expressões aritméticas e lógicas.",
       "horas_estimadas": 6,
       "prerequisitos": [],
-      "materiais": []
+      "materiais": ["provisorio_variaveis_tipos.txt"]
     },
     {
       "id": "condicionais",
@@ -16,7 +16,7 @@
       "descricao": "Controlar o fluxo do programa com if, elif e else a partir de condições lógicas.",
       "horas_estimadas": 4,
       "prerequisitos": ["variaveis_tipos"],
-      "materiais": []
+      "materiais": ["provisorio_condicionais.txt"]
     },
     {
       "id": "repeticao",
@@ -24,7 +24,7 @@
       "descricao": "Repetir instruções com for e while, incluindo contadores, acumuladores e condição de parada.",
       "horas_estimadas": 6,
       "prerequisitos": ["condicionais"],
-      "materiais": []
+      "materiais": ["provisorio_repeticao.txt"]
     },
     {
       "id": "funcoes",
@@ -32,7 +32,7 @@
       "descricao": "Definir funções com parâmetros e retorno, entender escopo e dividir o programa em partes reutilizáveis.",
       "horas_estimadas": 6,
       "prerequisitos": ["repeticao"],
-      "materiais": []
+      "materiais": ["provisorio_funcoes.txt"]
     },
     {
       "id": "listas_strings",
@@ -40,7 +40,7 @@
       "descricao": "Manipular sequências: indexação, fatiamento, percorrer com laços e métodos comuns de listas e strings.",
       "horas_estimadas": 8,
       "prerequisitos": ["repeticao"],
-      "materiais": []
+      "materiais": ["provisorio_listas_strings.txt"]
     },
     {
       "id": "recursao",

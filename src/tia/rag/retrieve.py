@@ -19,17 +19,24 @@ from tia.core.llm_client import gerar_embedding
 from tia.core.config import CHROMA_DIR, COLLECTION_NAME
 
 
-def buscar_contexto(pergunta: str, k: int = 3) -> list[dict]:
+def buscar_contexto(pergunta: str, k: int = 3, fontes: list[str] | None = None) -> list[dict]:
     """Busca os k pedaços de material mais relevantes para a pergunta.
 
+    Se "fontes" for informado (lista de nomes de arquivo), a busca fica
+    restrita a esses arquivos; lista vazia não encontra nada.
+
     Retorna uma lista de dicionários, cada um com o texto do trecho,
-    a fonte (arquivo de origem) e a distância (quanto menor, mais parecido).
+    a fonte (arquivo de origem), o índice do pedaço dentro do arquivo e a
+    distância (quanto menor, mais parecido).
     """
+    if fontes is not None and not fontes:
+        return []
     cliente = chromadb.PersistentClient(path=CHROMA_DIR)
     colecao = cliente.get_or_create_collection(COLLECTION_NAME)
 
     embedding_pergunta = gerar_embedding(pergunta)
-    resultado = colecao.query(query_embeddings=[embedding_pergunta], n_results=k)
+    filtro = {"fonte": {"$in": fontes}} if fontes else None
+    resultado = colecao.query(query_embeddings=[embedding_pergunta], n_results=k, where=filtro)
 
     trechos = []
     documentos = resultado.get("documents", [[]])[0]
@@ -40,6 +47,7 @@ def buscar_contexto(pergunta: str, k: int = 3) -> list[dict]:
         trechos.append({
             "texto": texto,
             "fonte": meta.get("fonte", "desconhecida"),
+            "indice": meta.get("indice", 0),
             "distancia": distancia,
         })
     return trechos

@@ -15,6 +15,9 @@ Quando think=False (padrão), o sufixo /nothink é acrescentado
 automaticamente à última mensagem do usuário (requisito R09 — resposta em
 até 15 segundos). Quem chama não precisa escrevê-lo no prompt.
 
+Toda chamada envia "keep_alive" (OLLAMA_KEEP_ALIVE, padrão "30m"), para o
+modelo continuar carregado na memória entre interações.
+
 Como rodar (teste rápido de conexão):
     python -m tia.core.llm_client
 
@@ -25,7 +28,7 @@ Pré-requisitos:
 
 import requests
 
-from tia.core.config import CHAT_MODEL, EMBED_MODEL, OLLAMA_URL
+from tia.core.config import CHAT_MODEL, EMBED_MODEL, OLLAMA_KEEP_ALIVE, OLLAMA_URL
 
 SUFIXO_NOTHINK = "/nothink"
 
@@ -43,7 +46,8 @@ def _aplicar_nothink(mensagens: list[dict]) -> list[dict]:
     return copia
 
 
-def chamar_llm(prompt: str, model: str = None, think: bool = False, timeout: int = 120) -> str:
+def chamar_llm(prompt: str, model: str = None, think: bool = False, timeout: int = 120,
+               max_tokens: int | None = None) -> str:
     """Envia um prompt ao modelo local e retorna a resposta em texto.
 
     Parâmetros:
@@ -55,13 +59,18 @@ def chamar_llm(prompt: str, model: str = None, think: bool = False, timeout: int
                complexas). Padrão é False, para priorizar velocidade
                (requisito R09 — resposta em até 15 segundos).
         timeout: tempo máximo de espera pela resposta, em segundos.
+        max_tokens: limite de tokens gerados (opção num_predict do Ollama).
+               Em CPU, a geração é o que mais pesa no tempo; limitar evita
+               estourar o R09. None = sem limite. O texto pode vir cortado.
     """
     return chamar_llm_com_historico(
         [{"role": "user", "content": prompt}], model=model, think=think, timeout=timeout,
+        max_tokens=max_tokens,
     )
 
 
-def chamar_llm_com_historico(mensagens: list[dict], model: str = None, think: bool = False, timeout: int = 120) -> str:
+def chamar_llm_com_historico(mensagens: list[dict], model: str = None, think: bool = False, timeout: int = 120,
+                             max_tokens: int | None = None) -> str:
     """Igual a chamar_llm, mas aceita um histórico de conversa (multi-turno),
     no formato [{"role": "user"/"assistant", "content": "..."}].
     Necessário para o Agente 2 (Tutor), que mantém contexto entre perguntas.
@@ -69,16 +78,16 @@ def chamar_llm_com_historico(mensagens: list[dict], model: str = None, think: bo
     modelo_usado = model or CHAT_MODEL
     if not think:
         mensagens = _aplicar_nothink(mensagens)
-    resposta = requests.post(
-        f"{OLLAMA_URL}/api/chat",
-        json={
-            "model": modelo_usado,
-            "messages": mensagens,
-            "think": think,
-            "stream": False,
-        },
-        timeout=timeout,
-    )
+    corpo = {
+        "model": modelo_usado,
+        "messages": mensagens,
+        "think": think,
+        "stream": False,
+        "keep_alive": OLLAMA_KEEP_ALIVE,
+    }
+    if max_tokens is not None:
+        corpo["options"] = {"num_predict": max_tokens}
+    resposta = requests.post(f"{OLLAMA_URL}/api/chat", json=corpo, timeout=timeout)
     resposta.raise_for_status()
     return resposta.json()["message"]["content"]
 
@@ -97,7 +106,7 @@ def gerar_embedding(texto: str, model: str = None, timeout: int = 60) -> list[fl
     modelo_usado = model or EMBED_MODEL
     resposta = requests.post(
         f"{OLLAMA_URL}/api/embeddings",
-        json={"model": modelo_usado, "prompt": texto},
+        json={"model": modelo_usado, "prompt": texto, "keep_alive": OLLAMA_KEEP_ALIVE},
         timeout=timeout,
     )
     resposta.raise_for_status()

@@ -38,12 +38,25 @@ COLUNAS_NOVAS_TRILHA = {
 }
 
 
+# Colunas acrescentadas ao historico_respostas pelo Agente 2 (Tutor), também só por ADD COLUMN.
+COLUNAS_NOVAS_HISTORICO = {
+    "nivel": "INTEGER",
+    "fontes": "TEXT",  # lista de nomes de arquivo, em JSON
+    "tempo_ms": "INTEGER",
+}
+
+
+def _acrescentar_colunas(cursor: sqlite3.Cursor, tabela: str, colunas: dict[str, str]):
+    """Acrescenta à tabela as colunas que ainda não existem."""
+    existentes = {linha[1] for linha in cursor.execute(f"PRAGMA table_info({tabela})")}
+    for nome, tipo in colunas.items():
+        if nome not in existentes:
+            cursor.execute(f"ALTER TABLE {tabela} ADD COLUMN {nome} {tipo}")
+
+
 def _migrar_trilha_estudo(cursor: sqlite3.Cursor):
     """Acrescenta à trilha_estudo as colunas que ainda não existem."""
-    existentes = {linha[1] for linha in cursor.execute("PRAGMA table_info(trilha_estudo)")}
-    for nome, tipo in COLUNAS_NOVAS_TRILHA.items():
-        if nome not in existentes:
-            cursor.execute(f"ALTER TABLE trilha_estudo ADD COLUMN {nome} {tipo}")
+    _acrescentar_colunas(cursor, "trilha_estudo", COLUNAS_NOVAS_TRILHA)
 
 
 def criar_tabelas():
@@ -81,6 +94,26 @@ def criar_tabelas():
             dificuldade TEXT,
             acertou BOOLEAN,
             timestamp DATETIME,
+            FOREIGN KEY (aluno_id) REFERENCES alunos(id)
+        )
+    """)
+
+    _acrescentar_colunas(cursor, "historico_respostas", COLUNAS_NOVAS_HISTORICO)
+
+    # Estado das sessões do questionário adaptativo (Agente 2). Fica no
+    # banco, e não em memória, para sobreviver a reinícios da API.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tutor_sessoes (
+            id TEXT PRIMARY KEY,
+            aluno_id TEXT,
+            competencia_id TEXT,
+            nivel INTEGER,
+            item_atual_id TEXT,
+            itens_usados TEXT,
+            acertos_seguidos_nivel_max INTEGER,
+            concluida BOOLEAN,
+            criado_em DATETIME,
+            atualizado_em DATETIME,
             FOREIGN KEY (aluno_id) REFERENCES alunos(id)
         )
     """)

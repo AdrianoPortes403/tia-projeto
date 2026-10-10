@@ -1,0 +1,510 @@
+{
+  "_provisorio": true,
+  "_nota": "PROVISÓRIO: banco de itens de exemplo criado pela frente de infraestrutura (A3) para a fatia vertical do Agente 2 (Tutor). Substituir pelo banco oficial da Pessoa 4. Formato: 2 itens por competência e nível de dificuldade (1 a 3).",
+  "itens": [
+    {
+      "id": "variaveis_tipos_n1a",
+      "competencia_id": "variaveis_tipos",
+      "nivel": 1,
+      "enunciado": "Qual é o tipo do valor 3.14 em Python?",
+      "alternativas": [
+        "int",
+        "float",
+        "str",
+        "bool"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Números com parte decimal são do tipo float; int guarda apenas inteiros."
+    },
+    {
+      "id": "variaveis_tipos_n1b",
+      "competencia_id": "variaveis_tipos",
+      "nivel": 1,
+      "enunciado": "O que faz a instrução idade = 18?",
+      "alternativas": [
+        "Compara idade com 18",
+        "Imprime 18 na tela",
+        "Guarda o valor 18 no nome idade",
+        "Gera erro porque idade ainda não existe"
+      ],
+      "indice_correto": 2,
+      "explicacao": "O sinal = é atribuição: guarda o valor da direita no nome da esquerda, e a variável é criada nesse momento."
+    },
+    {
+      "id": "variaveis_tipos_n2a",
+      "competencia_id": "variaveis_tipos",
+      "nivel": 2,
+      "enunciado": "Qual é o valor de 7 // 2?",
+      "alternativas": [
+        "3",
+        "3.5",
+        "1",
+        "4"
+      ],
+      "indice_correto": 0,
+      "explicacao": "O operador // faz a divisão inteira e descarta a parte decimal; 7 / 2 é que valeria 3.5."
+    },
+    {
+      "id": "variaveis_tipos_n2b",
+      "competencia_id": "variaveis_tipos",
+      "nivel": 2,
+      "enunciado": "Qual é o resultado de \"2\" + \"3\"?",
+      "alternativas": [
+        "5",
+        "\"23\"",
+        "\"5\"",
+        "Erro de tipo"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Entre aspas, os valores são textos (str), e + junta textos: o resultado é \"23\"."
+    },
+    {
+      "id": "variaveis_tipos_n3a",
+      "competencia_id": "variaveis_tipos",
+      "nivel": 3,
+      "enunciado": "Qual é o valor de 2 + 3 * 4 ** 2?",
+      "alternativas": [
+        "80",
+        "146",
+        "50",
+        "400"
+      ],
+      "indice_correto": 2,
+      "explicacao": "A potência vem primeiro (4 ** 2 = 16), depois a multiplicação (3 * 16 = 48) e por fim a soma (2 + 48 = 50)."
+    },
+    {
+      "id": "variaveis_tipos_n3b",
+      "competencia_id": "variaveis_tipos",
+      "nivel": 3,
+      "enunciado": "Sendo x = 5, qual é o valor de not (x > 3 and x < 5) or x == 4?",
+      "alternativas": [
+        "True",
+        "False",
+        "Erro de sintaxe",
+        "None"
+      ],
+      "indice_correto": 0,
+      "explicacao": "x > 3 and x < 5 é False, pois 5 não é menor que 5; not inverte para True, e True or qualquer coisa é True."
+    },
+    {
+      "id": "condicionais_n1a",
+      "competencia_id": "condicionais",
+      "nivel": 1,
+      "enunciado": "Em um if, quando o bloco indentado logo abaixo é executado?",
+      "alternativas": [
+        "Sempre, independentemente da condição",
+        "Quando a condição é False",
+        "Somente se houver um else",
+        "Quando a condição é True"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O bloco do if só executa quando a condição é verdadeira (True); se for False, ele é pulado."
+    },
+    {
+      "id": "condicionais_n1b",
+      "competencia_id": "condicionais",
+      "nivel": 1,
+      "enunciado": "Que caractere deve terminar a linha de um if em Python?",
+      "alternativas": [
+        "Dois-pontos (:)",
+        "Ponto e vírgula (;)",
+        "Abre chaves ({)",
+        "Nenhum caractere"
+      ],
+      "indice_correto": 0,
+      "explicacao": "A linha do if termina com dois-pontos, e o bloco é definido pela indentação."
+    },
+    {
+      "id": "condicionais_n2a",
+      "competencia_id": "condicionais",
+      "nivel": 2,
+      "enunciado": "O que o código abaixo imprime?\n\nnota = 4\nif nota >= 5:\n    print(\"aprovado\")\nelse:\n    print(\"reprovado\")",
+      "alternativas": [
+        "aprovado",
+        "reprovado",
+        "aprovado e reprovado",
+        "Nada"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Como 4 >= 5 é falso, o bloco do else é executado; exatamente um dos dois blocos roda."
+    },
+    {
+      "id": "condicionais_n2b",
+      "competencia_id": "condicionais",
+      "nivel": 2,
+      "enunciado": "Qual condição testa se idade está entre 16 (inclusive) e 18 (exclusive)?",
+      "alternativas": [
+        "idade >= 16 or idade < 18",
+        "idade = 16 and idade < 18",
+        "idade >= 16 and idade < 18",
+        "not idade < 18"
+      ],
+      "indice_correto": 2,
+      "explicacao": "O and exige que as duas comparações sejam verdadeiras; com or, quase qualquer idade passaria, e = é atribuição, não comparação."
+    },
+    {
+      "id": "condicionais_n3a",
+      "competencia_id": "condicionais",
+      "nivel": 3,
+      "enunciado": "O que o código abaixo imprime?\n\nnota = 9.5\nif nota >= 7:\n    print(\"bom\")\nelif nota >= 9:\n    print(\"ótimo\")\nelse:\n    print(\"regular\")",
+      "alternativas": [
+        "ótimo",
+        "bom e ótimo",
+        "regular",
+        "bom"
+      ],
+      "indice_correto": 3,
+      "explicacao": "Só o bloco da primeira condição verdadeira executa: nota >= 7 já é True, então o elif é ignorado (as condições estão na ordem errada)."
+    },
+    {
+      "id": "condicionais_n3b",
+      "competencia_id": "condicionais",
+      "nivel": 3,
+      "enunciado": "O que o código abaixo imprime?\n\nx = 10\nif x > 5:\n    if x > 20:\n        print(\"A\")\n    else:\n        print(\"B\")\nelse:\n    print(\"C\")",
+      "alternativas": [
+        "B",
+        "A",
+        "C",
+        "Nada"
+      ],
+      "indice_correto": 0,
+      "explicacao": "x > 5 é verdadeiro, então entra no primeiro bloco; lá, x > 20 é falso e o else interno imprime B."
+    },
+    {
+      "id": "repeticao_n1a",
+      "competencia_id": "repeticao",
+      "nivel": 1,
+      "enunciado": "Quais números range(4) produz?",
+      "alternativas": [
+        "1, 2, 3, 4",
+        "0, 1, 2, 3, 4",
+        "0, 1, 2, 3",
+        "1, 2, 3"
+      ],
+      "indice_correto": 2,
+      "explicacao": "range(4) começa em 0 e não inclui o valor final 4."
+    },
+    {
+      "id": "repeticao_n1b",
+      "competencia_id": "repeticao",
+      "nivel": 1,
+      "enunciado": "Quando um laço while para de repetir?",
+      "alternativas": [
+        "Sempre após 10 repetições",
+        "Quando a condição se torna verdadeira",
+        "Quando encontra um print",
+        "Quando a condição se torna falsa"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O while repete enquanto a condição for verdadeira e para assim que ela fica falsa."
+    },
+    {
+      "id": "repeticao_n2a",
+      "competencia_id": "repeticao",
+      "nivel": 2,
+      "enunciado": "O que o código abaixo imprime?\n\nsoma = 0\nfor i in range(1, 5):\n    soma = soma + i\nprint(soma)",
+      "alternativas": [
+        "10",
+        "15",
+        "6",
+        "4"
+      ],
+      "indice_correto": 0,
+      "explicacao": "range(1, 5) produz 1, 2, 3 e 4, e o acumulador soma todos eles: 1 + 2 + 3 + 4 = 10."
+    },
+    {
+      "id": "repeticao_n2b",
+      "competencia_id": "repeticao",
+      "nivel": 2,
+      "enunciado": "Para que serve o comando break dentro de um laço?",
+      "alternativas": [
+        "Pular para a próxima repetição",
+        "Reiniciar o laço do começo",
+        "Interromper o laço imediatamente",
+        "Encerrar o programa inteiro"
+      ],
+      "indice_correto": 2,
+      "explicacao": "break interrompe o laço na hora; quem pula para a próxima repetição é o continue."
+    },
+    {
+      "id": "repeticao_n3a",
+      "competencia_id": "repeticao",
+      "nivel": 3,
+      "enunciado": "O que o código abaixo imprime?\n\nfor i in range(5):\n    total = 0\n    total = total + i\nprint(total)",
+      "alternativas": [
+        "10",
+        "0",
+        "4",
+        "5"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Como total = 0 está dentro do laço, o acumulador é zerado a cada volta e só guarda o último i, que é 4."
+    },
+    {
+      "id": "repeticao_n3b",
+      "competencia_id": "repeticao",
+      "nivel": 3,
+      "enunciado": "O que o código abaixo imprime?\n\ni = 0\nwhile i < 10:\n    i = i + 3\nprint(i)",
+      "alternativas": [
+        "9",
+        "12",
+        "10",
+        "Nada, é um laço infinito"
+      ],
+      "indice_correto": 1,
+      "explicacao": "A condição é testada antes de cada volta: com i = 9 ainda entra e i vira 12; aí 12 < 10 é falso e o laço termina."
+    },
+    {
+      "id": "funcoes_n1a",
+      "competencia_id": "funcoes",
+      "nivel": 1,
+      "enunciado": "Qual palavra-chave define uma função em Python?",
+      "alternativas": [
+        "function",
+        "func",
+        "define",
+        "def"
+      ],
+      "indice_correto": 3,
+      "explicacao": "Funções são definidas com def, seguido do nome, dos parâmetros entre parênteses e de dois-pontos."
+    },
+    {
+      "id": "funcoes_n1b",
+      "competencia_id": "funcoes",
+      "nivel": 1,
+      "enunciado": "O que acontece quando o Python lê a definição def dobro(x): return 2 * x?",
+      "alternativas": [
+        "A função é executada imediatamente",
+        "A função fica definida e só roda quando for chamada",
+        "O dobro de x é impresso na tela",
+        "Gera erro porque x não tem valor"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Definir a função não a executa; ela só roda quando é chamada, por exemplo dobro(5)."
+    },
+    {
+      "id": "funcoes_n2a",
+      "competencia_id": "funcoes",
+      "nivel": 2,
+      "enunciado": "Qual é a diferença entre print e return dentro de uma função?",
+      "alternativas": [
+        "Nenhuma, são equivalentes",
+        "print devolve o valor para quem chamou; return só mostra na tela",
+        "return devolve o valor para quem chamou; print só mostra na tela",
+        "return só funciona com números"
+      ],
+      "indice_correto": 2,
+      "explicacao": "print apenas mostra um texto na tela; return entrega o valor para ser guardado ou usado em outra expressão."
+    },
+    {
+      "id": "funcoes_n2b",
+      "competencia_id": "funcoes",
+      "nivel": 2,
+      "enunciado": "Qual é o valor de r depois do código abaixo?\n\ndef f(x):\n    x * 2\n\nr = f(5)",
+      "alternativas": [
+        "None",
+        "10",
+        "5",
+        "Erro de sintaxe"
+      ],
+      "indice_correto": 0,
+      "explicacao": "A função calcula x * 2 mas não tem return, e toda função sem return devolve None."
+    },
+    {
+      "id": "funcoes_n3a",
+      "competencia_id": "funcoes",
+      "nivel": 3,
+      "enunciado": "O que acontece ao rodar o código abaixo?\n\ndef soma(a, b):\n    resultado = a + b\n    return resultado\n\nsoma(2, 3)\nprint(resultado)",
+      "alternativas": [
+        "Imprime 5",
+        "Imprime None",
+        "Imprime 0",
+        "Erro (NameError), pois resultado só existe dentro da função"
+      ],
+      "indice_correto": 3,
+      "explicacao": "resultado é uma variável local: existe só durante a execução de soma e não é vista fora dela."
+    },
+    {
+      "id": "funcoes_n3b",
+      "competencia_id": "funcoes",
+      "nivel": 3,
+      "enunciado": "O que acontece na chamada teste(3)?\n\ndef teste(n):\n    if n > 0:\n        return \"positivo\"\n    print(\"depois\")\n    return \"não positivo\"",
+      "alternativas": [
+        "Imprime \"depois\" e devolve \"positivo\"",
+        "Devolve \"positivo\" sem imprimir nada",
+        "Devolve \"não positivo\"",
+        "Imprime \"depois\" e devolve \"não positivo\""
+      ],
+      "indice_correto": 1,
+      "explicacao": "O return encerra a função na hora: como 3 > 0, devolve \"positivo\" e as linhas seguintes não executam."
+    },
+    {
+      "id": "listas_strings_n1a",
+      "competencia_id": "listas_strings",
+      "nivel": 1,
+      "enunciado": "Sendo notas = [7, 5, 9], qual é o valor de notas[0]?",
+      "alternativas": [
+        "7",
+        "5",
+        "9",
+        "IndexError"
+      ],
+      "indice_correto": 0,
+      "explicacao": "Os índices começam em 0, então notas[0] é o primeiro elemento, 7."
+    },
+    {
+      "id": "listas_strings_n1b",
+      "competencia_id": "listas_strings",
+      "nivel": 1,
+      "enunciado": "Qual é o valor de len(\"Python\")?",
+      "alternativas": [
+        "5",
+        "7",
+        "1",
+        "6"
+      ],
+      "indice_correto": 3,
+      "explicacao": "len devolve a quantidade de elementos da sequência, e \"Python\" tem 6 caracteres."
+    },
+    {
+      "id": "listas_strings_n2a",
+      "competencia_id": "listas_strings",
+      "nivel": 2,
+      "enunciado": "Sendo notas = [7, 5, 9], qual é o valor de notas[-1]?",
+      "alternativas": [
+        "7",
+        "IndexError",
+        "9",
+        "5"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Índices negativos contam do fim: notas[-1] é o último elemento, 9."
+    },
+    {
+      "id": "listas_strings_n2b",
+      "competencia_id": "listas_strings",
+      "nivel": 2,
+      "enunciado": "Qual é o valor de \"Python\"[1:4]?",
+      "alternativas": [
+        "\"Pyt\"",
+        "\"yth\"",
+        "\"ytho\"",
+        "\"ython\""
+      ],
+      "indice_correto": 1,
+      "explicacao": "O fatiamento [1:4] pega do índice 1 até o 3 (o fim não entra): y, t, h."
+    },
+    {
+      "id": "listas_strings_n3a",
+      "competencia_id": "listas_strings",
+      "nivel": 3,
+      "enunciado": "O que acontece ao rodar o código abaixo?\n\ns = \"casa\"\ns[0] = \"m\"",
+      "alternativas": [
+        "Erro, pois strings são imutáveis",
+        "s passa a valer \"masa\"",
+        "s passa a valer \"m\"",
+        "s vira uma lista de letras"
+      ],
+      "indice_correto": 0,
+      "explicacao": "Strings não podem ser alteradas no lugar; para \"mudar\" um texto, é preciso criar uma string nova."
+    },
+    {
+      "id": "listas_strings_n3b",
+      "competencia_id": "listas_strings",
+      "nivel": 3,
+      "enunciado": "O que o código abaixo imprime?\n\npalavras = \"eu gosto de python\".split()\npalavras.append(\"!\")\nprint(len(palavras))",
+      "alternativas": [
+        "19",
+        "4",
+        "5",
+        "18"
+      ],
+      "indice_correto": 2,
+      "explicacao": "split quebra o texto em uma lista de 4 palavras, e append acrescenta mais um elemento: 5."
+    },
+    {
+      "id": "recursao_n1a",
+      "competencia_id": "recursao",
+      "nivel": 1,
+      "enunciado": "O que é uma função recursiva?",
+      "alternativas": [
+        "Uma função que usa obrigatoriamente um laço for",
+        "Uma função sem return",
+        "Uma função que chama a si mesma",
+        "Uma função com vários parâmetros"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Recursão é quando uma função chama a si mesma para resolver versões menores do mesmo problema."
+    },
+    {
+      "id": "recursao_n1b",
+      "competencia_id": "recursao",
+      "nivel": 1,
+      "enunciado": "Para que serve o caso base de uma função recursiva?",
+      "alternativas": [
+        "Para deixar a função mais rápida",
+        "É a condição que faz a função parar de chamar a si mesma",
+        "Para definir os parâmetros da função",
+        "Para imprimir o resultado"
+      ],
+      "indice_correto": 1,
+      "explicacao": "O caso base é a condição de parada: sem ele, a função continuaria chamando a si mesma indefinidamente."
+    },
+    {
+      "id": "recursao_n2a",
+      "competencia_id": "recursao",
+      "nivel": 2,
+      "enunciado": "O que acontece se uma função recursiva não tiver caso base?",
+      "alternativas": [
+        "Devolve None",
+        "Executa uma única vez",
+        "O Python cria um caso base automaticamente",
+        "Chama a si mesma até esgotar a memória (estouro de pilha)"
+      ],
+      "indice_correto": 3,
+      "explicacao": "Sem caso base, as chamadas não param até esgotar a memória, o erro de estouro de pilha (stack overflow)."
+    },
+    {
+      "id": "recursao_n2b",
+      "competencia_id": "recursao",
+      "nivel": 2,
+      "enunciado": "No cálculo recursivo do fatorial, qual é o caso base?",
+      "alternativas": [
+        "fatorial(0) = 1",
+        "fatorial(n) = n * fatorial(n - 1)",
+        "fatorial(1) = 0",
+        "fatorial(n) = n + 1"
+      ],
+      "indice_correto": 0,
+      "explicacao": "fatorial(0) = 1 é o caso base; fatorial(n) = n * fatorial(n - 1) é o caso recursivo."
+    },
+    {
+      "id": "recursao_n3a",
+      "competencia_id": "recursao",
+      "nivel": 3,
+      "enunciado": "Qual é o valor de f(4)?\n\ndef f(n):\n    if n == 0:\n        return 0\n    return n + f(n - 1)",
+      "alternativas": [
+        "4",
+        "24",
+        "10",
+        "Estouro de pilha"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Cada chamada soma n ao resultado de f(n - 1) até o caso base f(0) = 0: 4 + 3 + 2 + 1 + 0 = 10."
+    },
+    {
+      "id": "recursao_n3b",
+      "competencia_id": "recursao",
+      "nivel": 3,
+      "enunciado": "O que acontece na chamada g(3)?\n\ndef g(n):\n    if n == 0:\n        return 1\n    return n * g(n - 2)",
+      "alternativas": [
+        "Devolve 3",
+        "Devolve 6",
+        "Devolve 0",
+        "Estouro de pilha (RecursionError), pois n nunca chega a 0"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O caso recursivo vai de 3 para 1 e depois para -1, pulando o caso base n == 0, então as chamadas nunca param."
+    }
+  ]
+}

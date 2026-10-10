@@ -23,6 +23,9 @@ load_dotenv()
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 CHAT_MODEL = os.getenv("CHAT_MODEL", "qwen3:1.7b")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text")
+# Quanto tempo o Ollama mantém o modelo carregado após a última chamada
+# (evita recarregar a cada interação, o que estouraria o R09)
+OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "30m")
 
 # --- Banco de dados (SQLite) ---
 DB_PATH = os.getenv("DB_PATH", "data/tia.db")
@@ -46,10 +49,37 @@ PERFIS_PATH = os.getenv("PERFIS_PATH", "conteudo/perfis/perfis.json")
 # Tempo máximo (s) para o LLM escrever as justificativas; abaixo do limite de 15 s do R09
 PLANEJADOR_TIMEOUT_LLM = int(os.getenv("PLANEJADOR_TIMEOUT_LLM", "12"))
 
+# --- Agente 2 (Tutor) ---
+# Banco de itens do questionário (PROVISÓRIO até a entrega da Pessoa 4)
+BANCO_ITENS_PATH = os.getenv("BANCO_ITENS_PATH", "conteudo/banco_itens/itens.json")
+# Decisão de 10/10 (CLAUDE.md): não otimizar para os 15 s do R09 em desenvolvimento;
+# o LLM de produção roda em máquina mais potente. O R09 será medido na VM.
+# Tempo máximo (s) de espera pelo LLM no feedback; alto em desenvolvimento.
+TUTOR_TIMEOUT_LLM = int(os.getenv("TUTOR_TIMEOUT_LLM", "120"))
+# Limite de tokens gerados no feedback: folga para até 3 frases completas, de
+# modo que o descarte de frase cortada (feedback.limpar_explicacao) seja raro.
+TUTOR_MAX_TOKENS = int(os.getenv("TUTOR_MAX_TOKENS", "200"))
+# Como o LLM escreve o feedback:
+#   "ancorado" (padrão): reformula a explicação verificada do item, apoiada nos
+#              trechos do RAG; proibido calcular ou inventar valores e resultados;
+#   "livre":   explica só a partir dos trechos (modo antigo, mantido para comparação).
+TUTOR_MODO_FEEDBACK = os.getenv("TUTOR_MODO_FEEDBACK", "ancorado")
+# Quantos trechos do material o RAG busca para o prompt do feedback.
+TUTOR_NUM_TRECHOS = int(os.getenv("TUTOR_NUM_TRECHOS", "4"))
+# Distância máxima (Chroma, L2 ao quadrado com nomic-embed-text) para um trecho
+# contar como relevante; medido no material de exemplo: relevantes ~200-330,
+# sem relação ~440+. Rever se trocar o modelo de embedding.
+# PROVISÓRIO: calibrado com o material PROVISÓRIO (conteudo/materiais/provisorio_*.txt).
+# Recalibrar quando o material real do curso (Pessoa 4) chegar: medir as
+# distâncias de trechos relevantes e sem relação e ajustar este valor.
+TUTOR_DISTANCIA_MAXIMA = float(os.getenv("TUTOR_DISTANCIA_MAXIMA", "400"))
+
 
 if __name__ == "__main__":
-    for nome in ("OLLAMA_URL", "CHAT_MODEL", "EMBED_MODEL", "DB_PATH",
+    for nome in ("OLLAMA_URL", "CHAT_MODEL", "EMBED_MODEL", "OLLAMA_KEEP_ALIVE", "DB_PATH",
                  "MATERIAIS_DIR", "CHROMA_DIR", "COLLECTION_NAME",
                  "CHUNK_SIZE", "CHUNK_OVERLAP", "EMENTA_PATH", "PERFIS_PATH",
-                 "PLANEJADOR_TIMEOUT_LLM"):
+                 "PLANEJADOR_TIMEOUT_LLM", "BANCO_ITENS_PATH", "TUTOR_TIMEOUT_LLM", "TUTOR_MAX_TOKENS", "TUTOR_MODO_FEEDBACK",
+                 "TUTOR_NUM_TRECHOS",
+                 "TUTOR_DISTANCIA_MAXIMA"):
         print(f"{nome} = {globals()[nome]}")

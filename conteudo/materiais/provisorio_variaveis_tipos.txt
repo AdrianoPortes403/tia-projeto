@@ -1,0 +1,25 @@
+Variáveis, tipos e expressões em Python
+
+Uma variável é um nome que guarda um valor na memória do computador. Em
+Python, a variável é criada no momento da atribuição, com o sinal de igual:
+idade = 18 guarda o número 18 no nome idade. O sinal = não significa
+igualdade matemática, e sim "guarde o valor da direita no nome da esquerda".
+Por isso x = x + 1 é válido: calcula x + 1 e guarda o resultado em x.
+
+Todo valor tem um tipo. Os tipos básicos são: int (números inteiros, como
+7 e -3), float (números com parte decimal, como 3.14 e 2.0), str (textos,
+escritos entre aspas, como "olá") e bool (valores lógicos True e False).
+A função type(valor) mostra o tipo de um valor. Para converter entre tipos,
+usam-se int(), float() e str(): int("42") vale 42 e str(7) vale "7".
+Atenção: "2" + "3" junta textos e resulta em "23", enquanto 2 + 3 resulta 5.
+
+Expressões aritméticas usam + - * /, além de // (divisão inteira), %
+(resto da divisão) e ** (potência). A divisão / sempre produz float:
+7 / 2 vale 3.5, mas 7 // 2 vale 3 e 7 % 2 vale 1. A precedência segue a
+matemática: ** antes de * e /, que vêm antes de + e -. Parênteses mudam a
+ordem: 2 + 3 * 4 vale 14, e (2 + 3) * 4 vale 20.
+
+Expressões lógicas produzem True ou False. Os operadores de comparação são
+==, !=, <, >, <= e >=. Os operadores lógicos são and (verdadeiro só se os
+dois lados forem verdadeiros), or (verdadeiro se pelo menos um lado for) e
+not (inverte o valor). Não confunda = (atribuição) com == (comparação).

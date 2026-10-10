@@ -1,0 +1,24 @@
+Estruturas condicionais em Python
+
+Uma estrutura condicional permite que o programa escolha entre caminhos
+diferentes conforme uma condição seja verdadeira ou falsa. Em Python, a
+forma básica é o if: se a condição for True, o bloco indentado logo abaixo
+é executado; se for False, o bloco é pulado. A linha do if termina com
+dois-pontos, e o bloco é definido pela indentação (em geral, 4 espaços).
+
+O else define o que fazer quando a condição do if é falsa. Exemplo:
+    if nota >= 5:
+        print("aprovado")
+    else:
+        print("reprovado")
+Exatamente um dos dois blocos é executado, nunca os dois.
+
+Quando há mais de duas possibilidades, usa-se elif (abreviação de "else
+if"). As condições são testadas de cima para baixo, e apenas o bloco da
+PRIMEIRA condição verdadeira é executado; as demais são ignoradas, mesmo
+que também sejam verdadeiras. Por isso a ordem importa: ao classificar
+notas, teste primeiro nota >= 9, depois nota >= 7, e assim por diante.
+
+As condições podem combinar comparações com and, or e not, por exemplo
+if idade >= 16 and idade < 18. Erros comuns: esquecer os dois-pontos,
+indentar errado e usar = no lugar de == na condição.

@@ -69,3 +69,11 @@ Sempre ativar o venv da raiz: `source venv/bin/activate`.
 - Pacote 1.4.6 (segurança/LGPD) não iniciado: documentos vão em `docs/seguranca-lgpd/`.
 - Material real do curso depende da Pessoa 4.
 - VM institucional ainda não disponível; testes feitos em notebook e em máquina com RTX 3050.
+
+## Desempenho (decisão de 10/10)
+
+- Não otimizar para o limite de 15 s (R09) durante o desenvolvimento: o LLM de produção roda
+  em máquina mais potente que a de desenvolvimento. Priorizar qualidade da resposta.
+- Todo timeout de chamada ao LLM fica em core/config.py (lido do .env), nunca fixo no código.
+  Em desenvolvimento usar valores altos (ex.: 120 s). O R09 será medido na VM.
+- Mesmo assim, toda demonstração imprime o tempo gasto, para termos o número quando a VM chegar.

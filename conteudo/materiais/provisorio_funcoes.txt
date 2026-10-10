@@ -1,0 +1,25 @@
+Funções e modularização em Python
+
+Uma função é um bloco de código com nome, que pode ser executado sempre
+que necessário. Em Python ela é definida com def, seguida do nome, dos
+parâmetros entre parênteses e de dois-pontos:
+    def area_retangulo(base, altura):
+        return base * altura
+Definir a função não a executa; ela só roda quando é chamada, por exemplo
+area_retangulo(3, 4), que devolve 12.
+
+Parâmetros são os nomes que aparecem na definição; argumentos são os
+valores passados na chamada. Parâmetros podem ter valor padrão, como
+def saudacao(texto="olá"), usado quando o argumento é omitido.
+
+O return encerra a função e devolve um valor para quem a chamou. Depois do
+return, nenhuma linha da função é executada. Uma função sem return devolve
+o valor especial None. Atenção à diferença entre print e return: print
+apenas mostra um texto na tela, enquanto return entrega o valor para ser
+guardado numa variável ou usado em outra expressão.
+
+Escopo é a região do programa onde um nome existe. Variáveis criadas
+dentro de uma função são locais: existem só durante a execução da função e
+não são vistas fora dela. Por isso funções devem receber dados por
+parâmetros e devolver resultados com return. Dividir o programa em funções
+pequenas, cada uma com uma tarefa, é a modularização.

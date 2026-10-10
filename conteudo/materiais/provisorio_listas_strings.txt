@@ -1,0 +1,25 @@
+Listas e strings em Python
+
+Listas e strings são sequências: guardam vários elementos em ordem. Uma
+lista é escrita entre colchetes, como notas = [7, 5, 9], e pode guardar
+valores de qualquer tipo. Uma string é uma sequência de caracteres, como
+nome = "Python". A função len devolve o tamanho: len(notas) vale 3.
+
+Os elementos são acessados por índice, que começa em 0: notas[0] vale 7 e
+notas[2] vale 9. Índices negativos contam do fim: notas[-1] é o último
+elemento. Acessar um índice que não existe, como notas[3], gera IndexError.
+O fatiamento seq[inicio:fim] devolve os elementos do índice inicio até
+fim - 1: "Python"[0:2] vale "Py". Omitir o início ou o fim significa ir
+desde o começo ou até o final da sequência.
+
+A diferença principal é que listas são mutáveis e strings são imutáveis.
+Numa lista, pode-se trocar um elemento (notas[0] = 10), acrescentar ao fim
+com append (notas.append(8)) e remover com remove ou pop. Numa string,
+s[0] = "J" gera erro; para "mudar" um texto, cria-se uma string nova, por
+exemplo com s.upper(), s.replace("a", "o") ou concatenação com +.
+
+Para percorrer uma sequência, usa-se for: for nota in notas visita cada
+elemento. Quando também se precisa do índice, usa-se for i in
+range(len(notas)). O operador in testa se um elemento pertence à
+sequência: 9 in notas vale True. Outros métodos úteis: split, que quebra
+uma string em uma lista de palavras, e join, que faz o caminho inverso.

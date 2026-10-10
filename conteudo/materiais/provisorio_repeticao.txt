@@ -1,0 +1,25 @@
+Laços de repetição em Python
+
+Laços repetem um bloco de instruções várias vezes. Python tem dois tipos:
+for e while. O for percorre uma sequência, executando o bloco uma vez para
+cada elemento. A função range gera sequências de números: range(5) produz
+0, 1, 2, 3 e 4 (começa em 0 e não inclui o 5); range(2, 6) produz 2, 3, 4
+e 5; range(0, 10, 2) produz os pares 0, 2, 4, 6 e 8.
+
+O while repete o bloco enquanto uma condição for verdadeira. A condição é
+testada antes de cada repetição; se for falsa logo de início, o bloco não
+executa nenhuma vez. Dentro do laço, algo precisa mudar para que a
+condição um dia fique falsa; caso contrário, o laço nunca termina (laço
+infinito). Use while quando não se sabe de antemão quantas repetições
+serão necessárias, como ao ler valores até o usuário digitar zero.
+
+Dois padrões aparecem o tempo todo. O contador é uma variável que começa
+em 0 e soma 1 a cada repetição, para contar quantas vezes algo aconteceu.
+O acumulador começa em um valor neutro (0 para somas, 1 para produtos) e
+vai incorporando cada novo valor: soma = soma + x. A inicialização deve
+ficar ANTES do laço; se ficar dentro, o valor é zerado a cada volta.
+
+O comando break interrompe o laço imediatamente, e continue pula para a
+próxima repetição sem executar o resto do bloco. Erros comuns: esquecer de
+atualizar a variável da condição do while e errar o limite do range,
+que nunca inclui o valor final.
