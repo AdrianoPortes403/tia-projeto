@@ -1,0 +1,145 @@
+{
+  "_nota": "Conjunto de TESTE v2 do portão de cobertura do diálogo do Tutor, escrito em 10/10 ANTES de qualquer medição, para avaliar a regra do termo mais raro. 'coberta' foi decidido lendo o material PROVISÓRIO de conteudo/materiais. Nenhum parâmetro pode ser ajustado com estas perguntas. Fora do material: 8 sobre Python não coberto (sort, tupla, lambda, import, enumerate, set, f-string, pip) e 2 gerais.",
+  "perguntas": [
+    {
+      "id": "v2_cob_01",
+      "competencia_id": "listas_strings",
+      "pergunta": "O que o append faz?",
+      "coberta": true,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_cob_02",
+      "competencia_id": "variaveis_tipos",
+      "pergunta": "Qual operador dá o resto da divisão?",
+      "coberta": true,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_cob_03",
+      "competencia_id": "funcoes",
+      "pergunta": "O que uma função sem return devolve?",
+      "coberta": true,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_cob_04",
+      "competencia_id": "repeticao",
+      "pergunta": "O que é um laço infinito?",
+      "coberta": true,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_cob_05",
+      "competencia_id": null,
+      "pergunta": "Para que serve o acumulador?",
+      "coberta": true,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_cob_06",
+      "competencia_id": "condicionais",
+      "pergunta": "Posso juntar and e or numa condição?",
+      "coberta": true,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_cob_07",
+      "competencia_id": "listas_strings",
+      "pergunta": "Índice negativo funciona como?",
+      "coberta": true,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_cob_08",
+      "competencia_id": "funcoes",
+      "pergunta": "Variáveis locais existem fora da função?",
+      "coberta": true,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_cob_09",
+      "competencia_id": "variaveis_tipos",
+      "pergunta": "Como converter texto em número inteiro?",
+      "coberta": true,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_cob_10",
+      "competencia_id": null,
+      "pergunta": "O que causa estouro de pilha?",
+      "coberta": true,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_fora_01",
+      "competencia_id": "listas_strings",
+      "pergunta": "Como ordenar uma lista com sort?",
+      "coberta": false,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_fora_02",
+      "competencia_id": null,
+      "pergunta": "O que é uma tupla?",
+      "coberta": false,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_fora_03",
+      "competencia_id": "funcoes",
+      "pergunta": "Como usar lambda?",
+      "coberta": false,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_fora_04",
+      "competencia_id": null,
+      "pergunta": "Como importar um módulo?",
+      "coberta": false,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_fora_05",
+      "competencia_id": "repeticao",
+      "pergunta": "Como usar enumerate no for?",
+      "coberta": false,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_fora_06",
+      "competencia_id": null,
+      "pergunta": "O que são sets em Python?",
+      "coberta": false,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_fora_07",
+      "competencia_id": "variaveis_tipos",
+      "pergunta": "Como formatar strings com f-string?",
+      "coberta": false,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_fora_08",
+      "competencia_id": null,
+      "pergunta": "Como instalar pacotes com pip?",
+      "coberta": false,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_fora_09",
+      "competencia_id": null,
+      "pergunta": "Qual a melhor linguagem para ciência de dados?",
+      "coberta": false,
+      "conjunto": "teste_v2"
+    },
+    {
+      "id": "v2_fora_10",
+      "competencia_id": null,
+      "pergunta": "Quem criou o Python?",
+      "coberta": false,
+      "conjunto": "teste_v2"
+    }
+  ]
+}

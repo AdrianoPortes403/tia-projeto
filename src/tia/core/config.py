@@ -90,6 +90,9 @@ TUTOR_DISTANCIA_MAXIMA = float(os.getenv("TUTOR_DISTANCIA_MAXIMA", "400"))
 # 0.42: meio do intervalo ótimo no ajuste (0.35 a 0.50: nenhuma pergunta "fora"
 # passa e as 9 cobertas passam), medido em 10/10 com o material PROVISÓRIO.
 TUTOR_COBERTURA_MIN = float(os.getenv("TUTOR_COBERTURA_MIN", "0.42"))
+# Regra adicional do portão: o termo de conteúdo mais raro da pergunta no índice
+# (maior IDF, contando sinônimos) precisa estar nos trechos recuperados.
+TUTOR_EXIGE_TERMO_RARO = os.getenv("TUTOR_EXIGE_TERMO_RARO", "0").lower() in ("1", "true", "sim")
 # Dias sem interação com o Tutor (respostas, sessões, diálogo) a partir dos
 # quais o aluno conta como inativo e recebe o incentivo (GET /tutor/incentivo).
 INATIVIDADE_DIAS = int(os.getenv("INATIVIDADE_DIAS", "3"))
@@ -101,5 +104,6 @@ if __name__ == "__main__":
                  "CHUNK_SIZE", "CHUNK_OVERLAP", "EMENTA_PATH", "PERFIS_PATH",
                  "PLANEJADOR_TIMEOUT_LLM", "BANCO_ITENS_PATH", "TUTOR_TIMEOUT_LLM", "TUTOR_MAX_TOKENS", "TUTOR_TEMPERATURA", "TUTOR_TOP_P", "TUTOR_SEED", "TUTOR_MODO_FEEDBACK",
                  "TUTOR_NUM_TRECHOS",
-                 "TUTOR_DISTANCIA_MAXIMA", "TUTOR_COBERTURA_MIN", "INATIVIDADE_DIAS"):
+                 "TUTOR_DISTANCIA_MAXIMA", "TUTOR_COBERTURA_MIN", "TUTOR_EXIGE_TERMO_RARO",
+                 "INATIVIDADE_DIAS"):
         print(f"{nome} = {globals()[nome]}")

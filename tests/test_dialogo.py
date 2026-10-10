@@ -35,6 +35,7 @@ DO_MATERIAL = "Do material: " + TRECHO["texto"]
 def sem_indice_real(monkeypatch):
     """Termos genéricos sem ler o Chroma de verdade (cada teste define os seus)."""
     monkeypatch.setattr(dialogo, "termos_genericos", lambda: frozenset())
+    monkeypatch.setattr(dialogo, "textos_do_indice", lambda: ())
 
 
 def mockar(monkeypatch, trechos: list[dict], resposta_llm="O break encerra o laço na hora."):
@@ -503,53 +504,122 @@ def test_portao_usa_sinonimos_da_competencia_da_pergunta(monkeypatch):
     assert len(prompts) == 1  # funcoes não tem "loop" como sinônimo de "laço": barrado antes do LLM
 
 
-# --- conjunto de avaliação (instantâneo do RAG real, LLM mockado) ---
+# --- regra do termo mais raro ---
 
-with open("tests/dados/perguntas_avaliacao.json", encoding="utf-8") as _arquivo:
-    AVALIACAO = json.load(_arquivo)["perguntas"]
-with open("tests/dados/trechos_avaliacao.json", encoding="utf-8") as _arquivo:
-    INSTANTANEO = json.load(_arquivo)
+INDICE = ["o for percorre a lista", "a lista guarda valores", "a lista tem append", "o while repete"]
 
-# Erros conhecidos, medidos na VALIDAÇÃO em 10/10 (não usados para ajustar nada).
-# strict=True: se o portão passar a acertar, o teste avisa para tirar daqui.
+
+def test_termo_raro_barra_quando_o_termo_mais_raro_falta():
+    # o caso da fora_09: "list" (sinônimo de "lista", em 3 trechos do índice) coberto,
+    # "comprehension" (em nenhum) não. Pela fração (1/2) passa; pela regra, não.
+    grupos = [["lista", "list"]]
+    sem_regra = dialogo.avaliar_cobertura("list comprehension", ["a lista guarda"], set(), grupos, 0.42)
+    com_regra = dialogo.avaliar_cobertura("list comprehension", ["a lista guarda"], set(), grupos, 0.42,
+                                          textos_indice=INDICE)
+    assert (sem_regra.passou, sem_regra.fracao, sem_regra.raros) == (True, 0.5, None)
+    assert (com_regra.passou, com_regra.raros) == (False, ["comprehension"])
+
+
+def test_termo_raro_coberto_passa_e_frequencia_conta_sinonimos():
+    grupos = [["laço", "loop"]]
+    # "loop" não aparece no índice, mas o sinônimo "laço" aparece em 1 trecho; "lista" em 3
+    indice = ["o laço repete", "a lista guarda", "a lista muda", "a lista cresce"]
+    cobertura = dialogo.avaliar_cobertura("loop na lista", ["o laço percorre a lista"], set(), grupos, 0.42,
+                                          textos_indice=indice)
+    assert cobertura.raros == ["loop"] and cobertura.passou is True
+
+
+def test_termo_raro_empatado_exige_todos():
+    cobertura = dialogo.avaliar_cobertura("enumerate e zip no for", ["o for repete"], set(), [], 0.3,
+                                          textos_indice=INDICE)
+    assert cobertura.raros == ["enumerate", "zip"] and cobertura.passou is False
+
+
+def test_regra_do_termo_raro_so_vale_com_a_config(monkeypatch):
+    trecho = {**TRECHO, "texto": "No for, o break interrompe a lista."}
+    monkeypatch.setattr(dialogo, "textos_do_indice", lambda: ("o for repete", "o for e a lista", "a lista"))
+    _, prompts = mockar(monkeypatch, [trecho])
+    monkeypatch.setattr(dialogo, "TUTOR_EXIGE_TERMO_RARO", False)
+    assert dialogo.gerar_resposta("O for com enumerate?", None, []).origem == "LLM"     # 1/2 passa pela fração
+    monkeypatch.setattr(dialogo, "TUTOR_EXIGE_TERMO_RARO", True)
+    assert dialogo.gerar_resposta("O for com enumerate?", None, []).origem == "fallback"  # "enumerate" é o raro
+    assert len(prompts) == 1
+
+
+# --- conjuntos de avaliação (instantâneo do RAG real, LLM mockado) ---
+
+def _carregar(perguntas: str, instantaneo: str) -> list[tuple[dict, dict]]:
+    with open(perguntas, encoding="utf-8") as arquivo:
+        lista = json.load(arquivo)["perguntas"]
+    with open(instantaneo, encoding="utf-8") as arquivo:
+        inst = json.load(arquivo)
+    return [(p, inst) for p in lista]
+
+
+AVALIACAO = (_carregar("tests/dados/perguntas_avaliacao.json", "tests/dados/trechos_avaliacao.json")
+             + _carregar("tests/dados/perguntas_avaliacao_v2.json", "tests/dados/trechos_avaliacao_v2.json"))
+
+# Erros conhecidos, medidos em 10/10 e NÃO usados para ajustar nada. Chave:
+# (regra do termo raro ligada?, id). strict=True: se o portão passar a acertar,
+# o teste avisa para tirar daqui.
 ERROS_CONHECIDOS = {
-    "fora_09": "'list' casa com o sinônimo 'lista' e 'comprehension' não: cobertura 0,50, igual à "
-               "de uma pergunta coberta de dois termos (cob_11)",
+    # regra desligada (padrão): empate de cobertura 0,50 com perguntas cobertas de dois termos
+    (False, "fora_09"): "'list' casa com o sinônimo 'lista', 'comprehension' não: 0,50",
+    (False, "v2_fora_05"): "'for' coberto, 'enumerate' não: 0,50",
+    (False, "v2_fora_07"): "'strings' coberto, 'formatar' não: 0,50 ('f' de f-string tem 1 letra)",
+    (False, "v2_cob_07"): "o RAG não trouxe trecho a menos de TUTOR_DISTANCIA_MAXIMA",
+    # regra ligada: o termo mais raro é uma palavra comum ausente do material
+    (True, "cob_11"): "raro: 'alterada' (o material diz 'mutáveis'/'imutáveis')",
+    (True, "cob_14"): "raro: 'fatiamento', ausente dos trechos recuperados (está em outro trecho)",
+    (True, "v2_cob_06"): "raro: 'juntar', ausente do material",
+    (True, "v2_cob_07"): "o RAG não trouxe trecho a menos de TUTOR_DISTANCIA_MAXIMA",
+    (True, "v2_cob_10"): "raro: 'causa', ausente do material",
 }
 
 
-def _com_marca(pergunta: dict):
-    motivo = ERROS_CONHECIDOS.get(pergunta["id"])
-    marcas = [pytest.mark.xfail(strict=True, reason=motivo)] if motivo else []
-    return pytest.param(pergunta, id=pergunta["id"], marks=marcas)
+def _casos(coberta: bool):
+    for termo_raro in (False, True):
+        for pergunta, inst in AVALIACAO:
+            if pergunta["coberta"] != coberta:
+                continue
+            motivo = ERROS_CONHECIDOS.get((termo_raro, pergunta["id"]))
+            marcas = [pytest.mark.xfail(strict=True, reason=motivo)] if motivo else []
+            yield pytest.param(pergunta, inst, termo_raro, marks=marcas,
+                               id=f"{pergunta['id']}-{'raro' if termo_raro else 'padrao'}")
 
 
-def responder_do_instantaneo(monkeypatch, pergunta: dict):
+def responder_do_instantaneo(monkeypatch, pergunta: dict, inst: dict, termo_raro: bool):
     from tia.agentes.tutor.repositorio import materiais_da_competencia, palavras_chave
-    monkeypatch.setattr(dialogo, "termos_genericos", lambda: frozenset(INSTANTANEO["termos_genericos"]))
-    monkeypatch.setattr(dialogo, "TUTOR_DISTANCIA_MAXIMA", INSTANTANEO["distancia_maxima"])
-    _, prompts = mockar(monkeypatch, INSTANTANEO["trechos"][pergunta["id"]])
+    monkeypatch.setattr(dialogo, "termos_genericos", lambda: frozenset(inst["termos_genericos"]))
+    monkeypatch.setattr(dialogo, "textos_do_indice", lambda: tuple(inst["textos_indice"]))
+    monkeypatch.setattr(dialogo, "TUTOR_DISTANCIA_MAXIMA", inst["distancia_maxima"])
+    monkeypatch.setattr(dialogo, "TUTOR_EXIGE_TERMO_RARO", termo_raro)
+    _, prompts = mockar(monkeypatch, inst["trechos"][pergunta["id"]])
     materiais = materiais_da_competencia(pergunta["competencia_id"]) if pergunta["competencia_id"] else None
     return dialogo.gerar_resposta(pergunta["pergunta"], materiais, palavras_chave(pergunta["competencia_id"])), prompts
 
 
-@pytest.mark.parametrize("pergunta", [_com_marca(p) for p in AVALIACAO if not p["coberta"]])
-def test_pergunta_fora_do_material_nao_chama_o_llm(monkeypatch, pergunta):
-    resultado, prompts = responder_do_instantaneo(monkeypatch, pergunta)
+@pytest.mark.parametrize("pergunta, inst, termo_raro", _casos(coberta=False))
+def test_pergunta_fora_do_material_nao_chama_o_llm(monkeypatch, pergunta, inst, termo_raro):
+    resultado, prompts = responder_do_instantaneo(monkeypatch, pergunta, inst, termo_raro)
     assert prompts == []
     assert (resultado.resposta, resultado.fontes, resultado.origem) == (dialogo.MENSAGEM_SEM_MATERIAL, [], "fallback")
 
 
-def test_perguntas_cobertas_chegam_ao_llm(monkeypatch):
-    cobertas = [p for p in AVALIACAO if p["coberta"]]
-    chegaram = [p["id"] for p in cobertas if responder_do_instantaneo(monkeypatch, p)[1]]
-    assert len(chegaram) / len(cobertas) >= 0.8, chegaram
-    assert len(chegaram) == len(cobertas)  # medido em 10/10: todas as 14
+@pytest.mark.parametrize("pergunta, inst, termo_raro", _casos(coberta=True))
+def test_pergunta_coberta_chega_ao_llm(monkeypatch, pergunta, inst, termo_raro):
+    _, prompts = responder_do_instantaneo(monkeypatch, pergunta, inst, termo_raro)
+    assert len(prompts) == 1
 
 
-def test_conjunto_de_avaliacao_e_validacao_separada():
-    assert len(AVALIACAO) == 30 and len({p["id"] for p in AVALIACAO}) == 30
-    assert sum(p["coberta"] for p in AVALIACAO) == 14
-    validacao = [p for p in AVALIACAO if p["conjunto"] == "validacao"]
+def test_conjuntos_de_avaliacao():
+    v1 = [p for p, _ in AVALIACAO if not p["id"].startswith("v2_")]
+    v2 = [p for p, _ in AVALIACAO if p["id"].startswith("v2_")]
+    assert len(v1) == 30 and sum(p["coberta"] for p in v1) == 14
+    validacao = [p for p in v1 if p["conjunto"] == "validacao"]
     assert len(validacao) == 10 and {p["coberta"] for p in validacao} == {True, False}
-    assert set(INSTANTANEO["trechos"]) == {p["id"] for p in AVALIACAO}
+    assert len(v2) == 20 and sum(p["coberta"] for p in v2) == 10
+    assert {p["conjunto"] for p in v2} == {"teste_v2"}
+    assert len({p["id"] for p, _ in AVALIACAO}) == 50
+    for pergunta, inst in AVALIACAO:
+        assert pergunta["id"] in inst["trechos"] and inst["textos_indice"]

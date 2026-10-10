@@ -11,7 +11,10 @@ Para cada pergunta:
        acento nem pontuação, plural simples), perde stopwords e termos
        genéricos do índice (presentes em mais de metade dos trechos), e pelo
        menos TUTOR_COBERTURA_MIN dos termos restantes (ou um sinônimo do campo
-       "palavras_chave" da ementa) precisa aparecer nos trechos recuperados;
+       "palavras_chave" da ementa) precisa aparecer nos trechos recuperados.
+       Com TUTOR_EXIGE_TERMO_RARO, também o termo de conteúdo mais raro do
+       índice (maior IDF, contando os sinônimos) precisa estar coberto: uma
+       pergunta como "list comprehension" empatava em 0,50 com uma coberta;
     3. sem trecho relevante ou sem passar no portão: resposta FIXA gerada por
        código (MENSAGEM_SEM_MATERIAL), sem chamar o LLM;
     4. com trechos: prompt ancorado (mesmas regras do feedback de item,
@@ -49,8 +52,8 @@ from functools import lru_cache
 from tia.agentes.tutor import CompetenciaInexistente, repositorio
 from tia.agentes.tutor.feedback import REGRAS_ANCORADAS, limpar_explicacao, verificar_texto
 from tia.agentes.tutor.modelos import PerguntaAluno, RespostaDialogo
-from tia.core.config import (TUTOR_COBERTURA_MIN, TUTOR_DISTANCIA_MAXIMA, TUTOR_MAX_TOKENS, TUTOR_NUM_TRECHOS,
-                             TUTOR_SEED, TUTOR_TEMPERATURA, TUTOR_TIMEOUT_LLM, TUTOR_TOP_P)
+from tia.core.config import (TUTOR_COBERTURA_MIN, TUTOR_DISTANCIA_MAXIMA, TUTOR_EXIGE_TERMO_RARO, TUTOR_MAX_TOKENS,
+                             TUTOR_NUM_TRECHOS, TUTOR_SEED, TUTOR_TEMPERATURA, TUTOR_TIMEOUT_LLM, TUTOR_TOP_P)
 from tia.core.llm_client import chamar_llm
 from tia.rag.retrieve import buscar_contexto, listar_trechos
 
@@ -121,9 +124,15 @@ def calcular_termos_genericos(textos: list[str], fracao: float = FRACAO_GENERICA
 
 
 @lru_cache(maxsize=1)
+def textos_do_indice() -> tuple[str, ...]:
+    """Textos de todos os trechos do índice (lidos uma vez por processo)."""
+    return tuple(t["texto"] for t in listar_trechos())
+
+
+@lru_cache(maxsize=1)
 def termos_genericos() -> frozenset[str]:
     """Termos genéricos do índice inteiro (calculado uma vez por processo)."""
-    return frozenset(calcular_termos_genericos([t["texto"] for t in listar_trechos()]))
+    return frozenset(calcular_termos_genericos(list(textos_do_indice())))
 
 
 @dataclass
@@ -132,29 +141,45 @@ class Cobertura:
     fracao: float
     termos: list[str]       # termos de conteúdo da pergunta
     cobertos: list[str]     # os que aparecem (ou um sinônimo) nos trechos
+    raros: list[str] | None = None  # termos mais raros no índice (só com a regra do termo raro)
+
+
+def _presente(termo: str, tokens: set[str] | frozenset[str], grupos: list[list[list[str]]]) -> bool:
+    """O termo, ou um sinônimo do seu grupo, está entre os tokens? (membro de
+    várias palavras: todas elas presentes)"""
+    if termo in tokens:
+        return True
+    return any([termo] in grupo and any(m and set(m) <= tokens for m in grupo) for grupo in grupos)
 
 
 def avaliar_cobertura(pergunta: str, textos_trechos: list[str], genericos: set[str] | frozenset[str],
-                      sinonimos: list[list[str]], minimo: float = TUTOR_COBERTURA_MIN) -> Cobertura:
+                      sinonimos: list[list[str]], minimo: float = TUTOR_COBERTURA_MIN,
+                      textos_indice: list[str] | tuple[str, ...] | None = None) -> Cobertura:
     """Portão de cobertura (puro): fração dos termos de conteúdo da pergunta
     presentes nos trechos. Sem termo de conteúdo, não passa.
     sinonimos: grupos do campo "palavras_chave" da ementa; um termo que é
     membro de um grupo conta como presente se qualquer membro estiver nos
-    trechos (membro de várias palavras: todas elas presentes)."""
+    trechos (membro de várias palavras: todas elas presentes).
+    textos_indice: com ele, aplica a regra do termo mais raro: o(s) termo(s)
+    de conteúdo presentes no menor número de trechos do índice (maior IDF,
+    contando os sinônimos) precisam estar todos cobertos. Vazio ou None: sem a regra."""
     termos = list(dict.fromkeys(t for t in normalizar(pergunta)
                                 if len(t) > 1 and not t.isdigit()
                                 and t not in STOPWORDS_NORMALIZADAS and t not in genericos))
     presentes = {t for texto in textos_trechos for t in normalizar(texto)}
     grupos = [[normalizar(membro) for membro in grupo] for grupo in sinonimos]
 
-    def coberto(termo: str) -> bool:
-        if termo in presentes:
-            return True
-        return any([termo] in grupo and any(m and set(m) <= presentes for m in grupo) for grupo in grupos)
-
-    cobertos = [t for t in termos if coberto(t)]
+    cobertos = [t for t in termos if _presente(t, presentes, grupos)]
     fracao = len(cobertos) / len(termos) if termos else 0.0
-    return Cobertura(passou=bool(termos) and fracao >= minimo, fracao=fracao, termos=termos, cobertos=cobertos)
+    passou = bool(termos) and fracao >= minimo
+    raros = None
+    if textos_indice and termos:
+        indice = [set(normalizar(texto)) for texto in textos_indice]
+        frequencia = {t: sum(_presente(t, tokens, grupos) for tokens in indice) for t in termos}
+        menor = min(frequencia.values())
+        raros = [t for t in termos if frequencia[t] == menor]
+        passou = passou and all(t in cobertos for t in raros)
+    return Cobertura(passou=passou, fracao=fracao, termos=termos, cobertos=cobertos, raros=raros)
 
 
 # --- guarda de identificadores ---
@@ -254,7 +279,8 @@ def gerar_resposta(pergunta: str, materiais: list[str] | None, sinonimos: list[l
         return sem_material
 
     sinonimos = repositorio.palavras_chave(None) if sinonimos is None else sinonimos
-    cobertura = avaliar_cobertura(pergunta, [t["texto"] for t in trechos], genericos, sinonimos)
+    cobertura = avaliar_cobertura(pergunta, [t["texto"] for t in trechos], genericos, sinonimos,
+                                  textos_indice=textos_do_indice() if TUTOR_EXIGE_TERMO_RARO else None)
     if not cobertura.passou:
         # só a fração: os termos são texto livre do aluno (R08)
         log.info("Portão de cobertura barrou a pergunta (%.2f); resposta fixa sem chamar o LLM.", cobertura.fracao)
