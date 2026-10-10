@@ -26,9 +26,9 @@ e `GET /relatorio/turma[?perfil_id=]`. Demonstração: `python -m tia.agentes.re
 | # | Indicador | Definição | Fórmula | Fonte de dados | Status |
 |---|---|---|---|---|---|
 | 1 | Progresso na trilha | Quanto da trilha do Planejador o aluno concluiu e em que nível está em cada competência | `% = etapas concluídas / etapas da trilha`. Etapa concluída = há sessão do questionário concluída na competência. Nível atual = `nivel` da sessão mais recente da competência | `trilha_estudo` (Agente 1), `tutor_sessoes` | PROVISÓRIO |
-| 2 | Desempenho | Taxa de acerto por competência e por nível, com tendência | `taxa = acertos / respostas`. Tendência: taxa nas últimas 5 respostas − taxa nas anteriores; ≥ +15 pontos = subindo, ≤ −15 = caindo, senão estável; menos de 3 respostas em um dos lados = insuficiente | `historico_respostas` (`topico`, `nivel`, `acertou`, `timestamp`) | PROVISÓRIO |
+| 2 | Desempenho | Taxa de acerto por competência e por nível, com tendência | `taxa = acertos / respostas`. Tendência (`base: "sessao"`): taxa na **última sessão** (a da resposta mais recente) − taxa nas outras sessões, só entre respostas com `sessao_id`; exige 2 sessões ou mais e 3 respostas de cada lado. Senão (respostas antigas sem `sessao_id`, sessão recém-aberta), fallback (`base: "janela"`): últimas 5 respostas − anteriores. ≥ +15 pontos = subindo, ≤ −15 = caindo, senão estável; menos de 3 respostas em um dos lados = insuficiente | `historico_respostas` (`topico`, `nivel`, `acertou`, `timestamp`, `sessao_id`) | PROVISÓRIO |
 | 3 | Engajamento | Sessões, dias ativos e dias de inatividade | sessões = linhas em `tutor_sessoes`; dias ativos = datas distintas com resposta, sessão ou pergunta no diálogo; dias de inatividade = dias inteiros desde a última ação (sem ação: desde a criação da trilha); inativo se ≥ `INATIVIDADE_DIAS` (3) | `tutor_sessoes`, `historico_respostas`, `tutor_dialogo`, `trilha_estudo` | PROVISÓRIO |
-| 4 | Pontos fracos recorrentes | Competências com erro repetido, e quanto o aluno pediu explicação nelas | competência com ≥ 2 erros **e** taxa de erro ≥ 50%; também a maior sequência de erros seguidos e o nº de perguntas no diálogo na competência (aproximação de "uso de explicação") | `historico_respostas`, `tutor_dialogo` (`competencia_id`) | PROVISÓRIO |
+| 4 | Pontos fracos recorrentes | Competências e itens com erro repetido, e quanto o aluno pediu explicação nelas | **Competência** (todas as respostas, com ou sem `item_id`): ≥ 2 erros **e** taxa de erro ≥ 50%; também a maior sequência de erros seguidos e o nº de perguntas no diálogo na competência (aproximação de "uso de explicação"). **Item** (`itens_fracos`, só respostas com `item_id`): mesmos limiares por item | `historico_respostas` (`item_id`), `tutor_dialogo` (`competencia_id`) | PROVISÓRIO |
 | 5 | Qualidade do feedback | Quanto do feedback veio do LLM, foi barrado pela guarda ou caiu no fallback, e quanto o docente vetou | `taxa(origem) = respostas com a origem / respostas com origem registrada` (item + diálogo); `taxa de veto = diálogos vetados / diálogos` | `auditoria` (origem de cada resposta de item, por `referencia_id`), `tutor_dialogo` (`origem`, `vetada`) | PROVISÓRIO |
 
 ### Turma / instituição (agregado)
@@ -39,6 +39,8 @@ e `GET /relatorio/turma[?perfil_id=]`. Demonstração: `python -m tia.agentes.re
   Uma taxa por competência ou por nível só aparece se pelo menos N alunos responderam.
 - **Indicadores agregados:** progresso médio, acerto agregado por competência e por nível, médias de
   engajamento, número de alunos com cada ponto fraco e qualidade do feedback do grupo.
+- **Itens com erro repetido:** só entram itens respondidos por pelo menos N alunos. Mostram quantos alunos
+  erraram (abaixo de N, "menos de 5") e o erro agregado.
 - **Alertas de risco** (contagens, nunca alunos):
   - inatividade (≥ `INATIVIDADE_DIAS`);
   - desempenho em queda (tendência "caindo");
@@ -48,11 +50,14 @@ e `GET /relatorio/turma[?perfil_id=]`. Demonstração: `python -m tia.agentes.re
 
 | Indicador afetado | Falta | Hoje | Proposta (só ADD COLUMN, sem apagar dados) |
 |---|---|---|---|
-| 4 (por item) | O item respondido | Pontos fracos só por competência | `ALTER TABLE historico_respostas ADD COLUMN item_id TEXT` (gravar em `tutor/repositorio.registrar_resposta`, que já tem o item) |
-| 2 (tendência por sessão) | A sessão de cada resposta | Tendência por janela das últimas 5 respostas | `ALTER TABLE historico_respostas ADD COLUMN sessao_id TEXT` |
 | 4 (uso de dica) | Não existe recurso de dica, e a leitura da explicação não é registrada (o feedback sempre vem com ela) | Aproximação: perguntas no diálogo na competência | Quando houver dica: `ALTER TABLE historico_respostas ADD COLUMN pediu_dica INTEGER` |
 | Turma | Turma do aluno | Instituição inteira ou perfil | `ALTER TABLE alunos ADD COLUMN turma_id TEXT` |
 | 5 (respostas antigas) | Origem das respostas gravadas antes da auditoria | Contadas em "sem registro" | Opcional: `ALTER TABLE historico_respostas ADD COLUMN origem TEXT`, para não depender do JOIN com a auditoria |
+
+**Resolvido em 10/10:** `historico_respostas.item_id` e `historico_respostas.sessao_id` (ADD COLUMN,
+nuláveis). O Tutor grava os dois em toda resposta. As respostas anteriores ficam com NULL e seguem
+pelos caminhos antigos: só por competência no indicador 4, janela de respostas no indicador 2.
+Detalhes em `docs/relatorios/colunas_item_sessao.md`.
 
 ## Limitações conhecidas
 
@@ -66,10 +71,11 @@ e `GET /relatorio/turma[?perfil_id=]`. Demonstração: `python -m tia.agentes.re
 
 1. Uma etapa da trilha deve contar como concluída quando o aluno conclui uma sessão do questionário na
    competência (2 acertos seguidos no nível 3), ou há outro critério (nota mínima, todas as atividades)?
-2. A tendência deve comparar sessões ou janelas de respostas? Quantas, e qual variação conta como queda
-   (hoje: 15 pontos percentuais)?
-3. "Ponto fraco recorrente": ≥ 2 erros e ≥ 50% de erro na competência serve? Deve ser por item (exige
-   gravar `item_id`)?
+2. A tendência compara a última sessão com as anteriores. Isso basta, ou deve comparar mais de uma
+   sessão recente? Qual variação conta como queda (hoje: 15 pontos percentuais)?
+3. "Ponto fraco recorrente": ≥ 2 erros e ≥ 50% de erro serve, por competência e por item? Como o
+   questionário não repete item na mesma sessão, o erro repetido por item só aparece entre sessões.
+   Isso faz sentido pedagogicamente?
 4. Haverá recurso de dica? Se sim, como registrar o uso (para o indicador 4)?
 5. Qual nível de inatividade justifica alerta para o docente (hoje: 3 dias, o mesmo do incentivo)?
 6. O grupo mínimo de 5 alunos para o relatório agregado está adequado para as turmas do piloto (30 alunos)?

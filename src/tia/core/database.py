@@ -43,6 +43,10 @@ COLUNAS_NOVAS_HISTORICO = {
     "nivel": "INTEGER",
     "fontes": "TEXT",  # lista de nomes de arquivo, em JSON
     "tempo_ms": "INTEGER",
+    # item e sessão de cada resposta (usados pelo Agente 3: pontos fracos por
+    # item e tendência por sessão); respostas anteriores a esta coluna ficam NULL
+    "item_id": "TEXT",
+    "sessao_id": "TEXT",
 }
 
 

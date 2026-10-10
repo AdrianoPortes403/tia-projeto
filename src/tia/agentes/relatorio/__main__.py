@@ -4,7 +4,9 @@ Demonstração e linha de comando do Agente 3 (Relatório).
 --demo: cria um banco TEMPORÁRIO (não toca em data/tia.db) com 6 alunos
 fictícios (DEMO-R01 a DEMO-R06; códigos, nunca nomes, R08) e padrões
 diferentes: constante, em queda, inativo, com dificuldade em repetição e
-dois do perfil intermediário. Imprime o relatório de um aluno, o da
+dois do perfil intermediário. As respostas gravam item_id e sessao_id,
+exceto as do DEMO-R06, que simulam respostas antigas (NULL) para mostrar
+o comportamento sem esses campos. Imprime o relatório de um aluno, o da
 instituição e o do perfil "iniciante" (4 alunos: suprimido, abaixo do
 grupo mínimo), cada um com o tempo gasto (R09 a medir na VM).
 
@@ -35,6 +37,7 @@ from tia.agentes.planejador.planejar import gerar_trilha
 from tia.agentes.planejador.repositorio import salvar_trilha
 from tia.agentes.relatorio import gerar_relatorio_aluno, gerar_relatorio_turma
 from tia.agentes.relatorio.narrativa import formatar_texto_aluno, formatar_texto_turma
+from tia.agentes.tutor.repositorio import carregar_itens
 from tia.core import auditoria
 from tia.core.config import CHAT_MODEL
 
@@ -55,24 +58,33 @@ ALUNOS_DEMO = [
      [("funcoes", 4, True)]),
 ]
 ALUNO_EXEMPLO = "DEMO-R02"  # o aluno em queda
+SEM_ITEM_NEM_SESSAO = {"DEMO-R06"}  # simula respostas gravadas antes das colunas item_id/sessao_id
 
 
 def popular_dados_sinteticos(agora: datetime, semente: int = 42):
     """Grava trilhas, sessões, respostas, diálogos e auditoria fictícios."""
     sorteio = random.Random(semente)
+    itens_por_competencia: dict[str, list[str]] = {}
+    for item in carregar_itens():
+        itens_por_competencia.setdefault(item["competencia_id"], []).append(item["id"])
     for aluno_id, perfil_id, sessoes, dialogos in ALUNOS_DEMO:
+        antigo = aluno_id in SEM_ITEM_NEM_SESSAO
         salvar_trilha(gerar_trilha(EntradaPlanejador(aluno_id=aluno_id, perfil_id=perfil_id, horas_semanais=6)), 6)
         conexao = database.obter_conexao()
         with conexao:
             for competencia, acertos, dias_atras, concluida in sessoes:
                 inicio = agora - timedelta(days=dias_atras, hours=2)
+                sessao_id = uuid.uuid4().hex
+                itens = itens_por_competencia[competencia]
                 nivel = 1
                 for n, acerto in enumerate(acertos):
                     ts = (inicio + timedelta(minutes=3 * n)).isoformat(timespec="seconds")
                     cursor = conexao.execute(
-                        """INSERT INTO historico_respostas (aluno_id, topico, acertou, timestamp, nivel, fontes, tempo_ms)
-                           VALUES (?, ?, ?, ?, ?, '[]', ?)""",
-                        (aluno_id, competencia, acerto == "1", ts, nivel, sorteio.randint(4000, 60000)))
+                        """INSERT INTO historico_respostas (aluno_id, topico, acertou, timestamp, nivel, fontes, tempo_ms,
+                                                           item_id, sessao_id)
+                           VALUES (?, ?, ?, ?, ?, '[]', ?, ?, ?)""",
+                        (aluno_id, competencia, acerto == "1", ts, nivel, sorteio.randint(4000, 60000),
+                         None if antigo else itens[n % len(itens)], None if antigo else sessao_id))
                     origem = sorteio.choices(["LLM", "guarda", "fallback"], weights=[8, 1, 1])[0]
                     auditoria.registrar(conexao, aluno_id, "resposta_item", cursor.lastrowid, origem, [], ts=ts)
                     nivel = min(3, nivel + 1) if acerto == "1" else max(1, nivel - 1)
@@ -80,7 +92,7 @@ def popular_dados_sinteticos(agora: datetime, semente: int = 42):
                 conexao.execute(
                     """INSERT INTO tutor_sessoes (id, aluno_id, competencia_id, nivel, concluida, criado_em, atualizado_em)
                        VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                    (uuid.uuid4().hex, aluno_id, competencia, nivel, concluida, inicio.isoformat(timespec="seconds"), fim))
+                    (sessao_id, aluno_id, competencia, nivel, concluida, inicio.isoformat(timespec="seconds"), fim))
             for competencia, dias_atras, vetada in dialogos:
                 ts = (agora - timedelta(days=dias_atras, hours=1)).isoformat(timespec="seconds")
                 origem = sorteio.choice(["LLM", "LLM", "fallback"])

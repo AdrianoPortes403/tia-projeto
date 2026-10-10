@@ -54,8 +54,9 @@ def resumo_aluno(rel: RelatorioAluno) -> str:
     else:
         linhas.append("Trilha: o aluno ainda não gerou a trilha de estudo.")
     linhas.append(f"Acerto geral: {pct(d.geral.taxa)} em {d.geral.respostas} respostas.")
+    recente = "na última sessão" if d.tendencia.base == "sessao" else "nas últimas respostas"
     linhas.append(f"Tendência do acerto: {DIRECAO[d.tendencia.direcao]}"
-                  + (f" ({pct(d.tendencia.recentes.taxa)} nas últimas respostas, "
+                  + (f" ({pct(d.tendencia.recentes.taxa)} {recente}, "
                      f"{pct(d.tendencia.anteriores.taxa)} antes)." if d.tendencia.variacao is not None else "."))
     linhas.append(f"Atividade: {e.sessoes} sessões, {e.dias_ativos} dias com atividade"
                   + (f", {e.dias_inativo} dias desde a última atividade." if e.dias_inativo is not None else "."))
@@ -140,8 +141,10 @@ def formatar_texto_aluno(rel: RelatorioAluno) -> str:
     for t in d.por_competencia:
         linhas.append(f"   - {nomes.get(t.chave, t.chave)}: {pct(t.taxa)} ({t.acertos} de {t.respostas})")
     linhas.append("   Por nível: " + (", ".join(f"nível {t.chave} {pct(t.taxa)}" for t in d.por_nivel) or "-"))
+    recente = ("na última sessão" if d.tendencia.base == "sessao"
+               else f"nas últimas {d.tendencia.recentes.respostas} respostas")
     linhas.append(f"   Tendência: {DIRECAO[d.tendencia.direcao]}"
-                  + (f" ({pct(d.tendencia.recentes.taxa)} nas últimas {d.tendencia.recentes.respostas} respostas,"
+                  + (f" ({pct(d.tendencia.recentes.taxa)} {recente},"
                      f" {pct(d.tendencia.anteriores.taxa)} antes)" if d.tendencia.variacao is not None else ""))
     linhas += ["", "3. Sua atividade",
                f"   {e.sessoes} sessões ({e.sessoes_concluidas} concluídas), {e.respostas} respostas, "
@@ -156,6 +159,8 @@ def formatar_texto_aluno(rel: RelatorioAluno) -> str:
                           f"(até {f.maior_sequencia_erros} seguidos); {f.perguntas_dialogo} perguntas ao Tutor")
     else:
         linhas.append("   Nenhum tema com erro repetido.")
+    for i in rel.itens_fracos:
+        linhas.append(f"   - questão {i.item_id}: {i.erros} erros em {i.respostas} tentativas")
     linhas += ["", "5. Respostas do Tutor para você",
                "   " + ", ".join(f"{o}: {n}" for o, n in q.por_origem.items())
                + f"; respostas revisadas por professor: {q.vetados} de {q.dialogos}"]
@@ -189,6 +194,9 @@ def formatar_texto_turma(rel: RelatorioTurma) -> str:
     linhas += ([f"   - {g.chave}: {g.alunos.texto} alunos"
                 + ("" if g.suprimido else f", erro agregado {pct(g.taxa)}") for g in rel.pontos_fracos]
                or ["   Nenhum."])
+    linhas.append("   Itens com erro repetido (respondidos por pelo menos o grupo mínimo):")
+    linhas += ([f"   - {g.chave}: {g.alunos.texto} alunos erraram, erro agregado {pct(g.taxa)} em {g.respostas} "
+                f"respostas" for g in rel.itens_fracos] or ["   Nenhum."])
     q = rel.qualidade_feedback
     linhas += ["", "5. Qualidade do feedback",
                "   Origem: " + ", ".join(f"{o} {n} ({pct(q.taxa_por_origem[o])})" for o, n in q.por_origem.items())

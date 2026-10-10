@@ -52,8 +52,10 @@ class Progresso(BaseModel):
 # --- 2. desempenho ---
 
 class Tendencia(BaseModel):
-    """Acerto nas últimas respostas x nas anteriores (PROVISÓRIO: por janela de
-    respostas, porque historico_respostas não guarda a sessão)."""
+    """Acerto recente x anterior (PROVISÓRIO). base "sessao": última sessão x
+    sessões anteriores (respostas com sessao_id); base "janela": últimas
+    respostas x anteriores, para respostas antigas, sem sessao_id."""
+    base: Literal["sessao", "janela"]
     recentes: Taxa
     anteriores: Taxa
     variacao: float | None  # recentes.taxa - anteriores.taxa
@@ -96,6 +98,16 @@ class PontoFraco(BaseModel):
 
 # --- 5. qualidade do feedback ---
 
+class ItemFraco(BaseModel):
+    """Item do banco com erro repetido (só respostas com item_id)."""
+    item_id: str
+    competencia_id: str
+    respostas: int
+    erros: int
+    taxa_erro: float
+    maior_sequencia_erros: int
+
+
 class QualidadeFeedback(BaseModel):
     respostas_com_origem: int
     respostas_sem_registro: int  # anteriores à auditoria (sem origem gravada)
@@ -123,6 +135,7 @@ class RelatorioAluno(BaseModel):
     desempenho: Desempenho
     engajamento: Engajamento
     pontos_fracos: list[PontoFraco] = []
+    itens_fracos: list[ItemFraco] = []
     qualidade_feedback: QualidadeFeedback
     narrativa: Narrativa
 
@@ -174,6 +187,7 @@ class RelatorioTurma(BaseModel):
     desempenho_por_nivel: list[GrupoTaxa] = []
     engajamento: EngajamentoTurma | None = None
     pontos_fracos: list[GrupoTaxa] = []  # alunos com a competência como ponto fraco
+    itens_fracos: list[GrupoTaxa] = []   # alunos que erraram o item; taxa = erro agregado
     qualidade_feedback: QualidadeFeedback | None = None
     alertas: list[AlertaTurma] = []
     narrativa: Narrativa

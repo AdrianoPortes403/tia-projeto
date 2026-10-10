@@ -465,7 +465,10 @@ def test_migracao_do_historico_preserva_linhas_antigas(tmp_path, monkeypatch):
     conexao = sqlite3.connect(caminho)
     colunas = {linha[1] for linha in conexao.execute("PRAGMA table_info(historico_respostas)")}
     assert set(database.COLUNAS_NOVAS_HISTORICO) <= colunas
-    assert conexao.execute("SELECT topico FROM historico_respostas").fetchall() == [("antigo",)]
+    assert {"item_id", "sessao_id"} <= colunas
+    # a linha antiga continua lá, com as colunas novas em NULL
+    assert conexao.execute("SELECT topico, acertou, item_id, sessao_id FROM historico_respostas").fetchall() == [
+        ("antigo", 1, None, None)]
     conexao.close()
 
 

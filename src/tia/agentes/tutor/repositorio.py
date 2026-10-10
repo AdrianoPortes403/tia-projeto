@@ -125,10 +125,11 @@ def registrar_resposta(sessao_id: str, aluno_id: str, item_respondido: dict, nov
             nivel = item_respondido["nivel"]
             cursor = conexao.execute(
                 """INSERT INTO historico_respostas
-                   (aluno_id, topico, dificuldade, acertou, timestamp, nivel, fontes, tempo_ms)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (aluno_id, topico, dificuldade, acertou, timestamp, nivel, fontes, tempo_ms, item_id, sessao_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (aluno_id, item_respondido["competencia_id"], DIFICULDADE_POR_NIVEL.get(nivel), acertou,
-                 agora, nivel, json.dumps(fontes, ensure_ascii=False), tempo_ms),
+                 agora, nivel, json.dumps(fontes, ensure_ascii=False), tempo_ms,
+                 item_respondido["id"], sessao_id),
             )
             auditoria.registrar(conexao, aluno_id, "resposta_item", cursor.lastrowid, origem, fontes, ts=agora)
     finally:

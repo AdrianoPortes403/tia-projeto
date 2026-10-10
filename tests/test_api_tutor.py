@@ -84,6 +84,18 @@ def test_resposta_correta_sobe_nivel_cita_fonte_e_grava_historico():
     assert json.loads(linha["fontes"]) == [MATERIAL] and linha["tempo_ms"] is not None
 
 
+def test_tutor_grava_item_e_sessao_de_cada_resposta():
+    sessao = iniciar().json()
+    primeira = sessao["pergunta"]
+    segunda = responder(sessao, primeira, correta=True).json()["proxima_pergunta"]
+    responder(sessao, segunda, correta=False)
+    conexao = obter_conexao()
+    linhas = conexao.execute("SELECT item_id, sessao_id FROM historico_respostas ORDER BY id").fetchall()
+    conexao.close()
+    assert [tuple(linha) for linha in linhas] == [(primeira["item_id"], sessao["sessao_id"]),
+                                                  (segunda["item_id"], sessao["sessao_id"])]
+
+
 def test_resposta_incorreta_nao_passa_do_nivel_1():
     sessao = iniciar().json()
     fb = responder(sessao, sessao["pergunta"], correta=False).json()

@@ -8,8 +8,10 @@ validação dos critérios com a Pessoa 4 (docs/arquitetura/relatorio_indicadore
 
     1. progresso:          % de etapas da trilha concluídas e nível atual por competência
     2. desempenho:         taxa de acerto por competência e por nível, com tendência
+                           (última sessão x anteriores; sem sessao_id, janela de respostas)
     3. engajamento:        sessões, dias ativos e dias de inatividade (INATIVIDADE_DIAS)
-    4. pontos fracos:      competências com erro repetido (+ perguntas no diálogo)
+    4. pontos fracos:      competências e itens (com item_id) com erro repetido
+                           (+ perguntas no diálogo)
     5. qualidade feedback: taxa de origem LLM/guarda/fallback e taxa de veto docente
 
 Turma/instituição (agregar_turma): só agregados; grupo com menos de
@@ -25,14 +27,14 @@ Pré-requisitos:
 from datetime import datetime
 
 from tia.agentes.relatorio.modelos import (AlertaTurma, Contagem, Desempenho, Engajamento, EngajamentoTurma,
-                                           GrupoTaxa, Progresso, ProgressoCompetencia, PontoFraco,
+                                           GrupoTaxa, ItemFraco, Progresso, ProgressoCompetencia, PontoFraco,
                                            QualidadeFeedback, Taxa, Tendencia)
 from tia.agentes.relatorio.repositorio import DadosAluno
 from tia.core.config import INATIVIDADE_DIAS
 
 # PROVISÓRIO: critérios a validar com a Pessoa 4.
-JANELA_TENDENCIA = 5            # últimas N respostas x todas as anteriores
-MIN_RESPOSTAS_TENDENCIA = 3     # mínimo em cada lado para haver tendência
+JANELA_TENDENCIA = 5            # sem sessao_id: últimas N respostas x todas as anteriores
+MIN_RESPOSTAS_TENDENCIA = 3     # mínimo em cada lado para haver tendência (sessão ou janela)
 LIMIAR_TENDENCIA = 0.15         # variação de taxa que conta como subida/queda
 PONTO_FRACO_MIN_ERROS = 2       # erros na competência para contar como recorrente...
 PONTO_FRACO_TAXA_ERRO = 0.5     # ...com taxa de erro de pelo menos isto
@@ -75,16 +77,31 @@ def progresso(dados: DadosAluno, nomes: dict[str, str]) -> Progresso:
 
 # --- 2. desempenho ---
 
-def tendencia(respostas: list[dict]) -> Tendencia:
-    """Últimas JANELA_TENDENCIA respostas x todas as anteriores (em ordem de tempo)."""
-    recentes, anteriores = respostas[-JANELA_TENDENCIA:], respostas[:-JANELA_TENDENCIA]
+def _comparar(base: str, recentes: list[dict], anteriores: list[dict]) -> Tendencia:
     t_recentes, t_anteriores = _taxa("recentes", recentes), _taxa("anteriores", anteriores)
     if len(recentes) < MIN_RESPOSTAS_TENDENCIA or len(anteriores) < MIN_RESPOSTAS_TENDENCIA:
-        return Tendencia(recentes=t_recentes, anteriores=t_anteriores, variacao=None, direcao="insuficiente")
+        return Tendencia(base=base, recentes=t_recentes, anteriores=t_anteriores, variacao=None,
+                         direcao="insuficiente")
     variacao = round(t_recentes.taxa - t_anteriores.taxa, 3)
     direcao = ("subindo" if variacao >= LIMIAR_TENDENCIA else
                "caindo" if variacao <= -LIMIAR_TENDENCIA else "estavel")
-    return Tendencia(recentes=t_recentes, anteriores=t_anteriores, variacao=variacao, direcao=direcao)
+    return Tendencia(base=base, recentes=t_recentes, anteriores=t_anteriores, variacao=variacao, direcao=direcao)
+
+
+def tendencia(respostas: list[dict]) -> Tendencia:
+    """Com sessao_id: respostas da última sessão (a da resposta mais recente)
+    x respostas das outras sessões. Usada se houver 2 sessões ou mais e
+    MIN_RESPOSTAS_TENDENCIA respostas de cada lado; senão (respostas antigas,
+    sem sessao_id, ou sessão recém-aberta), últimas JANELA_TENDENCIA respostas
+    x todas as anteriores. Respostas em ordem de tempo."""
+    com_sessao = [r for r in respostas if r.get("sessao_id")]
+    if com_sessao:
+        ultima = com_sessao[-1]["sessao_id"]
+        recentes = [r for r in com_sessao if r["sessao_id"] == ultima]
+        anteriores = [r for r in com_sessao if r["sessao_id"] != ultima]
+        if len(recentes) >= MIN_RESPOSTAS_TENDENCIA and len(anteriores) >= MIN_RESPOSTAS_TENDENCIA:
+            return _comparar("sessao", recentes, anteriores)
+    return _comparar("janela", respostas[-JANELA_TENDENCIA:], respostas[:-JANELA_TENDENCIA])
 
 
 def desempenho(respostas: list[dict]) -> Desempenho:
@@ -131,21 +148,40 @@ def _maior_sequencia_erros(respostas: list[dict]) -> int:
     return maior
 
 
+def _erro_repetido(erros: int, respostas: int) -> bool:
+    return erros >= PONTO_FRACO_MIN_ERROS and erros / respostas >= PONTO_FRACO_TAXA_ERRO
+
+
 def pontos_fracos(respostas: list[dict], dialogos: list[dict], nomes: dict[str, str]) -> list[PontoFraco]:
     """Competências com pelo menos PONTO_FRACO_MIN_ERROS erros e taxa de erro
-    >= PONTO_FRACO_TAXA_ERRO, da mais errada para a menos. Por item não é
-    possível: historico_respostas não guarda o item_id."""
+    >= PONTO_FRACO_TAXA_ERRO, da mais errada para a menos. Usa todas as
+    respostas, com ou sem item_id (o detalhe por item está em itens_fracos)."""
     fracos = []
     for c in dict.fromkeys(r["competencia_id"] for r in respostas):
         da_competencia = [r for r in respostas if r["competencia_id"] == c]
         erros = sum(not r["acertou"] for r in da_competencia)
         taxa_erro = erros / len(da_competencia)
-        if erros >= PONTO_FRACO_MIN_ERROS and taxa_erro >= PONTO_FRACO_TAXA_ERRO:
+        if _erro_repetido(erros, len(da_competencia)):
             fracos.append(PontoFraco(
                 competencia_id=c, nome=nomes.get(c, c), respostas=len(da_competencia), erros=erros,
                 taxa_erro=round(taxa_erro, 3), maior_sequencia_erros=_maior_sequencia_erros(da_competencia),
                 perguntas_dialogo=sum(d["competencia_id"] == c for d in dialogos)))
     return sorted(fracos, key=lambda p: (-p.taxa_erro, -p.erros, p.competencia_id))
+
+
+def itens_fracos(respostas: list[dict]) -> list[ItemFraco]:
+    """Itens com erro repetido (mesmos limiares da competência), só entre as
+    respostas com item_id; as antigas, sem item_id, ficam só no agrupamento
+    por competência."""
+    fracos = []
+    for item_id in dict.fromkeys(r["item_id"] for r in respostas if r.get("item_id")):
+        do_item = [r for r in respostas if r.get("item_id") == item_id]
+        erros = sum(not r["acertou"] for r in do_item)
+        if _erro_repetido(erros, len(do_item)):
+            fracos.append(ItemFraco(item_id=item_id, competencia_id=do_item[0]["competencia_id"],
+                                    respostas=len(do_item), erros=erros, taxa_erro=round(erros / len(do_item), 3),
+                                    maior_sequencia_erros=_maior_sequencia_erros(do_item)))
+    return sorted(fracos, key=lambda f: (-f.taxa_erro, -f.erros, f.item_id))
 
 
 # --- 5. qualidade do feedback ---
@@ -218,6 +254,18 @@ def agregar_turma(dados: list[DadosAluno], agora: datetime, min_grupo: int, nome
                                     respostas=grupo.respostas,
                                     taxa=None if grupo.taxa is None else round(1 - grupo.taxa, 3)))
 
+    # itens: só os respondidos por pelo menos min_grupo alunos são avaliados (R08)
+    itens = []
+    for item_id in dict.fromkeys(r["item_id"] for d in dados for r in d.respostas if r.get("item_id")):
+        por_aluno = [[r for r in d.respostas if r.get("item_id") == item_id] for d in dados]
+        grupo = _grupo(item_id, por_aluno, min_grupo)
+        erros = sum(not r["acertou"] for respostas in por_aluno for r in respostas)
+        if not grupo.suprimido and _erro_repetido(erros, grupo.respostas):
+            erraram = sum(any(not r["acertou"] for r in respostas) for respostas in por_aluno)
+            itens.append(GrupoTaxa(chave=item_id, alunos=contagem(erraram, min_grupo), suprimido=False,
+                                   respostas=grupo.respostas, taxa=round(1 - grupo.taxa, 3)))
+    itens.sort(key=lambda g: (-g.taxa, g.chave))
+
     inativos = sum(e.inativo for e in engajamentos)
     em_queda = sum(t.direcao == "caindo" for t in tendencias)
     alertas = []
@@ -226,8 +274,9 @@ def agregar_turma(dados: list[DadosAluno], agora: datetime, min_grupo: int, nome
                                    descricao=f"Alunos sem atividade há {INATIVIDADE_DIAS} dias ou mais."))
     if em_queda:
         alertas.append(AlertaTurma(tipo="desempenho_em_queda", alunos=contagem(em_queda, min_grupo),
-                                   descricao=(f"Alunos com acerto nas últimas {JANELA_TENDENCIA} respostas "
-                                              f"{round(LIMIAR_TENDENCIA * 100)} pontos ou mais abaixo das anteriores.")))
+                                   descricao=(f"Alunos com acerto na última sessão (ou, sem sessão registrada, nas "
+                                              f"últimas {JANELA_TENDENCIA} respostas) {round(LIMIAR_TENDENCIA * 100)} "
+                                              f"pontos ou mais abaixo do anterior.")))
     for grupo in por_competencia:
         if not grupo.suprimido and grupo.taxa is not None and grupo.taxa < 1 - TURMA_TAXA_ERRO_ALTO:
             alertas.append(AlertaTurma(tipo="competencia_com_erro_alto", alunos=grupo.alunos,
@@ -250,6 +299,7 @@ def agregar_turma(dados: list[DadosAluno], agora: datetime, min_grupo: int, nome
             media_perguntas_dialogo=round(sum(e.perguntas_dialogo for e in engajamentos) / n, 1),
             inativos=contagem(inativos, min_grupo)),
         "pontos_fracos": fracos,
+        "itens_fracos": itens,
         "qualidade_feedback": qualidade_feedback(todas_respostas, todos_dialogos),
         "alertas": alertas,
     }

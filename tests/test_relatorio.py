@@ -33,9 +33,10 @@ def ts(dias_atras: float, minutos: int = 0) -> str:
 
 
 def resposta(competencia: str, acertou: bool, nivel: int = 1, dias_atras: float = 1, minutos: int = 0,
-             origem: str | None = "LLM") -> dict:
+             origem: str | None = "LLM", item_id: str | None = None, sessao_id: str | None = None) -> dict:
+    """Sem item_id/sessao_id: como as respostas gravadas antes dessas colunas."""
     return {"competencia_id": competencia, "nivel": nivel, "acertou": acertou, "ts": ts(dias_atras, minutos),
-            "origem": origem}
+            "origem": origem, "item_id": item_id, "sessao_id": sessao_id}
 
 
 def trilha(*competencias: str) -> Trilha:
@@ -90,9 +91,40 @@ def test_desempenho_por_competencia_e_por_nivel():
     ("1111", "insuficiente", None),           # nem 5 recentes
 ])
 def test_tendencia_ultimas_respostas_contra_anteriores(sequencia, direcao, variacao):
-    respostas = [resposta("a", c == "1", minutos=n) for n, c in enumerate(sequencia)]
+    respostas = [resposta("a", c == "1", minutos=n) for n, c in enumerate(sequencia)]  # sem sessao_id
     t = indicadores.tendencia(respostas)
-    assert (t.direcao, t.variacao) == (direcao, variacao)
+    assert (t.base, t.direcao, t.variacao) == ("janela", direcao, variacao)
+
+
+def respostas_por_sessao(*sessoes: tuple[str, str]) -> list[dict]:
+    """[(sessao_id, "1101"), ...] em ordem de tempo."""
+    lista, minuto = [], 0
+    for sessao_id, sequencia in sessoes:
+        for c in sequencia:
+            lista.append(resposta("a", c == "1", minutos=minuto, sessao_id=sessao_id))
+            minuto += 1
+    return lista
+
+
+def test_tendencia_compara_a_ultima_sessao_com_as_anteriores():
+    # anteriores: S1 + S2 = 6/7; última (S3) = 1/3. Pela janela seria outra conta
+    t = indicadores.tendencia(respostas_por_sessao(("S1", "1111"), ("S2", "110"), ("S3", "010")))
+    assert (t.base, t.recentes.respostas, t.anteriores.respostas, t.direcao, t.variacao) == (
+        "sessao", 3, 7, "caindo", -0.524)
+
+
+def test_tendencia_por_sessao_ignora_respostas_antigas_sem_sessao():
+    antigas = [resposta("a", False, minutos=-10 + n) for n in range(4)]  # sem sessao_id, todas erradas
+    t = indicadores.tendencia(antigas + respostas_por_sessao(("S1", "111"), ("S2", "111")))
+    assert (t.base, t.anteriores.respostas, t.direcao) == ("sessao", 3, "estavel")
+
+
+@pytest.mark.parametrize("sessoes", [
+    (("S1", "11110"), ("S2", "0")),   # sessão recém-aberta: 1 resposta, abaixo do mínimo
+    (("S1", "1111100000"),),          # uma sessão só: não há "anteriores"
+])
+def test_tendencia_volta_para_a_janela_quando_a_sessao_nao_basta(sessoes):
+    assert indicadores.tendencia(respostas_por_sessao(*sessoes)).base == "janela"
 
 
 def test_desempenho_sem_respostas():
@@ -130,6 +162,24 @@ def test_pontos_fracos_erro_repetido_sequencia_e_dialogo():
     (fraco,) = indicadores.pontos_fracos(respostas, dialogos, NOMES)
     assert (fraco.competencia_id, fraco.nome, fraco.respostas, fraco.erros, fraco.taxa_erro,
             fraco.maior_sequencia_erros, fraco.perguntas_dialogo) == ("a", "Comp A", 4, 3, 0.75, 2, 2)
+
+
+def test_itens_fracos_so_com_item_id():
+    respostas = ([resposta("a", c == "1", minutos=n, item_id="a_n1a") for n, c in enumerate("010")]   # 2/3
+                 + [resposta("a", c == "1", minutos=10 + n, item_id="a_n1b") for n, c in enumerate("01")]  # 1 erro
+                 + [resposta("a", False, minutos=20 + n) for n in range(3)])                  # antigas, sem item
+    (item,) = indicadores.itens_fracos(respostas)
+    assert (item.item_id, item.competencia_id, item.respostas, item.erros, item.taxa_erro,
+            item.maior_sequencia_erros) == ("a_n1a", "a", 3, 2, 0.667, 1)
+    # a competência continua contando todas as respostas, com e sem item_id
+    (competencia,) = indicadores.pontos_fracos(respostas, [], NOMES)
+    assert (competencia.respostas, competencia.erros) == (8, 6)
+
+
+def test_sem_item_id_nao_ha_itens_fracos_mas_ha_competencia():
+    respostas = [resposta("a", False, minutos=n) for n in range(3)]
+    assert indicadores.itens_fracos(respostas) == []
+    assert [p.competencia_id for p in indicadores.pontos_fracos(respostas, [], NOMES)] == ["a"]
 
 
 def test_pontos_fracos_ordenados_pela_taxa_de_erro():
@@ -189,6 +239,25 @@ def test_grupo_de_competencia_abaixo_do_minimo_e_suprimido():
         True, "menos de 5", None, None)
 
 
+def aluno_com_item(i: int, sequencia: str, item_id: str = "a_n2a") -> DadosAluno:
+    return dados(respostas=[resposta("a", c == "1", minutos=n, item_id=item_id) for n, c in enumerate(sequencia)],
+                 aluno_id=f"T{i}")
+
+
+def test_itens_fracos_da_turma_respeitam_o_grupo_minimo():
+    # 5 alunos responderam a_n2a: 4 erraram (erro agregado 4/5); só 4 responderam b_n1a
+    turma = ([aluno_com_item(i, "0") for i in range(4)] + [aluno_com_item(4, "1")]
+             + [aluno_com_item(i, "00", "b_n1a") for i in range(5, 9)])
+    (item,) = indicadores.agregar_turma(turma, AGORA, 5, NOMES)["itens_fracos"]
+    assert (item.chave, item.alunos.texto, item.respostas, item.taxa, item.suprimido) == (
+        "a_n2a", "menos de 5", 5, 0.8, False)
+
+
+def test_turma_sem_item_id_nao_lista_itens():
+    turma = [aluno_turma(i) for i in range(6)]
+    assert indicadores.agregar_turma(turma, AGORA, 5, NOMES)["itens_fracos"] == []
+
+
 def test_alertas_da_turma_sao_contagens_agregadas():
     turma = ([aluno_turma(i, "a", queda=True, dias_atras=10) for i in range(5)]
              + [aluno_turma(i, "a") for i in range(5, 7)])
@@ -234,13 +303,34 @@ def test_relatorio_do_aluno_completo_com_narrativa_do_llm(demo, llm):
                                           "motivo_descarte": ""}
     assert (rel.progresso.concluidas, rel.progresso.etapas) == (1, 6)
     assert (rel.desempenho.geral.acertos, rel.desempenho.geral.respostas) == (9, 13)
-    assert rel.desempenho.tendencia.direcao == "caindo"
+    t = rel.desempenho.tendencia
+    assert (t.base, t.direcao, t.recentes.respostas, t.anteriores.respostas) == ("sessao", "caindo", 4, 9)
     assert rel.engajamento.dias_inativo == 2 and rel.engajamento.inativo is False
     assert [p.competencia_id for p in rel.pontos_fracos] == ["repeticao"]
     prompt, kwargs = llm["prompts"][0]
     assert "DEMO-R02" not in prompt  # o LLM não recebe o código do aluno
     assert "69%" in prompt and "1 de 6 etapas" in prompt
     assert kwargs["temperatura"] == narrativa.RELATORIO_TEMPERATURA and kwargs["seed"] == narrativa.RELATORIO_SEED
+
+
+def test_relatorio_com_respostas_antigas_sem_item_nem_sessao(demo, llm):
+    rel = gerar_relatorio_aluno("DEMO-R06", agora=AGORA)  # a demo grava NULL para este aluno
+    assert rel.itens_fracos == [] and rel.desempenho.tendencia.base == "janela"
+    assert [p.competencia_id for p in rel.pontos_fracos] == ["funcoes"]
+
+
+def test_relatorio_lista_item_com_erro_repetido(demo, llm):
+    rel = gerar_relatorio_aluno("DEMO-R04", agora=AGORA)  # repeticao "010010": itens n1a..n3b, um por resposta
+    assert rel.itens_fracos == []  # nenhum item repetido na mesma sessão
+    conexao = obter_conexao()
+    with conexao:  # nova sessão errando de novo o primeiro item de repetição
+        for minuto in range(2):
+            conexao.execute("""INSERT INTO historico_respostas (aluno_id, topico, acertou, timestamp, nivel,
+                                   item_id, sessao_id) VALUES ('DEMO-R04', 'repeticao', 0, ?, 1, 'repeticao_n1a', 'S9')""",
+                            (ts(0.5, minuto),))
+    conexao.close()
+    (item,) = gerar_relatorio_aluno("DEMO-R04", agora=AGORA).itens_fracos
+    assert (item.item_id, item.respostas, item.erros) == ("repeticao_n1a", 3, 3)
 
 
 def test_relatorio_funciona_completo_sem_llm(demo, llm):

@@ -56,6 +56,7 @@ def gerar_relatorio_aluno(aluno_id: str, agora: datetime | None = None,
         desempenho=indicadores.desempenho(dados.respostas),
         engajamento=indicadores.engajamento(dados, agora),
         pontos_fracos=indicadores.pontos_fracos(dados.respostas, dados.dialogos, nomes),
+        itens_fracos=indicadores.itens_fracos(dados.respostas),
         qualidade_feedback=indicadores.qualidade_feedback(dados.respostas, dados.dialogos),
         narrativa=Narrativa(texto=narrativa.FALLBACK_ALUNO, origem="fallback"),
     )

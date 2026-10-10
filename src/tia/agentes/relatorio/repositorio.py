@@ -32,7 +32,8 @@ class DadosAluno:
     perfil_id: str | None
     trilha: Trilha | None
     trilha_criada_em: str | None
-    # cada resposta: competencia_id, nivel, acertou, ts, origem (None sem auditoria)
+    # cada resposta: competencia_id, nivel, acertou, ts, origem (None sem auditoria),
+    # item_id e sessao_id (None nas respostas gravadas antes dessas colunas)
     respostas: list[dict] = field(default_factory=list)
     # cada sessão: competencia_id, nivel, concluida, criado_em, atualizado_em
     sessoes: list[dict] = field(default_factory=list)
@@ -68,7 +69,8 @@ def ler_dados_aluno(aluno_id: str) -> DadosAluno | None:
                WHERE aluno_id = ? AND competencia_id IS NOT NULL""", (aluno_id,),
         ).fetchone()
         respostas = conexao.execute(
-            """SELECT h.id, h.topico AS competencia_id, h.nivel, h.acertou, h.timestamp AS ts, a.origem
+            """SELECT h.id, h.topico AS competencia_id, h.nivel, h.acertou, h.timestamp AS ts, a.origem,
+                      h.item_id, h.sessao_id
                FROM historico_respostas h
                LEFT JOIN auditoria a ON a.tipo = 'resposta_item' AND a.referencia_id = CAST(h.id AS TEXT)
                WHERE h.aluno_id = ? AND h.nivel IS NOT NULL
@@ -90,7 +92,8 @@ def ler_dados_aluno(aluno_id: str) -> DadosAluno | None:
         trilha=ler_trilha(aluno_id),
         trilha_criada_em=trilha_info["criado"],
         respostas=[{"competencia_id": r["competencia_id"], "nivel": r["nivel"], "acertou": bool(r["acertou"]),
-                    "ts": r["ts"], "origem": r["origem"]} for r in respostas],
+                    "ts": r["ts"], "origem": r["origem"], "item_id": r["item_id"],
+                    "sessao_id": r["sessao_id"]} for r in respostas],
         sessoes=[{"competencia_id": s["competencia_id"], "nivel": s["nivel"], "concluida": bool(s["concluida"]),
                   "criado_em": s["criado_em"], "atualizado_em": s["atualizado_em"]} for s in sessoes],
         dialogos=[{"competencia_id": d["competencia_id"], "origem": d["origem"], "vetada": bool(d["vetada"]),
