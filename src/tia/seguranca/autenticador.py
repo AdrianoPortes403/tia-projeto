@@ -7,8 +7,11 @@ CONTRATO (Autenticador):
         - recebe as credenciais do provedor (local: {"login", "senha"};
           EBAULA: por exemplo {"ticket"} ou {"token"} do login único);
         - devolve o Usuario do TIA (id de login, papel aluno/docente/admin,
-          aluno_id no papel aluno) se as credenciais valem e o usuário está
-          ativo; None em qualquer outro caso, sem dizer o porquê;
+          aluno_id no papel aluno, trocar_senha) se as credenciais valem e o
+          usuário está ativo; None em qualquer outro caso, sem dizer o porquê;
+        - trocar_senha=True só no provedor local (senha temporária); um
+          provedor externo devolve False (a senha é dele, e POST /auth/senha
+          responde 409 com outro provedor);
         - nunca grava credencial em log ou auditoria e não abre sessão.
 
 O resto NÃO depende do provedor: limite de tentativas, sessão no servidor
@@ -49,7 +52,7 @@ class AutenticadorLocal:
             return None
         if not senhas.conferir(senha, linha["senha_hash"]) or not linha["ativo"]:
             return None
-        return Usuario(linha["id"], linha["papel"], linha["aluno_id"], True)
+        return Usuario(linha["id"], linha["papel"], linha["aluno_id"], True, bool(linha["trocar_senha"]))
 
 
 PROVEDORES: dict[str, type] = {"local": AutenticadorLocal}

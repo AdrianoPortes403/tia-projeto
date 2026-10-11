@@ -100,9 +100,15 @@
     $("login-mensagem").textContent = mensagem || "";
     $("login-mensagem").hidden = !mensagem;
     $("form-login").hidden = !!paraDocente;
+    TIA.esconderTrocaDeSenha();
     $("login-painel").hidden = !paraDocente;
     irPara("login");
     if (!paraDocente) $("campo-login").focus();
+  }
+
+  function mostrarTrocaDeSenha() {
+    mostrarLogin();
+    TIA.mostrarTrocaDeSenha();
   }
 
   async function iniciar() {
@@ -121,6 +127,7 @@
       return;
     }
     if (!situacao.usuario) { mostrarLogin(); return; }
+    if (situacao.usuario.trocar_senha) { mostrarTrocaDeSenha(); return; }
     if (situacao.usuario.papel !== "aluno") {
       mostrarLogin("Esta aplicação é para alunos. Você entrou como " + situacao.usuario.papel + ".", true);
       return;
@@ -578,6 +585,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     TIA.configurar({ aoExigirLogin: () => mostrarLogin("Sua sessão terminou. Entre de novo.") });
     $("form-login").addEventListener("submit", entrarComSenha);
+    TIA.ligarTrocaDeSenha(iniciar);
     $("sair").addEventListener("click", encerrarSessao);
     $("form-entrada").addEventListener("submit", entrar);
     $("form-matricula").addEventListener("submit", matricular);

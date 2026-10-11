@@ -9,8 +9,14 @@ Autorização das rotas (EAP 1.4.6): dependências do FastAPI.
     conferir_aluno(...)     o mesmo, para aluno_id que vem no corpo do pedido
 
 Toda recusa (401/403) responde com mensagem clara e grava "acesso_negado" na
-auditoria, com a rota. Com TIA_AUTH=desligada (modo de desenvolvimento) tudo
-passa e a auditoria grava o papel "sem_login".
+auditoria, com a rota. Os 401 de quem não tem sessão são agregados por origem
+e janela (seguranca.anonimos), para ninguém encher a auditoria. Com
+TIA_AUTH=desligada (modo de desenvolvimento) tudo passa e a auditoria grava o
+papel "sem_login".
+
+Senha temporária (criada ou redefinida pelo admin): até o usuário trocá-la, só
+POST /auth/senha e POST /auth/logout aceitam a sessão; as outras rotas
+respondem 403 pedindo a troca.
 
 Matriz de acesso: docs/arquitetura/arquitetura.md, seção "Segurança".
 
@@ -30,14 +36,20 @@ from fastapi import Depends, HTTPException, Request
 import tia.core.config as config
 from tia.core import auditoria
 from tia.core.database import obter_conexao
+from tia.seguranca import anonimos
 from tia.seguranca.sessoes import ler_sessao
 
 NOME_COOKIE = "tia_sessao"
 CABECALHO_CSRF = "X-CSRF-Token"
 METODOS_SEGUROS = ("GET", "HEAD", "OPTIONS")
 SEM_LOGIN = "sem_login"
+ANONIMO = "anonimo"
+# rotas que aceitam a sessão com senha temporária ainda não trocada
+ROTAS_DA_TROCA_DE_SENHA = ("/auth/senha", "/auth/logout")
+MENSAGEM_TROCAR_SENHA = "Troque a senha temporária antes de continuar."
 
 _ROTA: ContextVar[str] = ContextVar("rota", default="")
+_IP: ContextVar[str] = ContextVar("ip", default="desconhecido")
 
 
 @dataclass
@@ -46,35 +58,50 @@ class UsuarioSessao:
     papel: str
     aluno_id: str | None = None
     csrf: str | None = None
+    trocar_senha: bool = False
+
+
+def ip_de(request: Request) -> str:
+    """Origem do pedido (só para os limites; nunca vai para a auditoria)."""
+    return request.client.host if request.client else "desconhecido"
 
 
 def negar(status: int, detalhe: str, aluno_id: str | None = None):
-    """Grava a recusa na auditoria e levanta o erro HTTP."""
-    conexao = obter_conexao()
-    try:
-        with conexao:
-            auditoria.registrar(conexao, aluno_id, "acesso_negado", _ROTA.get() or None, str(status), [],
-                                ts=datetime.now().isoformat(timespec="seconds"), motivo=detalhe)
-    finally:
-        conexao.close()
+    """Grava a recusa na auditoria e levanta o erro HTTP. Sem sessão (401 de
+    anônimo), só o primeiro pedido da origem na janela é gravado (anonimos)."""
+    agora = datetime.now()
+    usuario = auditoria.USUARIO_ATUAL.get()
+    if status == 401 and usuario and usuario[1] == ANONIMO:
+        anonimos.registrar("acesso_negado", _IP.get(), _ROTA.get() or None, str(status), detalhe, agora)
+    else:
+        conexao = obter_conexao()
+        try:
+            with conexao:
+                auditoria.registrar(conexao, aluno_id, "acesso_negado", _ROTA.get() or None, str(status), [],
+                                    ts=agora.isoformat(timespec="seconds"), motivo=detalhe)
+        finally:
+            conexao.close()
     raise HTTPException(status_code=status, detail=detalhe)
 
 
 async def usuario_atual(request: Request) -> UsuarioSessao:
     _ROTA.set(f"{request.method} {request.url.path}")
+    _IP.set(ip_de(request))
     if config.AUTH_DESLIGADA:
         auditoria.definir_usuario(None, SEM_LOGIN)
         return UsuarioSessao(None, SEM_LOGIN)
     token = request.cookies.get(NOME_COOKIE)
     sessao = ler_sessao(token) if token else None
     if sessao is None:
-        auditoria.definir_usuario(None, "anonimo")
-        negar(401, "Faça login para continuar (sessão ausente ou expirada).")
+        auditoria.definir_usuario(None, ANONIMO)
+        negar(401, "Faça login para continuar (sessão ausente, expirada ou encerrada por inatividade).")
     auditoria.definir_usuario(sessao["id"], sessao["papel"])
-    usuario = UsuarioSessao(sessao["id"], sessao["papel"], sessao["aluno_id"], sessao["csrf"])
+    usuario = UsuarioSessao(sessao["id"], sessao["papel"], sessao["aluno_id"], sessao["csrf"], sessao["trocar_senha"])
     if request.method not in METODOS_SEGUROS and not hmac.compare_digest(
             request.headers.get(CABECALHO_CSRF, ""), usuario.csrf):
         negar(403, "Pedido recusado: falta o cabeçalho anti-CSRF válido. Recarregue a página e tente de novo.")
+    if usuario.trocar_senha and request.url.path not in ROTAS_DA_TROCA_DE_SENHA:
+        negar(403, MENSAGEM_TROCAR_SENHA)
     return usuario
 
 

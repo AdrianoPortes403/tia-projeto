@@ -7,13 +7,16 @@ Rotas de autenticação (EAP 1.4.6) e de gestão de usuários (papel admin).
                          terceiros não consegue enviá-lo). Limite de falhas por usuário
                          e por IP (429), atraso em cada falha; tudo vai para a auditoria
     POST /auth/logout    encerra a sessão (exige o token anti-CSRF da sessão)
-    GET  /auth/eu        situação: autenticação ligada ou desligada, usuário e token
-                         anti-CSRF (o front guarda só em memória)
+    POST /auth/senha     {senha_atual, nova_senha}: o próprio usuário troca a senha
+                         (obrigatório no primeiro acesso com senha temporária); abre
+                         uma sessão nova e encerra as outras
+    GET  /auth/eu        situação: autenticação ligada ou desligada, usuário (com
+                         trocar_senha) e token anti-CSRF (o front guarda só em memória)
 
     GET  /admin/usuarios                 lista (sem hash de senha)
-    POST /admin/usuarios                 cria {id, papel, aluno_id?, senha}
+    POST /admin/usuarios                 cria {id, papel, aluno_id?, senha} (senha temporária)
     POST /admin/usuarios/{id}/desativar  desativa e encerra as sessões
-    POST /admin/usuarios/{id}/senha      {senha}: redefine e encerra as sessões
+    POST /admin/usuarios/{id}/senha      {senha}: redefine (temporária) e encerra as sessões
 
 A senha nunca vai para log, auditoria ou resposta.
 
@@ -34,9 +37,9 @@ from pydantic import BaseModel, Field
 import tia.core.config as config
 from tia.core import auditoria
 from tia.core.database import obter_conexao
-from tia.seguranca import senhas, sessoes, usuarios
-from tia.seguranca.acesso import (CABECALHO_CSRF, NOME_COOKIE, UsuarioSessao, exigir_papel, negar,
-                                  usuario_atual)
+from tia.seguranca import anonimos, senhas, sessoes, usuarios
+from tia.seguranca.acesso import (CABECALHO_CSRF, NOME_COOKIE, SEM_LOGIN, UsuarioSessao, exigir_papel, ip_de,
+                                  negar, usuario_atual)
 from tia.seguranca.autenticador import obter_autenticador
 
 router = APIRouter(prefix="/auth", tags=["seguranca"])
@@ -52,6 +55,7 @@ class UsuarioPublico(BaseModel):
     id: str | None
     papel: str
     aluno_id: str | None = None
+    trocar_senha: bool = False  # senha temporária: só a troca de senha e a saída funcionam
 
 
 class Situacao(BaseModel):
@@ -71,11 +75,17 @@ class NovaSenha(BaseModel):
     senha: str = Field(min_length=1, max_length=256)
 
 
+class TrocaDeSenha(BaseModel):
+    senha_atual: str = Field(min_length=1, max_length=256)
+    nova_senha: str = Field(min_length=1, max_length=256)
+
+
 class UsuarioCadastro(BaseModel):
     id: str
     papel: str
     aluno_id: str | None
     ativo: bool
+    trocar_senha: bool
 
 
 def _auditar(tipo: str, origem: str, motivo: str):
@@ -92,6 +102,29 @@ def _login_seguro(login: str) -> str:
     return login if usuarios.PADRAO_ID.match(login) else "(fora do formato de código)"
 
 
+def _recusar_bloqueado(motivo_bloqueio: str, login: str, ip: str):
+    """429 com atraso; na auditoria, só o primeiro bloqueio da origem na janela (anonimos)."""
+    time.sleep(config.AUTH_ATRASO_SEGUNDOS)
+    anonimos.registrar("login_bloqueado", ip, None, "429",
+                       f"login={login}; limite de falhas por {motivo_bloqueio} na janela de "
+                       f"{config.AUTH_JANELA_MINUTOS} min")
+    raise HTTPException(status_code=429, detail=(
+        f"Muitas tentativas de login. Aguarde {config.AUTH_JANELA_MINUTOS} minutos e tente de novo."))
+
+
+def _abrir_sessao(response: Response, usuario_id: str) -> str:
+    """Abre a sessão, põe o cookie e devolve o token anti-CSRF."""
+    token, csrf = sessoes.criar_sessao(usuario_id)
+    response.set_cookie(NOME_COOKIE, token, max_age=config.AUTH_SESSAO_MAXIMA_MINUTOS * 60, httponly=True,
+                        samesite="strict", secure=config.AUTH_COOKIE_SEGURO, path="/")
+    return csrf
+
+
+def _publico(sessao: dict) -> UsuarioPublico:
+    return UsuarioPublico(id=sessao["id"], papel=sessao["papel"], aluno_id=sessao["aluno_id"],
+                          trocar_senha=sessao["trocar_senha"])
+
+
 @router.post("/login", response_model=Situacao)
 def entrar(dados: Login, request: Request, response: Response) -> Situacao:
     """Confere as credenciais pelo provedor configurado e abre a sessão."""
@@ -99,29 +132,27 @@ def entrar(dados: Login, request: Request, response: Response) -> Situacao:
         raise HTTPException(status_code=409, detail="A autenticação está desligada (modo de desenvolvimento).")
     if not request.headers.get(CABECALHO_CSRF):
         raise HTTPException(status_code=403, detail="Pedido recusado: falta o cabeçalho anti-CSRF.")
-    ip = request.client.host if request.client else "desconhecido"
+    ip = ip_de(request)
     login = _login_seguro(dados.login)
     auditoria.definir_usuario(None, "anonimo")  # o login tentado vai no motivo
     motivo_bloqueio = sessoes.bloqueio(dados.login, ip)
     if motivo_bloqueio:
-        time.sleep(config.AUTH_ATRASO_SEGUNDOS)
-        _auditar("login_bloqueado", "429", f"login={login}; limite de falhas por {motivo_bloqueio} na janela de "
-                                           f"{config.AUTH_JANELA_MINUTOS} min")
-        raise HTTPException(status_code=429, detail=(
-            f"Muitas tentativas de login. Aguarde {config.AUTH_JANELA_MINUTOS} minutos e tente de novo."))
+        _recusar_bloqueado(motivo_bloqueio, login, ip)
     usuario = obter_autenticador().autenticar({"login": dados.login, "senha": dados.senha})
     sessoes.registrar_tentativa(dados.login, ip, usuario is not None)
     if usuario is None:
         time.sleep(config.AUTH_ATRASO_SEGUNDOS)
         _auditar("login_falha", "401", f"login={login}")
         raise HTTPException(status_code=401, detail="Usuário ou senha incorretos.")
-    token, csrf = sessoes.criar_sessao(usuario.id)
+    csrf = _abrir_sessao(response, usuario.id)
     auditoria.definir_usuario(usuario.id, usuario.papel)
-    _auditar("login", obter_autenticador().nome, f"sessão de {config.AUTH_SESSAO_MINUTOS} min")
-    response.set_cookie(NOME_COOKIE, token, max_age=config.AUTH_SESSAO_MINUTOS * 60, httponly=True,
-                        samesite="strict", secure=config.AUTH_COOKIE_SEGURO, path="/")
+    _auditar("login", obter_autenticador().nome,
+             f"sessão de até {config.AUTH_SESSAO_MAXIMA_MINUTOS} min, encerrada após "
+             f"{config.AUTH_SESSAO_INATIVIDADE_MINUTOS} min sem uso"
+             + ("; senha temporária: troca obrigatória" if usuario.trocar_senha else ""))
     return Situacao(autenticacao="ligada", csrf=csrf,
-                    usuario=UsuarioPublico(id=usuario.id, papel=usuario.papel, aluno_id=usuario.aluno_id))
+                    usuario=UsuarioPublico(id=usuario.id, papel=usuario.papel, aluno_id=usuario.aluno_id,
+                                           trocar_senha=usuario.trocar_senha))
 
 
 @router.post("/logout", status_code=204)
@@ -134,6 +165,34 @@ def sair(request: Request, response: Response, usuario: UsuarioSessao = Depends(
     response.delete_cookie(NOME_COOKIE, path="/", httponly=True, samesite="strict", secure=config.AUTH_COOKIE_SEGURO)
 
 
+@router.post("/senha", response_model=Situacao)
+def trocar_senha(dados: TrocaDeSenha, request: Request, response: Response,
+                 usuario: UsuarioSessao = Depends(usuario_atual)) -> Situacao:
+    """O próprio usuário troca a senha (confere a atual). Encerra todas as
+    sessões dele e abre uma nova; a nova senha deixa de ser temporária."""
+    if usuario.papel == SEM_LOGIN:
+        raise HTTPException(status_code=409, detail="A autenticação está desligada (modo de desenvolvimento).")
+    if obter_autenticador().nome != "local":
+        raise HTTPException(status_code=409, detail="A senha é gerenciada pelo login da instituição.")
+    ip = ip_de(request)
+    motivo_bloqueio = sessoes.bloqueio(usuario.id, ip)
+    if motivo_bloqueio:
+        _recusar_bloqueado(motivo_bloqueio, usuario.id, ip)
+    try:
+        trocou = usuarios.trocar_propria_senha(usuario.id, dados.senha_atual, dados.nova_senha)
+    except senhas.SenhaFraca as erro:
+        raise HTTPException(status_code=422, detail=str(erro))
+    if not trocou:
+        # senha atual errada conta como falha de login (a sessão não vira um jeito de adivinhar a senha)
+        sessoes.registrar_tentativa(usuario.id, ip, False)
+        time.sleep(config.AUTH_ATRASO_SEGUNDOS)
+        _auditar("login_falha", "403", f"login={usuario.id}; senha atual incorreta na troca de senha")
+        raise HTTPException(status_code=403, detail="A senha atual não confere.")
+    csrf = _abrir_sessao(response, usuario.id)
+    return Situacao(autenticacao="ligada", csrf=csrf,
+                    usuario=UsuarioPublico(id=usuario.id, papel=usuario.papel, aluno_id=usuario.aluno_id))
+
+
 @router.get("/eu", response_model=Situacao)
 def eu(request: Request) -> Situacao:
     """Quem está logado (ou que a autenticação está desligada). Nunca 401."""
@@ -143,8 +202,7 @@ def eu(request: Request) -> Situacao:
     sessao = sessoes.ler_sessao(token) if token else None
     if sessao is None:
         return Situacao(autenticacao="ligada")
-    return Situacao(autenticacao="ligada", csrf=sessao["csrf"],
-                    usuario=UsuarioPublico(id=sessao["id"], papel=sessao["papel"], aluno_id=sessao["aluno_id"]))
+    return Situacao(autenticacao="ligada", csrf=sessao["csrf"], usuario=_publico(sessao))
 
 
 # --- gestão de usuários (admin) ---

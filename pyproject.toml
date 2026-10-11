@@ -24,4 +24,6 @@ where = ["src"]
 
 # arquivos da aplicação web standalone (tia.web), servidos em /app
 [tool.setuptools.package-data]
-"tia.web" = ["static/*"]
+"tia.web" = ["static/*", "static/painel/*"]
+# lista de senhas comuns bloqueadas pela política de senha (1.4.6)
+"tia.seguranca" = ["senhas_comuns.txt"]

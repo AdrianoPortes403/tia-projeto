@@ -8,6 +8,11 @@ scrypt com sal (seguranca.senhas) e a marca de ativo. Desativar ou trocar a
 senha encerra as sessões abertas. Cada mudança vai para a auditoria
 (gestao_usuario), sem a senha.
 
+Senha temporária: a senha criada ou redefinida pelo admin (comando ou rotas
+/admin) vale só para entrar; no primeiro acesso o usuário precisa trocá-la
+(POST /auth/senha, tela de troca no /app e no painel). Só os usuários
+fictícios de demonstração nascem sem essa exigência.
+
 Como rodar (a partir da raiz, com o venv ativo). A senha é pedida no
 terminal, sem eco (getpass), ou lida da entrada padrão com --senha-stdin;
 nunca pela linha de comando:
@@ -15,6 +20,7 @@ nunca pela linha de comando:
     python -m tia.seguranca.usuarios criar --id A2026-001 --papel aluno --aluno-id A2026-001
     python -m tia.seguranca.usuarios desativar --id DOC-01
     python -m tia.seguranca.usuarios redefinir-senha --id DOC-01
+    (a senha criada ou redefinida pelo comando é temporária: troca no primeiro acesso)
     python -m tia.seguranca.usuarios listar
 
 Pré-requisitos:
@@ -53,6 +59,7 @@ class Usuario:
     papel: str
     aluno_id: str | None
     ativo: bool
+    trocar_senha: bool = False
 
 
 def _agora() -> str:
@@ -63,7 +70,8 @@ def _auditar(conexao, usuario_id: str, acao: str):
     auditoria.registrar(conexao, None, "gestao_usuario", usuario_id, acao, [], ts=_agora(), motivo=acao)
 
 
-def criar(usuario_id: str, papel: str, senha: str, aluno_id: str | None = None) -> Usuario:
+def criar(usuario_id: str, papel: str, senha: str, aluno_id: str | None = None, temporaria: bool = True) -> Usuario:
+    """Cria o usuário. temporaria: a senha precisa ser trocada no primeiro acesso."""
     if not PADRAO_ID.match(usuario_id or ""):
         raise ErroUsuario("Id inválido: use um código (letras sem acento, números, \"-\" ou \"_\", até 32), "
                           "nunca o nome da pessoa.")
@@ -73,20 +81,22 @@ def criar(usuario_id: str, papel: str, senha: str, aluno_id: str | None = None) 
         raise ErroUsuario("Usuário com papel aluno precisa do aluno_id (código do aluno).")
     if papel != "aluno" and aluno_id:
         raise ErroUsuario("Só o papel aluno tem aluno_id.")
-    senhas.validar(senha)
+    senhas.validar(senha, usuario_id)
     conexao = obter_conexao()
     try:
         with conexao:
             cursor = conexao.execute(
-                """INSERT OR IGNORE INTO usuarios (id, papel, aluno_id, senha_hash, ativo, criado_em, atualizado_em)
-                   VALUES (?, ?, ?, ?, 1, ?, ?)""",
-                (usuario_id, papel, aluno_id, senhas.gerar_hash(senha), _agora(), _agora()))
+                """INSERT OR IGNORE INTO usuarios
+                     (id, papel, aluno_id, senha_hash, ativo, trocar_senha, criado_em, atualizado_em)
+                   VALUES (?, ?, ?, ?, 1, ?, ?, ?)""",
+                (usuario_id, papel, aluno_id, senhas.gerar_hash(senha), int(temporaria), _agora(), _agora()))
             if cursor.rowcount != 1:
                 raise ErroUsuario(f"Já existe o usuário '{usuario_id}'.")
-            _auditar(conexao, usuario_id, f"usuário criado (papel {papel})")
+            _auditar(conexao, usuario_id, f"usuário criado (papel {papel})"
+                     + ("; senha temporária" if temporaria else ""))
     finally:
         conexao.close()
-    return Usuario(usuario_id, papel, aluno_id, True)
+    return Usuario(usuario_id, papel, aluno_id, True, temporaria)
 
 
 def buscar(usuario_id: str) -> dict | None:
@@ -102,10 +112,11 @@ def buscar(usuario_id: str) -> dict | None:
 def listar() -> list[Usuario]:
     conexao = obter_conexao()
     try:
-        linhas = conexao.execute("SELECT id, papel, aluno_id, ativo FROM usuarios ORDER BY papel, id").fetchall()
+        linhas = conexao.execute(
+            "SELECT id, papel, aluno_id, ativo, trocar_senha FROM usuarios ORDER BY papel, id").fetchall()
     finally:
         conexao.close()
-    return [Usuario(l["id"], l["papel"], l["aluno_id"], bool(l["ativo"])) for l in linhas]
+    return [Usuario(l["id"], l["papel"], l["aluno_id"], bool(l["ativo"]), bool(l["trocar_senha"])) for l in linhas]
 
 
 def desativar(usuario_id: str) -> bool:
@@ -124,21 +135,37 @@ def desativar(usuario_id: str) -> bool:
     return True
 
 
-def redefinir_senha(usuario_id: str, senha: str) -> bool:
-    """Troca a senha e encerra as sessões; False se o usuário não existe."""
-    senhas.validar(senha)
+def redefinir_senha(usuario_id: str, senha: str, temporaria: bool = True) -> bool:
+    """Troca a senha e encerra as sessões; False se o usuário não existe.
+    temporaria (padrão, redefinição pelo admin): troca obrigatória no próximo acesso.
+    Com temporaria=False é a troca feita pelo próprio usuário (trocar_propria_senha)."""
+    senhas.validar(senha, usuario_id)
     conexao = obter_conexao()
     try:
         with conexao:
-            cursor = conexao.execute("UPDATE usuarios SET senha_hash = ?, atualizado_em = ? WHERE id = ?",
-                                     (senhas.gerar_hash(senha), _agora(), usuario_id))
+            cursor = conexao.execute(
+                "UPDATE usuarios SET senha_hash = ?, trocar_senha = ?, atualizado_em = ? WHERE id = ?",
+                (senhas.gerar_hash(senha), int(temporaria), _agora(), usuario_id))
             if cursor.rowcount != 1:
                 return False
             encerrar_sessoes_do_usuario(usuario_id, conexao)
-            _auditar(conexao, usuario_id, "senha redefinida")
+            _auditar(conexao, usuario_id, "senha redefinida; senha temporária" if temporaria
+                     else "senha trocada pelo próprio usuário")
     finally:
         conexao.close()
     return True
+
+
+def trocar_propria_senha(usuario_id: str, atual: str, nova: str) -> bool:
+    """O próprio usuário troca a senha: confere a atual e grava a nova como
+    definitiva (sai a exigência de troca). Encerra todas as sessões dele; quem
+    chama abre uma nova. False se a senha atual não confere."""
+    linha = buscar(usuario_id)
+    if linha is None or not senhas.conferir(atual, linha["senha_hash"]):
+        return False
+    if atual == nova:
+        raise senhas.SenhaFraca("A nova senha precisa ser diferente da atual.")
+    return redefinir_senha(usuario_id, nova, temporaria=False)
 
 
 def criar_usuarios_demonstracao() -> list[str]:
@@ -147,7 +174,7 @@ def criar_usuarios_demonstracao() -> list[str]:
     criados = []
     for usuario_id, papel, aluno_id in USUARIOS_DEMONSTRACAO:
         if buscar(usuario_id) is None:
-            criar(usuario_id, papel, SENHA_DEMONSTRACAO, aluno_id)
+            criar(usuario_id, papel, SENHA_DEMONSTRACAO, aluno_id, temporaria=False)
             criados.append(usuario_id)
     return criados
 

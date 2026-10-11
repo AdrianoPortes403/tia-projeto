@@ -1,6 +1,8 @@
 # Correções pequenas e autenticação com papéis (EAP 1.4.6, etapa 1)
 
-> Frente A3, 11/10/2026. Sem commit. Arquitetura: `docs/arquitetura/arquitetura.md`, seção "Segurança".
+> Frente A3, 11/10/2026. Arquitetura: `docs/arquitetura/arquitetura.md`, seção "Segurança".
+> **Atualização (parte E, pendências da etapa 1):** ver a seção "Parte E" no fim. Várias pendências abaixo
+> foram resolvidas lá.
 
 ## Resultado
 
@@ -125,3 +127,55 @@
    bloqueio)? Hoje: 10 caracteres, 5 falhas por usuário ou 20 por IP em 15 minutos.
 4. Guardar o IP das tentativas de login (só para o limite) é aceitável pela LGPD da instituição? Por quanto
    tempo?
+
+## Parte E: pendências da etapa 1 (11/10/2026, sem commit)
+
+`./run_tests.sh`: **580 passados, 9 xfailed** (os mesmos 9). São 41 testes novos em
+`tests/test_seguranca_etapa2.py`; em `test_seguranca.py`, algumas asserções foram ajustadas ao campo novo
+`trocar_senha` e à expiração renomeada, sem afrouxar o que verificam.
+
+- **E1, retenção e limpeza** (`seguranca/limpeza.py`):
+  - apaga as sessões vencidas;
+  - depois de `AUTH_RETENCAO_IP_DIAS` (30, PROVISÓRIO), apaga as tentativas de login e as contagens de
+    pedidos sem login, as únicas tabelas com IP;
+  - roda quando a API sobe, a cada `AUTH_LIMPEZA_MINUTOS` (60) e pelo comando
+    `python -m tia.seguranca.limpeza`;
+  - cada limpeza que apaga algo grava `limpeza_retencao` com as quantidades;
+  - um teste confere que o IP nunca aparece na auditoria.
+- **E2, pedidos sem login** (`seguranca/anonimos.py`, tabela `auth_anonimos`):
+  - os 401 sem sessão e os 429 de login bloqueado são contados por origem (IP), janela de 10 minutos e
+    tipo;
+  - só o primeiro pedido de cada origem na janela vai para a auditoria, até 50 origens por janela;
+  - fechada a janela, uma linha `resumo_anonimos` guarda o total de pedidos e de origens, então a contagem
+    não se perde;
+  - as recusas de quem está logado continuam uma a uma.
+- **E3, política de senha** (`seguranca/senhas.py`, `senhas_comuns.txt`), configurável:
+  - tamanho mínimo;
+  - bloqueio das senhas comuns, ignorando maiúsculas e os números e símbolos das pontas;
+  - lista extra da instituição;
+  - recusa senha que contém o id do usuário ou que repete quase só um caractere.
+- **E3, troca obrigatória:**
+  - senha criada ou redefinida pelo admin (comando ou `/admin`) é temporária;
+  - até ser trocada, a sessão só aceita `POST /auth/senha` e a saída; as telas `/app` e `/app/painel`
+    mostram o formulário de troca;
+  - a troca confere a senha atual (errar conta para o bloqueio), encerra as outras sessões e abre uma nova.
+- **E4, expiração da sessão:**
+  - por inatividade, `AUTH_SESSAO_INATIVIDADE_MINUTOS` (30);
+  - limite absoluto desde o login, `AUTH_SESSAO_MAXIMA_MINUTOS` (480), que substitui
+    `AUTH_SESSAO_MINUTOS`;
+  - o último uso é regravado no máximo uma vez por minuto.
+- **E5:** `docs/seguranca/implantacao.md` descreve o impacto do `SameSite=Strict` no iframe do EBAULA, as
+  quatro alternativas com recomendação, as perguntas para a equipe do EBAULA e a lista de conferência para
+  a VM.
+- **Correção encontrada pelos testes:** o bloqueio por usuário não contava falhas no mesmo segundo do último
+  sucesso, porque comparava o horário. Agora compara a ordem das linhas.
+- **Também corrigido:** o `pyproject.toml` não empacotava `static/painel/*`. Isso só afetaria uma instalação
+  que não fosse em modo editável.
+
+Pendências que continuam:
+
+- tela de administração (não pedida; o comando basta) e tela de troca voluntária de senha (a rota existe);
+- `/docs` fechado e cabeçalhos de segurança na API;
+- `login_falha` de muitas origens diferentes continua uma linha por falha;
+- decisão da sessão dentro do EBAULA (E5);
+- valores da instituição para a política de senha e a retenção.

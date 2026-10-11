@@ -16,9 +16,13 @@ Pré-requisitos:
     - pip install -e . (na raiz, com o venv ativo)
 """
 
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+
+import tia.core.config as config
 
 from tia.api.rotas_auditoria import router as rotas_auditoria
 from tia.api.rotas_auth import router as rotas_auth
@@ -31,15 +35,33 @@ from tia.api.rotas_planejador import router as rotas_planejador
 from tia.api.rotas_relatorio import router as rotas_relatorio
 from tia.api.rotas_tutor import router as rotas_tutor
 from tia.core.database import criar_tabelas
+from tia.seguranca import limpeza
 from tia import web
+
+log = logging.getLogger(__name__)
+
+
+async def limpar_periodicamente(minutos: int):
+    """Retenção das tabelas de segurança (seguranca.limpeza) ao subir e a cada `minutos`."""
+    while True:
+        try:
+            await asyncio.to_thread(limpeza.limpar)
+        except Exception as erro:  # a limpeza nunca derruba a API; tenta de novo na próxima volta
+            log.warning("Limpeza de segurança falhou: %s", type(erro).__name__)
+        await asyncio.sleep(minutos * 60)
 
 
 @asynccontextmanager
 async def ciclo_de_vida(app: FastAPI):
-    # Executado uma vez, ao iniciar o servidor: garante que as tabelas existem.
+    # Executado uma vez, ao iniciar o servidor: garante que as tabelas existem
+    # e liga a limpeza periódica (1.4.6; AUTH_LIMPEZA_MINUTOS=0 desliga).
     criar_tabelas()
+    tarefa = None
+    if config.AUTH_LIMPEZA_MINUTOS > 0:
+        tarefa = asyncio.create_task(limpar_periodicamente(config.AUTH_LIMPEZA_MINUTOS))
     yield
-    # (nada a fazer ao encerrar, por enquanto)
+    if tarefa:
+        tarefa.cancel()
 
 
 app = FastAPI(title="Sistema TIA — API", version="0.1.0", lifespan=ciclo_de_vida)

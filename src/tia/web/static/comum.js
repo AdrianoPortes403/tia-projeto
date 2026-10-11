@@ -10,10 +10,14 @@
  *                 sessão HttpOnly (o JavaScript nunca vê o cookie); o token
  *                 anti-CSRF fica só em memória e vai no cabeçalho X-CSRF-Token
  *                 de toda escrita; 401 chama configurar({ aoExigirLogin })
+ *   troca de senha mostrarTrocaDeSenha, esconderTrocaDeSenha, ligarTrocaDeSenha:
+ *                 troca obrigatória da senha temporária (form-senha dentro da
+ *                 tela de login)
  *
  * A página precisa dos ids: carregando, carregando-texto, carregando-segundos,
- * erro, erro-texto, erro-fechar, aviso-dev, usuario-barra, usuario-nome e
- * usuario-papel. Nada é escrito no console (R08).
+ * erro, erro-texto, erro-fechar, aviso-dev, usuario-barra, usuario-nome,
+ * usuario-papel, titulo-login, login-mensagem, form-login, form-senha, campo-senha-atual,
+ * campo-senha-nova e campo-senha-repetir. Nada é escrito no console (R08).
  */
 "use strict";
 
@@ -178,6 +182,65 @@ window.TIA = (function () {
     try { await chamar("POST", "/auth/logout", null, "Saindo…"); } finally { csrf = null; }
   }
 
+  // --- troca obrigatória da senha temporária ---
+
+  const CAMPOS_TROCA = ["campo-senha-atual", "campo-senha-nova", "campo-senha-repetir"];
+
+  // chamar depois de a página mostrar a tela de login: troca o formulário de login pelo de troca
+  function mostrarTrocaDeSenha() {
+    const titulo = $("titulo-login");
+    if (!titulo.dataset.original) titulo.dataset.original = titulo.textContent;
+    titulo.textContent = "Troca da senha temporária";
+    $("form-login").hidden = true;
+    $("form-senha").hidden = false;
+    $("login-mensagem").textContent = "Sua senha é temporária. Crie uma senha nova para continuar.";
+    $("login-mensagem").hidden = false;
+    $("campo-senha-atual").focus();
+  }
+
+  // volta a tela de login ao normal (as páginas chamam ao mostrar o login)
+  function esconderTrocaDeSenha() {
+    const titulo = $("titulo-login");
+    if (titulo.dataset.original) titulo.textContent = titulo.dataset.original;
+    $("form-senha").hidden = true;
+  }
+
+  async function trocarSenha(atual, nova) {
+    const situacao = await chamar("POST", "/auth/senha", { senha_atual: atual, nova_senha: nova }, "Trocando a senha…");
+    csrf = situacao.csrf || null; // a troca abre uma sessão nova
+    return situacao;
+  }
+
+  // aoConcluir: chamado depois da troca (normalmente o início da página, que relê a sessão)
+  function ligarTrocaDeSenha(aoConcluir) {
+    $("form-senha").addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+      const [atual, nova, repetida] = CAMPOS_TROCA.map((id) => $(id).value);
+      const limpar = () => CAMPOS_TROCA.forEach((id) => { $(id).value = ""; }); // a senha não fica na página
+      if (!atual || !nova) {
+        mostrarErro(new ErroApi("Preencha a senha atual e a nova senha.", 0));
+        return;
+      }
+      if (nova !== repetida) {
+        $("campo-senha-nova").value = "";
+        $("campo-senha-repetir").value = "";
+        mostrarErro(new ErroApi("A nova senha e a repetição não conferem.", 0));
+        return;
+      }
+      try {
+        await trocarSenha(atual, nova);
+      } catch (erro) {
+        mostrarErro(erro);
+        return;
+      } finally {
+        limpar();
+      }
+      esconderTrocaDeSenha();
+      $("login-mensagem").hidden = true;
+      await aoConcluir();
+    });
+  }
+
   // barra do usuário logado e aviso do modo de desenvolvimento
   function mostrarSessao(situacao) {
     $("aviso-dev").hidden = !situacao || situacao.autenticacao !== "desligada";
@@ -188,5 +251,5 @@ window.TIA = (function () {
   }
 
   return { configurar, estaOcupado, $, el, svg, tempo, porcento, ErroApi, chamar, mostrarErro, esconderErro,
-    obterSessao, entrar, sair, mostrarSessao };
+    obterSessao, entrar, sair, mostrarSessao, mostrarTrocaDeSenha, esconderTrocaDeSenha, ligarTrocaDeSenha };
 })();

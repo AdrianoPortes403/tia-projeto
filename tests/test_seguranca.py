@@ -12,6 +12,9 @@ desliga a autenticação para os demais testes):
 - provedor trocável (contrato Autenticador) e modo de desenvolvimento (TIA_AUTH=desligada);
 - nenhuma senha em auditoria, banco (fora do hash) ou log.
 
+Etapa 2 (retenção, pedidos sem login, política e troca de senha, inatividade):
+tests/test_seguranca_etapa2.py.
+
 Como rodar:
     ./run_tests.sh tests/test_seguranca.py
 """
@@ -44,11 +47,12 @@ def ligada(auth_ligada):
 
 @pytest.fixture
 def pessoas():
-    """Aluno A2026-S01, outro aluno A2026-S02, docente DOC-S01 e admin ADM-S01."""
-    usuarios.criar("A2026-S01", "aluno", SENHA, "A2026-S01")
-    usuarios.criar("A2026-S02", "aluno", SENHA, "A2026-S02")
-    usuarios.criar("DOC-S01", "docente", SENHA)
-    usuarios.criar("ADM-S01", "admin", SENHA)
+    """Aluno A2026-S01, outro aluno A2026-S02, docente DOC-S01 e admin ADM-S01
+    (senhas já definitivas: a troca obrigatória é testada na etapa 2)."""
+    usuarios.criar("A2026-S01", "aluno", SENHA, "A2026-S01", temporaria=False)
+    usuarios.criar("A2026-S02", "aluno", SENHA, "A2026-S02", temporaria=False)
+    usuarios.criar("DOC-S01", "docente", SENHA, temporaria=False)
+    usuarios.criar("ADM-S01", "admin", SENHA, temporaria=False)
 
 
 def cliente() -> TestClient:
@@ -102,7 +106,8 @@ def test_cadastro_recusa_senha_curta_e_id_repetido():
     usuarios.criar("DOC-X", "docente", SENHA)
     with pytest.raises(usuarios.ErroUsuario, match="Já existe"):
         usuarios.criar("DOC-X", "docente", SENHA)
-    assert [asdict for asdict in usuarios.listar()] == [Usuario("DOC-X", "docente", None, True)]
+    # criado sem dizer o contrário, a senha é temporária (troca no primeiro acesso)
+    assert usuarios.listar() == [Usuario("DOC-X", "docente", None, True, trocar_senha=True)]
 
 
 def test_linha_de_comando_cria_desativa_e_redefine(tmp_path):
@@ -128,10 +133,11 @@ def test_login_abre_sessao_com_cookie_seguro(pessoas, monkeypatch):
     assert resposta.status_code == 200
     cookie = resposta.headers["set-cookie"]
     assert cookie.startswith("tia_sessao=") and "HttpOnly" in cookie and "SameSite=strict" in cookie
-    assert "Secure" in cookie and f"Max-Age={config.AUTH_SESSAO_MINUTOS * 60}" in cookie
+    assert "Secure" in cookie and f"Max-Age={config.AUTH_SESSAO_MAXIMA_MINUTOS * 60}" in cookie
     corpo = resposta.json()
-    assert corpo["usuario"] == {"id": "DOC-S01", "papel": "docente", "aluno_id": None} and len(corpo["csrf"]) > 20
-    assert "senha" not in resposta.text.lower()
+    assert corpo["usuario"] == {"id": "DOC-S01", "papel": "docente", "aluno_id": None, "trocar_senha": False}
+    assert len(corpo["csrf"]) > 20
+    assert SENHA not in resposta.text and "hash" not in resposta.text  # nem a senha nem o hash
 
 
 def test_eu_login_logout(pessoas):
@@ -177,8 +183,9 @@ def test_sessao_expira(pessoas, monkeypatch):
     c, _ = logado("DOC-S01")
     assert c.get("/painel/competencias").status_code == 200
     token = c.cookies.get("tia_sessao")
-    assert sessoes.ler_sessao(token, agora=datetime.now() + timedelta(minutes=config.AUTH_SESSAO_MINUTOS + 1)) is None
-    monkeypatch.setattr(config, "AUTH_SESSAO_MINUTOS", -1)  # sessões novas já nascem vencidas
+    depois = datetime.now() + timedelta(minutes=config.AUTH_SESSAO_MAXIMA_MINUTOS + 1)
+    assert sessoes.ler_sessao(token, agora=depois, renovar=False) is None
+    monkeypatch.setattr(config, "AUTH_SESSAO_MAXIMA_MINUTOS", -1)  # sessões novas já nascem vencidas
     vencida, _ = logado("DOC-S01")
     assert vencida.get("/painel/competencias").status_code == 401
 
@@ -334,10 +341,10 @@ def test_conteudo_para_qualquer_usuario_logado(pessoas):
 def test_admin_gerencia_usuarios(pessoas):
     admin, csrf = logado("ADM-S01")
     assert {u["id"] for u in admin.get("/admin/usuarios").json()} == {"A2026-S01", "A2026-S02", "DOC-S01", "ADM-S01"}
-    assert "senha" not in admin.get("/admin/usuarios").text
+    assert "hash" not in admin.get("/admin/usuarios").text  # a lista nunca traz o hash da senha
     novo = admin.post("/admin/usuarios", json={"id": "DOC-S02", "papel": "docente", "senha": SENHA}, headers=csrf)
     assert novo.status_code == 201 and novo.json() == {"id": "DOC-S02", "papel": "docente", "aluno_id": None,
-                                                        "ativo": True}
+                                                        "ativo": True, "trocar_senha": True}
     assert admin.post("/admin/usuarios", json={"id": "DOC-S03", "papel": "docente", "senha": "curta"},
                       headers=csrf).status_code == 422
     assert admin.post("/admin/usuarios/DOC-S02/senha", json={"senha": "outra-senha-456"},
@@ -346,7 +353,8 @@ def test_admin_gerencia_usuarios(pessoas):
     assert admin.post("/admin/usuarios/ADM-S01/desativar", headers=csrf).status_code == 409
     assert admin.post("/admin/usuarios/NINGUEM/desativar", headers=csrf).status_code == 404
     acoes = [r["motivo"] for r in registros("gestao_usuario") if r["referencia_id"] == "DOC-S02"]
-    assert acoes == ["usuário criado (papel docente)", "senha redefinida", "usuário desativado"]
+    assert acoes == ["usuário criado (papel docente); senha temporária", "senha redefinida; senha temporária",
+                     "usuário desativado"]
     assert all(r["usuario_id"] == "ADM-S01" for r in registros("gestao_usuario") if r["referencia_id"] == "DOC-S02")
     for login in ("A2026-S01", "DOC-S01"):
         c, _ = logado(login)
@@ -435,7 +443,8 @@ def test_usuarios_de_demonstracao():
     assert usuarios.criar_usuarios_demonstracao() == ["DEMO-W01", "DEMO-DOCENTE"]
     assert usuarios.criar_usuarios_demonstracao() == []
     aluno, _ = logado("DEMO-W01", usuarios.SENHA_DEMONSTRACAO)
-    assert aluno.get("/auth/eu").json()["usuario"] == {"id": "DEMO-W01", "papel": "aluno", "aluno_id": "DEMO-W01"}
+    assert aluno.get("/auth/eu").json()["usuario"] == {"id": "DEMO-W01", "papel": "aluno", "aluno_id": "DEMO-W01",
+                                                       "trocar_senha": False}  # demonstração: sem troca
     docente, _ = logado("DEMO-DOCENTE", usuarios.SENHA_DEMONSTRACAO)
     assert docente.get("/painel/competencias").status_code == 200
     assert "FICTICIA" in usuarios.SENHA_DEMONSTRACAO

@@ -132,8 +132,10 @@ AUTH_DESLIGADA = TIA_AUTH in ("desligada", "desligado", "0", "off", "nao", "não
 # Provedor de autenticação (seguranca.autenticador): "local" (senha com scrypt).
 # O login único do EBAULA (1.4.3) entra como outro provedor.
 AUTH_PROVEDOR = os.getenv("AUTH_PROVEDOR", "local")
-# Duração da sessão no servidor (minutos, a partir do login)
-AUTH_SESSAO_MINUTOS = int(os.getenv("AUTH_SESSAO_MINUTOS", "480"))
+# Expiração da sessão no servidor (minutos): por inatividade (sem nenhum pedido)
+# e limite absoluto, contado do login, mesmo com uso contínuo
+AUTH_SESSAO_INATIVIDADE_MINUTOS = int(os.getenv("AUTH_SESSAO_INATIVIDADE_MINUTOS", "30"))
+AUTH_SESSAO_MAXIMA_MINUTOS = int(os.getenv("AUTH_SESSAO_MAXIMA_MINUTOS", "480"))
 # Cookie só por HTTPS (Secure). Os navegadores aceitam Secure em http://localhost;
 # desligar (0) só para testar por HTTP em outra máquina.
 AUTH_COOKIE_SEGURO = os.getenv("AUTH_COOKIE_SEGURO", "1").lower() in ("1", "true", "sim")
@@ -144,6 +146,24 @@ AUTH_MAX_FALHAS_IP = int(os.getenv("AUTH_MAX_FALHAS_IP", "20"))
 AUTH_JANELA_MINUTOS = int(os.getenv("AUTH_JANELA_MINUTOS", "15"))
 # Atraso (s) na resposta de cada login que falha (atrapalha a tentativa em massa)
 AUTH_ATRASO_SEGUNDOS = float(os.getenv("AUTH_ATRASO_SEGUNDOS", "1.0"))
+# Política de senha: tamanho mínimo e bloqueio das senhas mais comuns (lista em
+# seguranca/senhas_comuns.txt, mais o arquivo opcional AUTH_SENHAS_COMUNS_EXTRA,
+# uma por linha). PROVISÓRIO até a política da instituição (Tiago).
+AUTH_SENHA_MINIMA = int(os.getenv("AUTH_SENHA_MINIMA", "10"))
+AUTH_SENHA_BLOQUEAR_COMUNS = os.getenv("AUTH_SENHA_BLOQUEAR_COMUNS", "1").lower() in ("1", "true", "sim")
+AUTH_SENHAS_COMUNS_EXTRA = os.getenv("AUTH_SENHAS_COMUNS_EXTRA", "")
+# Retenção (dias) das tentativas de login e dos pedidos sem login, que guardam o
+# IP (só para os limites; o IP nunca vai para a auditoria). PROVISÓRIO (C1).
+AUTH_RETENCAO_IP_DIAS = int(os.getenv("AUTH_RETENCAO_IP_DIAS", "30"))
+# Limpeza periódica feita pela própria API (sessões vencidas, tentativas e
+# pedidos sem login fora da retenção), a cada tantos minutos; 0 = só pelo comando
+# python -m tia.seguranca.limpeza
+AUTH_LIMPEZA_MINUTOS = int(os.getenv("AUTH_LIMPEZA_MINUTOS", "60"))
+# Pedidos sem login (401): por origem (IP) e janela de tempo, só o primeiro vai
+# para a auditoria; os demais são contados e resumidos numa linha por janela.
+# No máximo AUTH_ANONIMOS_MAX_ORIGENS origens registradas uma a uma por janela.
+AUTH_ANONIMOS_JANELA_MINUTOS = int(os.getenv("AUTH_ANONIMOS_JANELA_MINUTOS", "10"))
+AUTH_ANONIMOS_MAX_ORIGENS = int(os.getenv("AUTH_ANONIMOS_MAX_ORIGENS", "50"))
 
 # --- Painel do docente (EAP 1.4.5) ---
 # Alerta de desempenho baixo: taxa de acerto geral abaixo deste valor, desde que o
@@ -164,6 +184,9 @@ if __name__ == "__main__":
                  "RELATORIO_TENDENCIA_MIN_RESPOSTAS", "RELATORIO_TENDENCIA_LIMIAR",
                  "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_INATIVIDADE_REFAZER_DIAS",
                  "PAINEL_DESEMPENHO_BAIXO", "PAINEL_MIN_RESPOSTAS", "TIA_AUTH", "AUTH_PROVEDOR",
-                 "AUTH_SESSAO_MINUTOS", "AUTH_COOKIE_SEGURO", "AUTH_MAX_FALHAS_USUARIO", "AUTH_MAX_FALHAS_IP",
-                 "AUTH_JANELA_MINUTOS", "AUTH_ATRASO_SEGUNDOS"):
+                 "AUTH_SESSAO_INATIVIDADE_MINUTOS", "AUTH_SESSAO_MAXIMA_MINUTOS", "AUTH_COOKIE_SEGURO",
+                 "AUTH_MAX_FALHAS_USUARIO", "AUTH_MAX_FALHAS_IP", "AUTH_JANELA_MINUTOS", "AUTH_ATRASO_SEGUNDOS",
+                 "AUTH_SENHA_MINIMA", "AUTH_SENHA_BLOQUEAR_COMUNS", "AUTH_SENHAS_COMUNS_EXTRA",
+                 "AUTH_RETENCAO_IP_DIAS", "AUTH_LIMPEZA_MINUTOS", "AUTH_ANONIMOS_JANELA_MINUTOS",
+                 "AUTH_ANONIMOS_MAX_ORIGENS"):
         print(f"{nome} = {globals()[nome]}")

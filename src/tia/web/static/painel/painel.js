@@ -77,6 +77,8 @@
     logout: "saída",
     acesso_negado: "acesso negado",
     gestao_usuario: "gestão de usuário",
+    resumo_anonimos: "resumo de pedidos sem login",
+    limpeza_retencao: "limpeza por prazo de retenção",
   };
 
   const estado = {
@@ -529,15 +531,22 @@
     $("filtro-grupo").hidden = true;
     $("tela-login").hidden = false;
     $("form-login").hidden = !!semFormulario;
+    TIA.esconderTrocaDeSenha();
     $("login-mensagem").textContent = mensagem || "";
     $("login-mensagem").hidden = !mensagem;
     if (!semFormulario) $("campo-login").focus();
+  }
+
+  function mostrarTrocaDeSenha() {
+    mostrarLogin();
+    TIA.mostrarTrocaDeSenha();
   }
 
   async function iniciar() {
     const situacao = await TIA.obterSessao();
     TIA.mostrarSessao(situacao);
     if (situacao.autenticacao === "ligada" && !situacao.usuario) { mostrarLogin(); return; }
+    if (situacao.usuario && situacao.usuario.trocar_senha) { mostrarTrocaDeSenha(); return; }
     if (situacao.autenticacao === "ligada" && situacao.usuario.papel !== "docente") {
       mostrarLogin("O painel é só para docentes. Você entrou como " + situacao.usuario.papel + ".", true);
       return;
@@ -620,6 +629,7 @@
     $("revisao-resumo").setAttribute("tabindex", "-1");
     TIA.configurar({ aoExigirLogin: () => mostrarLogin("Sua sessão terminou. Entre de novo.") });
     $("form-login").addEventListener("submit", entrarComSenha);
+    TIA.ligarTrocaDeSenha(iniciar);
     $("sair").addEventListener("click", encerrarSessao);
     iniciar().catch(mostrarErro);
   });

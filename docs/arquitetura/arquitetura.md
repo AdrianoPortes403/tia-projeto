@@ -17,7 +17,7 @@ flowchart LR
         CLI["Demonstrações<br/>python -m tia..."]
     end
 
-    AUTH["Autenticação 1.4.6 (etapa 1)<br/>/auth · sessão · papéis · anti-CSRF<br/>(src/tia/seguranca)"]
+    AUTH["Autenticação 1.4.6 (etapas 1 e 2)<br/>/auth · sessão · papéis · anti-CSRF<br/>(src/tia/seguranca)"]
     CRON["Agendador na VM (cron/timer)<br/>(não existe: depois de 15/10)"]:::futuro
 
     subgraph API["API FastAPI (src/tia/api)"]
@@ -89,7 +89,7 @@ flowchart LR
 | Agendador da verificação de inatividade (cron/timer na VM) | **Não existe**. O comando e a rota que ele chamará existem (`python -m tia.orquestrador --verificar-inatividade`, `POST /orquestrador/verificar-inatividade`) |
 | Auditoria (R11) | **Real** (tabela `auditoria`, `GET /auditoria/{id}`) |
 | API FastAPI | **Real**, com autenticação e papéis (ver "Segurança") |
-| Autenticação e papéis (1.4.6, etapa 1) | **Real**: login local, sessão no servidor, anti-CSRF, papéis aluno/docente/admin, auditoria com o usuário. Login único do EBAULA e etapa 2 pendentes |
+| Autenticação e papéis (1.4.6, etapas 1 e 2) | **Real**: login local, sessão no servidor (inatividade e limite absoluto), anti-CSRF, papéis aluno/docente/admin, auditoria com o usuário, política e troca obrigatória de senha, pedidos sem login agregados, retenção e limpeza. Login único do EBAULA pendente |
 | Web standalone (1.4.4, `src/tia/web/`, em `/app`) | **Real**, com login e com visual PROVISÓRIO (ver "Web standalone" abaixo) |
 | Painel do docente/instituição (1.4.5, `src/tia/web/static/painel/`, em `/app/painel`) | **Real**, com login (só docente) e com visual PROVISÓRIO (ver "Painel do docente" abaixo). A pasta `dashboard/` da raiz ficou vazia |
 | Plug-in EBAULA (`plugin-ebaula/`) | **Não existe** |
@@ -207,6 +207,9 @@ não passa por HTTP e grava a auditoria com o papel `sistema`.
   sessão, aluno, `vetada` e `correcao_docente`. Uma linha por resposta (`resposta_id` =
   `historico_respostas.id`); respostas anteriores não têm linha e não são revisáveis.
 - `auditoria.motivo`: motivo de cada decisão.
+- Segurança (1.4.6): `usuarios`, `auth_sessoes`, `auth_tentativas`, `auditoria.usuario_id` e
+  `auditoria.usuario_papel` (etapa 1); `usuarios.trocar_senha`, `auth_sessoes.ultimo_uso` e `auth_anonimos`
+  (etapa 2).
 
 ## Limitações conhecidas
 
@@ -291,7 +294,7 @@ HTML, CSS e JavaScript puros em `src/tia/web/static/painel/`, servidos em **`/ap
 | Tela | O que mostra | Rotas |
 |---|---|---|
 | Visão geral | os 5 indicadores agregados do Agente 3 em cartões (progresso médio, acerto por nível, engajamento, pontos fracos, origem dos feedbacks e taxa de veto), alertas da turma só com contagens, regra do grupo mínimo explicada e a interpretação com a origem (LLM, guarda ou fallback) só quando o docente pede. Filtro por perfil no topo. Exportar CSV e Imprimir | `GET /relatorio/turma?narrativa=false` e `?narrativa=true`, `GET /painel/exportar/indicadores.csv` |
-| Alertas de risco | alunos em risco **com código** (nunca nome): inatividade, desempenho em queda, desempenho baixo, com o motivo em texto, dias sem atividade, acerto, tendência e progresso. Aviso "Protótipo, sem login (TODO 1.4.6)". Cada consulta grava `consulta_painel` na auditoria com os códigos exibidos. Atalho para a auditoria do aluno | `GET /painel/alunos-em-risco` |
+| Alertas de risco | alunos em risco **com código** (nunca nome): inatividade, desempenho em queda, desempenho baixo, com o motivo em texto, dias sem atividade, acerto, tendência e progresso. Só docente; o rodapé avisa que cada consulta fica na auditoria em nome dele. Cada consulta grava `consulta_painel` na auditoria com os códigos exibidos. Atalho para a auditoria do aluno | `GET /painel/alunos-em-risco` |
 | Competências | barras SVG da taxa de acerto por competência (linha de referência em 50%), contagem de alunos por tendência e questões com erro repetido (com enunciado) | `GET /painel/competencias` |
 | Revisão docente (R12) | feedbacks das questões e respostas do diálogo com o texto original, a questão ou a pergunta, o veredito, a origem, as fontes, o texto barrado pela guarda e a correção; filtros por tipo, situação, origem e competência; Aprovar, Vetar (com a correção/motivo) e Retirar veto; taxa de vetos de cada tipo | `GET /painel/revisao`, `PATCH /tutor/dialogo/{id}/veto`, `PATCH /tutor/feedback/{id}/veto` |
 | Auditoria (R11) | tabela filtrável por agente (orquestrador, planejador, tutor, relatório, painel), código do aluno e período, paginada (25 por página) | `GET /painel/auditoria` |
@@ -367,22 +370,27 @@ está em `docs/avaliacao/protocolo_amostra.md`.
 original mesmo que o docente já tenha vetado o feedback. O reenvio só acontece segundos depois da resposta
 original, por falha de rede; a correção continua visível no histórico.
 
-## Segurança (EAP 1.4.6, etapa 1)
+## Segurança (EAP 1.4.6, etapas 1 e 2)
 
 Pacote `src/tia/seguranca/`, rotas em `tia.api.rotas_auth`. Só biblioteca padrão e FastAPI: `hashlib.scrypt`,
-`secrets`, `hmac`, `sqlite3`.
+`secrets`, `hmac`, `sqlite3`. Implantação e impacto do `SameSite=Strict` no EBAULA:
+`docs/seguranca/implantacao.md`.
 
 ### Como funciona
 
 | Peça | Implementação |
 |---|---|
-| Usuários | tabela `usuarios`: `id` (código de login, nunca nome; mesmo padrão do código de aluno), `papel` (`aluno`, `docente`, `admin`), `aluno_id` (só no papel aluno), `senha_hash` (scrypt n=2^14, r=8, p=1, sal de 16 bytes por senha), `ativo`. Gestão por `python -m tia.seguranca.usuarios criar\|desativar\|redefinir-senha\|listar` (senha pelo terminal sem eco ou por `--senha-stdin`, nunca na linha de comando) ou por `/admin/usuarios` (papel admin). Senha mínima de 10 caracteres (PROVISÓRIO) |
+| Usuários | tabela `usuarios`: `id` (código de login, nunca nome; mesmo padrão do código de aluno), `papel` (`aluno`, `docente`, `admin`), `aluno_id` (só no papel aluno), `senha_hash` (scrypt n=2^14, r=8, p=1, sal de 16 bytes por senha), `ativo`. Gestão por `python -m tia.seguranca.usuarios criar\|desativar\|redefinir-senha\|listar` (senha pelo terminal sem eco ou por `--senha-stdin`, nunca na linha de comando) ou por `/admin/usuarios` (papel admin). Não há tela de administração |
+| Política de senha | `seguranca.senhas.validar`, configurável (PROVISÓRIO): pelo menos `AUTH_SENHA_MINIMA` (10) caracteres; recusa as senhas mais comuns (`seguranca/senhas_comuns.txt` mais o arquivo opcional `AUTH_SENHAS_COMUNS_EXTRA`; ignora maiúsculas e os números e símbolos das pontas, então "Senha@2026!" cai em "senha"; `AUTH_SENHA_BLOQUEAR_COMUNS=0` desliga), senha que contém o id do usuário e senha com menos de 4 caracteres diferentes |
+| Senha temporária | toda senha criada ou redefinida pelo admin (comando ou `/admin/usuarios`) é temporária (`usuarios.trocar_senha`). No login, `usuario.trocar_senha` vem `true` e a sessão só aceita `POST /auth/senha` e `POST /auth/logout`; as outras rotas respondem 403 "Troque a senha temporária antes de continuar." As telas mostram o formulário de troca. `POST /auth/senha {senha_atual, nova_senha}` confere a atual (errar conta como falha de login, com o mesmo bloqueio), aplica a política, exige senha diferente, encerra todas as sessões do usuário e abre uma nova. Também serve para a troca voluntária (sem tela, por enquanto). Com provedor externo, 409. Os usuários fictícios de demonstração não têm senha temporária |
 | Login | `POST /auth/login {login, senha}` pelo provedor configurado (`AUTH_PROVEDOR`). Mesma mensagem para usuário inexistente, senha errada ou usuário desativado, e o mesmo tempo de resposta (hash fictício) |
-| Sessão | no servidor (`auth_sessoes`): o cookie `tia_sessao` leva um token aleatório de 256 bits e a tabela guarda só o SHA-256 dele. `HttpOnly`, `SameSite=Strict`, `Secure` configurável (`AUTH_COOKIE_SEGURO`, padrão ligado; os navegadores aceitam em `http://localhost`), `Path=/`. Expira em `AUTH_SESSAO_MINUTOS` (padrão 480), contados do login. `POST /auth/logout` apaga a sessão; desativar o usuário ou trocar a senha encerra todas as sessões dele |
+| Sessão | no servidor (`auth_sessoes`): o cookie `tia_sessao` leva um token aleatório de 256 bits e a tabela guarda só o SHA-256 dele. `HttpOnly`, `SameSite=Strict`, `Secure` configurável (`AUTH_COOKIE_SEGURO`, padrão ligado; os navegadores aceitam em `http://localhost`), `Path=/`. Expira após `AUTH_SESSAO_INATIVIDADE_MINUTOS` (30) sem nenhum pedido (`auth_sessoes.ultimo_uso`, regravado no máximo uma vez por minuto) e, mesmo em uso, `AUTH_SESSAO_MAXIMA_MINUTOS` (480) após o login. `POST /auth/logout` apaga a sessão; desativar o usuário ou trocar a senha encerra todas as sessões dele |
 | Anti-CSRF | toda escrita (POST, PATCH...) exige o cabeçalho `X-CSRF-Token` igual ao token da sessão (comparação em tempo constante). O front recebe o token no login ou em `GET /auth/eu` e o guarda só em memória. No login, que ainda não tem sessão, o cabeçalho só precisa existir: um site de terceiros não consegue mandá-lo sem CORS, e a API não libera CORS. Junto com `SameSite=Strict` |
-| Tentativas | `auth_tentativas` (login, IP, sucesso; nunca a senha). Bloqueio (429) com `AUTH_MAX_FALHAS_USUARIO` (5) falhas do mesmo login desde o último sucesso dele, ou `AUTH_MAX_FALHAS_IP` (20) falhas do mesmo IP, dentro de `AUTH_JANELA_MINUTOS` (15). Atraso de `AUTH_ATRASO_SEGUNDOS` (1 s) em cada falha e em cada bloqueio. Falha e bloqueio vão para a auditoria |
+| Tentativas | `auth_tentativas` (login, IP, sucesso; nunca a senha). Bloqueio (429) com `AUTH_MAX_FALHAS_USUARIO` (5) falhas do mesmo login desde o último sucesso dele, ou `AUTH_MAX_FALHAS_IP` (20) falhas do mesmo IP, dentro de `AUTH_JANELA_MINUTOS` (15). Atraso de `AUTH_ATRASO_SEGUNDOS` (1 s) em cada falha e em cada bloqueio. Cada falha vai para a auditoria; o bloqueio, agregado como os pedidos sem login |
+| Pedidos sem login | `seguranca.anonimos`: os 401 de quem não tem sessão e os 429 de login bloqueado são contados em `auth_anonimos` por origem (IP), janela fixa de `AUTH_ANONIMOS_JANELA_MINUTOS` (10) e tipo. Só o primeiro de cada origem na janela vai para a auditoria, e no máximo `AUTH_ANONIMOS_MAX_ORIGENS` (50) origens por janela. Fechada a janela, uma linha `resumo_anonimos` grava o total de pedidos e de origens e quantos foram registrados um a um. Recusas de quem está logado (403) continuam uma a uma |
+| Retenção e limpeza | `seguranca.limpeza`: apaga as sessões vencidas e, depois de `AUTH_RETENCAO_IP_DIAS` (30, PROVISÓRIO), as tentativas e as contagens de pedidos sem login, as únicas tabelas com IP. O IP nunca vai para a auditoria. A API limpa ao subir e a cada `AUTH_LIMPEZA_MINUTOS` (60; 0 desliga); também por `python -m tia.seguranca.limpeza` (cron). Cada limpeza que apaga algo grava `limpeza_retencao` com as quantidades |
 | Autorização | dependências de `seguranca.acesso`: `usuario_atual` (401 sem sessão; 403 sem anti-CSRF), `exigir_papel`, `acesso_ao_aluno` (`{aluno_id}` do caminho) e `conferir_aluno` (`aluno_id` do corpo). Toda recusa responde com mensagem clara e grava `acesso_negado` com a rota |
-| Auditoria | colunas `usuario_id` e `usuario_papel` em toda linha: o usuário da sessão (`core.auditoria.USUARIO_ATUAL`, por requisição); `sistema` fora de requisição (comandos, agendador); `anonimo` em login recusado e 401; `sem_login` no modo de desenvolvimento. Tipos novos: `login`, `login_falha`, `login_bloqueado`, `logout`, `acesso_negado`, `gestao_usuario`. Nunca a senha; o login digitado só entra se tiver o formato de código (um nome digitado por engano vira "fora do formato") |
+| Auditoria | colunas `usuario_id` e `usuario_papel` em toda linha: o usuário da sessão (`core.auditoria.USUARIO_ATUAL`, por requisição); `sistema` fora de requisição (comandos, agendador); `anonimo` em login recusado e 401; `sem_login` no modo de desenvolvimento. Tipos novos: `login`, `login_falha`, `login_bloqueado`, `logout`, `acesso_negado`, `gestao_usuario`, `resumo_anonimos`, `limpeza_retencao`. Nunca a senha; o login digitado só entra se tiver o formato de código (um nome digitado por engano vira "fora do formato") |
 
 ### Quem pode chamar o quê
 
@@ -394,6 +402,7 @@ Pacote `src/tia/seguranca/`, rotas em `tia.api.rotas_auth`. Só biblioteca padr�
 | `POST /orquestrador/verificar-inatividade` | 403 | sim | sim | 401 |
 | `GET /conteudo/ementa \| perfis` | sim | sim | sim | 401 |
 | `/admin/usuarios` | 403 | 403 | sim | 401 |
+| `POST /auth/senha`, `POST /auth/logout` | sim | sim | sim | 401 |
 | `/auth/login`, `/auth/eu`, `/health`, `/app/*` (arquivos estáticos), `/docs` | públicas | | | |
 
 O admin só gerencia usuários: não vê dados de aluno nem o painel (minimização, R08).
@@ -403,7 +412,9 @@ O admin só gerencia usuários: não vê dados de aluno nem o painel (minimizaç
 `/app/` e `/app/painel/` abrem na tela de login quando não há sessão. Logado, o topo mostra "Conectado:
 <usuário> (papel)" e o botão Sair; o aviso de protótipo saiu. O aluno só vê os próprios dados (o código vem
 da sessão) e um docente que entra em `/app/` recebe o endereço do painel. O painel recusa quem não é
-docente. Uma sessão que vence no meio do uso volta para o login ("Sua sessão terminou"). O JavaScript nunca
+docente. Uma sessão que vence no meio do uso (inatividade ou limite) volta para o login ("Sua sessão
+terminou"). Com senha temporária, a tela de login vira "Troca da senha temporária" (atual, nova e repetição;
+os campos são limpos depois de cada tentativa) e só segue depois da troca. O JavaScript nunca
 lê o cookie, a senha é apagada do campo depois de cada tentativa e todo texto da API entra por `textContent`.
 
 ### Provedor trocável (contrato `Autenticador`, para o login único do EBAULA)
@@ -419,19 +430,22 @@ escrever a classe, registrá-la em `PROVEDORES` e usar `AUTH_PROVEDOR=<nome>`. O
 
 `TIA_AUTH=desligada`: nenhuma rota pede login, a auditoria grava `sem_login` e as duas telas mostram
 "Modo de desenvolvimento: autenticação desligada". **Padrão: ligada.** Os testes que verificam os agentes
-pelas rotas usam esse modo (fixture `auth_desligada` no `conftest`); os de segurança (`test_seguranca.py`)
-ligam a autenticação. `python -m tia.web.dados_demo` e `python -m tia.web.dados_painel` criam o aluno
+pelas rotas usam esse modo (fixture `auth_desligada` no `conftest`); os de segurança (`test_seguranca.py`
+e `test_seguranca_etapa2.py`) ligam a autenticação. `python -m tia.web.dados_demo` e `python -m tia.web.dados_painel` criam o aluno
 DEMO-W01 e o docente DEMO-DOCENTE com uma senha de demonstração **fictícia e pública**, impressa pelo
 próprio comando. Só serve para a máquina de desenvolvimento.
 
-### Pendências (etapa 2 e outras entregas)
+### Pendências
 
-- Login único do EBAULA (1.4.3): o provedor e o mapeamento usuário do EBAULA → papel/aluno_id.
+- Login único do EBAULA (1.4.3): o provedor, o mapeamento usuário do EBAULA → papel/aluno_id e a forma de
+  sessão dentro do EBAULA (`SameSite=Strict` não funciona em iframe de outro site; alternativas em
+  `docs/seguranca/implantacao.md`).
 - Docente restrito às próprias turmas (não existe turma no banco).
-- Tela de administração de usuários (hoje: comando e `/admin/usuarios`); troca de senha pelo próprio usuário.
+- Tela de administração de usuários e tela de troca voluntária de senha (hoje: comando, `/admin/usuarios` e
+  `POST /auth/senha`).
 - `/docs` e `/openapi.json` públicos: desligar ou proteger na VM.
 - HTTPS na VM (o cookie `Secure` depende disso), cabeçalhos de segurança também na API (hoje só em `/app`).
-- Retenção de `auth_tentativas` e `auth_sessoes` (limpeza periódica) e política de senha da instituição.
-- Requisições sem sessão gravam `acesso_negado`: um volume alto de pedidos anônimos enche a auditoria
-  (limite por IP também nas rotas, na etapa 2).
+- Política de senha e prazo de retenção da instituição (valores atuais PROVISÓRIOS).
+- `login_falha` continua uma linha por falha: o bloqueio por IP limita cada origem, mas muitas origens
+  diferentes (botnet) ainda geram muitas linhas. Agregar também, se aparecer na VM.
 

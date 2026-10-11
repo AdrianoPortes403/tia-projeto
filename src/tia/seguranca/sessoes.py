@@ -2,12 +2,13 @@
 Sessões no servidor e tentativas de login (EAP 1.4.6).
 
 Sessão: o cookie leva um token aleatório (secrets.token_urlsafe); a tabela
-auth_sessoes guarda só o SHA-256 dele, o usuário, o token anti-CSRF e a
-expiração (AUTH_SESSAO_MINUTOS a partir do login). Usuário desativado ou
-sessão expirada = sem sessão.
+auth_sessoes guarda só o SHA-256 dele, o usuário, o token anti-CSRF, a
+expiração absoluta (AUTH_SESSAO_MAXIMA_MINUTOS a partir do login) e o último
+uso. A sessão também vence após AUTH_SESSAO_INATIVIDADE_MINUTOS sem nenhum
+pedido. Usuário desativado ou sessão vencida = sem sessão.
 
-Tentativas: cada login (com sucesso ou não) grava o login e o IP em
-auth_tentativas, sem senha. O login fica bloqueado quando há
+Tentativas: cada login (com sucesso ou não) e cada senha atual errada na
+troca de senha grava o login e o IP em auth_tentativas, sem senha. O login fica bloqueado quando há
 AUTH_MAX_FALHAS_USUARIO falhas do mesmo login (desde o último sucesso dele)
 ou AUTH_MAX_FALHAS_IP falhas do mesmo IP dentro de AUTH_JANELA_MINUTOS.
 
@@ -23,6 +24,9 @@ from datetime import datetime, timedelta
 
 import tia.core.config as config
 from tia.core.database import obter_conexao
+
+# o último uso só é regravado quando tem mais que isto (evita uma escrita por pedido)
+INTERVALO_ULTIMO_USO = timedelta(seconds=60)
 
 
 def _texto(momento: datetime) -> str:
@@ -42,30 +46,52 @@ def criar_sessao(usuario_id: str, agora: datetime | None = None) -> tuple[str, s
     conexao = obter_conexao()
     try:
         with conexao:
-            # aproveita para limpar as sessões vencidas
-            conexao.execute("DELETE FROM auth_sessoes WHERE expira_em < ?", (_texto(agora),))
+            _apagar_vencidas(conexao, agora)  # aproveita para limpar
             conexao.execute(
-                "INSERT INTO auth_sessoes (token_hash, usuario_id, csrf, criada_em, expira_em) VALUES (?, ?, ?, ?, ?)",
+                """INSERT INTO auth_sessoes (token_hash, usuario_id, csrf, criada_em, expira_em, ultimo_uso)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
                 (_hash(token), usuario_id, csrf, _texto(agora),
-                 _texto(agora + timedelta(minutes=config.AUTH_SESSAO_MINUTOS))))
+                 _texto(agora + timedelta(minutes=config.AUTH_SESSAO_MAXIMA_MINUTOS)), _texto(agora)))
     finally:
         conexao.close()
     return token, csrf
 
 
-def ler_sessao(token: str, agora: datetime | None = None) -> dict | None:
-    """Usuário da sessão (id, papel, aluno_id, csrf); None se não existe,
-    venceu ou o usuário foi desativado."""
+def _limite_inatividade(agora: datetime) -> str:
+    return _texto(agora - timedelta(minutes=config.AUTH_SESSAO_INATIVIDADE_MINUTOS))
+
+
+def _apagar_vencidas(conexao, agora: datetime) -> int:
+    """Apaga as sessões vencidas (limite absoluto ou inatividade); devolve quantas."""
+    return conexao.execute(
+        "DELETE FROM auth_sessoes WHERE expira_em <= ? OR COALESCE(ultimo_uso, criada_em) <= ?",
+        (_texto(agora), _limite_inatividade(agora))).rowcount
+
+
+def ler_sessao(token: str, agora: datetime | None = None, renovar: bool = True) -> dict | None:
+    """Usuário da sessão (id, papel, aluno_id, trocar_senha, csrf); None se não
+    existe, venceu (limite absoluto ou inatividade) ou o usuário foi desativado.
+    renovar: conta este pedido como uso (adia a expiração por inatividade)."""
     agora = agora or datetime.now()
     conexao = obter_conexao()
     try:
         linha = conexao.execute(
-            """SELECT u.id, u.papel, u.aluno_id, s.csrf FROM auth_sessoes s JOIN usuarios u ON u.id = s.usuario_id
-               WHERE s.token_hash = ? AND s.expira_em > ? AND u.ativo""",
-            (_hash(token), _texto(agora))).fetchone()
+            """SELECT u.id, u.papel, u.aluno_id, u.trocar_senha, s.csrf, COALESCE(s.ultimo_uso, s.criada_em) AS uso
+               FROM auth_sessoes s JOIN usuarios u ON u.id = s.usuario_id
+               WHERE s.token_hash = ? AND s.expira_em > ? AND COALESCE(s.ultimo_uso, s.criada_em) > ? AND u.ativo""",
+            (_hash(token), _texto(agora), _limite_inatividade(agora))).fetchone()
+        if linha and renovar and linha["uso"] < _texto(agora - INTERVALO_ULTIMO_USO):
+            with conexao:
+                conexao.execute("UPDATE auth_sessoes SET ultimo_uso = ? WHERE token_hash = ?",
+                                (_texto(agora), _hash(token)))
     finally:
         conexao.close()
-    return dict(linha) if linha else None
+    if linha is None:
+        return None
+    sessao = dict(linha)
+    del sessao["uso"]
+    sessao["trocar_senha"] = bool(sessao["trocar_senha"])
+    return sessao
 
 
 def encerrar_sessao(token: str):
@@ -110,7 +136,7 @@ def bloqueio(login: str, ip: str, agora: datetime | None = None) -> str | None:
     try:
         do_login = conexao.execute(
             """SELECT COUNT(*) FROM auth_tentativas WHERE login = ? AND NOT sucesso AND ts >= ?
-                 AND ts > COALESCE((SELECT MAX(ts) FROM auth_tentativas WHERE login = ? AND sucesso), '')""",
+                 AND id > COALESCE((SELECT MAX(id) FROM auth_tentativas WHERE login = ? AND sucesso), 0)""",
             (login, inicio, login)).fetchone()[0]
         do_ip = conexao.execute("SELECT COUNT(*) FROM auth_tentativas WHERE ip = ? AND NOT sucesso AND ts >= ?",
                                 (ip, inicio)).fetchone()[0]
@@ -121,3 +147,24 @@ def bloqueio(login: str, ip: str, agora: datetime | None = None) -> str | None:
     if do_ip >= config.AUTH_MAX_FALHAS_IP:
         return "ip"
     return None
+
+
+# --- limpeza (retenção) ---
+
+def limpar(agora: datetime | None = None, conexao=None) -> dict[str, int]:
+    """Apaga as sessões vencidas e as tentativas de login mais antigas que
+    AUTH_RETENCAO_IP_DIAS (guardam o IP). Devolve quantas linhas saíram."""
+    agora = agora or datetime.now()
+    limite_ip = _texto(agora - timedelta(days=config.AUTH_RETENCAO_IP_DIAS))
+    propria = conexao is None
+    conexao = conexao or obter_conexao()
+    try:
+        removidas = {"sessoes": _apagar_vencidas(conexao, agora),
+                     "tentativas": conexao.execute("DELETE FROM auth_tentativas WHERE ts < ?",
+                                                   (limite_ip,)).rowcount}
+        if propria:
+            conexao.commit()
+    finally:
+        if propria:
+            conexao.close()
+    return removidas

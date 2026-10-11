@@ -29,10 +29,12 @@ from tia.core.database import obter_conexao
 # tipos de interação registrados. veto_docente: veto ou retirada do veto (R12);
 # consulta_painel: consulta do docente que mostra códigos de aluno (painel 1.4.5);
 # segurança (1.4.6): login, login_falha, login_bloqueado, logout, acesso_negado
-# (401/403) e gestao_usuario (criar, desativar, redefinir senha; nunca a senha)
+# (401/403) e gestao_usuario (criar, desativar, redefinir ou trocar senha; nunca
+# a senha); etapa 2: resumo_anonimos (pedidos sem login só contados numa janela,
+# seguranca.anonimos) e limpeza_retencao (linhas apagadas pela retenção)
 TIPOS = ("resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma", "decisao_orquestrador",
          "veto_docente", "consulta_painel", "login", "login_falha", "login_bloqueado", "logout", "acesso_negado",
-         "gestao_usuario")
+         "gestao_usuario", "resumo_anonimos", "limpeza_retencao")
 
 # Quem está agindo (1.4.6): (usuario_id, papel), definido por requisição pela
 # segurança (seguranca.acesso). Sem valor (comandos, agendador, testes de
@@ -85,7 +87,8 @@ AGENTE_POR_TIPO = {
     "relatorio_aluno": "relatorio", "relatorio_turma": "relatorio",
     "decisao_orquestrador": "orquestrador", "consulta_painel": "painel",
     "login": "seguranca", "login_falha": "seguranca", "login_bloqueado": "seguranca", "logout": "seguranca",
-    "acesso_negado": "seguranca", "gestao_usuario": "seguranca",
+    "acesso_negado": "seguranca", "gestao_usuario": "seguranca", "resumo_anonimos": "seguranca",
+    "limpeza_retencao": "seguranca",
 }
 AGENTES = ("orquestrador", "planejador", "tutor", "relatorio", "painel", "seguranca")
 

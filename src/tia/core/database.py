@@ -61,6 +61,11 @@ COLUNAS_NOVAS_AUDITORIA = {
     "usuario_papel": "TEXT",
 }
 
+# Segurança, etapa 2 (1.4.6): senha temporária (troca obrigatória no primeiro
+# acesso) e último uso da sessão (expiração por inatividade)
+COLUNAS_NOVAS_USUARIOS = {"trocar_senha": "INTEGER NOT NULL DEFAULT 0"}
+COLUNAS_NOVAS_SESSOES = {"ultimo_uso": "DATETIME"}
+
 
 def _acrescentar_colunas(cursor: sqlite3.Cursor, tabela: str, colunas: dict[str, str]):
     """Acrescenta à tabela as colunas que ainda não existem."""
@@ -290,8 +295,9 @@ def criar_tabelas():
             atualizado_em DATETIME
         )
     """)
+    _acrescentar_colunas(cursor, "usuarios", COLUNAS_NOVAS_USUARIOS)
     # Sessões no servidor: o cookie leva um token aleatório; aqui fica só o
-    # SHA-256 dele, com o token anti-CSRF e a expiração.
+    # SHA-256 dele, com o token anti-CSRF, a expiração absoluta e o último uso.
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS auth_sessoes (
             token_hash TEXT PRIMARY KEY,
@@ -302,6 +308,7 @@ def criar_tabelas():
             FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
         )
     """)
+    _acrescentar_colunas(cursor, "auth_sessoes", COLUNAS_NOVAS_SESSOES)
     # Tentativas de login (limite por usuário e por IP). Sem senha.
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS auth_tentativas (
@@ -313,6 +320,23 @@ def criar_tabelas():
         )
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_tentativas ON auth_tentativas (ts)")
+    # Pedidos sem login (401) e logins bloqueados, contados por origem (IP),
+    # janela de tempo e tipo: só o primeiro de cada janela vai para a auditoria
+    # (seguranca.anonimos). O IP fica só aqui, apagado após AUTH_RETENCAO_IP_DIAS.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS auth_anonimos (
+            ip TEXT NOT NULL,
+            janela DATETIME NOT NULL,
+            tipo TEXT NOT NULL,
+            pedidos INTEGER NOT NULL,
+            registrado INTEGER NOT NULL DEFAULT 0,
+            resumido INTEGER NOT NULL DEFAULT 0,
+            primeiro_ts DATETIME,
+            ultimo_ts DATETIME,
+            PRIMARY KEY (ip, janela, tipo)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_anonimos_janela ON auth_anonimos (janela, tipo)")
 
     conexao.commit()
     conexao.close()

@@ -64,6 +64,20 @@
                maxlength="256">
         <button type="submit" class="botao acao">Entrar</button>
       </form>
+      <!-- troca obrigatória da senha temporária (criada ou redefinida pelo admin) -->
+      <form id="form-senha" class="cartao" novalidate hidden>
+        <label for="campo-senha-atual">Senha atual (temporária)</label>
+        <input id="campo-senha-atual" name="senha_atual" type="password" required autocomplete="current-password"
+               maxlength="256">
+        <label for="campo-senha-nova">Nova senha</label>
+        <input id="campo-senha-nova" name="nova_senha" type="password" required autocomplete="new-password"
+               maxlength="256" aria-describedby="dica-senha">
+        <p class="dica" id="dica-senha">Use uma senha longa, que não seja comum nem contenha o seu usuário.</p>
+        <label for="campo-senha-repetir">Repita a nova senha</label>
+        <input id="campo-senha-repetir" name="repetir_senha" type="password" required autocomplete="new-password"
+               maxlength="256">
+        <button type="submit" class="botao acao">Trocar a senha</button>
+      </form>
       <p class="dica" id="login-painel" hidden>Docentes: o painel fica em <a href="/app/painel/">/app/painel/</a>.</p>
     </section>
 

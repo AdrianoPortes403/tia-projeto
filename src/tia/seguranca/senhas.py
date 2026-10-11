@@ -7,6 +7,12 @@ aleatório por senha. Formato guardado (uma string, sem a senha):
 A conferência usa comparação em tempo constante (hmac.compare_digest). A
 senha nunca vai para log, auditoria ou documentação.
 
+Política de senha (validar), configurável em core/config.py: pelo menos
+AUTH_SENHA_MINIMA caracteres, não pode ser uma das senhas mais comuns
+(senhas_comuns.txt e AUTH_SENHAS_COMUNS_EXTRA; ignora maiúsculas e os números
+e símbolos das pontas), nem conter o id do usuário, nem repetir quase só um
+caractere. PROVISÓRIA até a política da instituição.
+
 Não é executável; usado por seguranca.usuarios e seguranca.autenticador.
 
 Pré-requisitos:
@@ -16,22 +22,61 @@ Pré-requisitos:
 import hashlib
 import hmac
 import os
+from functools import cache
+from pathlib import Path
+
+import tia.core.config as config
 
 # custo do scrypt: 2**14 * 8 * 128 bytes = 16 MiB de memória por conferência (~50 ms)
 N, R, P = 2 ** 14, 8, 1
 TAMANHO_HASH = 32
 TAMANHO_SAL = 16
-SENHA_MINIMA = 10  # caracteres; PROVISÓRIO até a política da instituição (Tiago)
+LISTA_COMUNS = Path(__file__).with_name("senhas_comuns.txt")
+MINIMO_CARACTERES_DIFERENTES = 4
 
 
 class SenhaFraca(ValueError):
     pass
 
 
-def validar(senha: str):
-    """Política mínima: pelo menos SENHA_MINIMA caracteres e não só espaços."""
-    if len(senha) < SENHA_MINIMA or not senha.strip():
-        raise SenhaFraca(f"A senha precisa ter pelo menos {SENHA_MINIMA} caracteres.")
+@cache
+def _ler_lista(caminho: str) -> frozenset[str]:
+    linhas = Path(caminho).read_text(encoding="utf-8").splitlines()
+    return frozenset(l.strip().lower() for l in linhas if l.strip() and not l.lstrip().startswith("#"))
+
+
+def senhas_comuns() -> frozenset[str]:
+    """Senhas bloqueadas: a lista do TIA mais o arquivo extra da instituição, se houver."""
+    comuns = _ler_lista(str(LISTA_COMUNS))
+    if config.AUTH_SENHAS_COMUNS_EXTRA:
+        comuns = comuns | _ler_lista(config.AUTH_SENHAS_COMUNS_EXTRA)
+    return comuns
+
+
+def _base(senha: str) -> str:
+    """A senha em minúsculas sem os números e símbolos das pontas ("Senha@2026!" -> "senha")."""
+    texto = senha.strip().lower()
+    inicio, fim = 0, len(texto)
+    while inicio < fim and not texto[inicio].isalpha():
+        inicio += 1
+    while fim > inicio and not texto[fim - 1].isalpha():
+        fim -= 1
+    return texto[inicio:fim]
+
+
+def validar(senha: str, usuario_id: str | None = None):
+    """Aplica a política de senha; levanta SenhaFraca com a mensagem para o usuário."""
+    minima = config.AUTH_SENHA_MINIMA
+    if len(senha) < minima or not senha.strip():
+        raise SenhaFraca(f"A senha precisa ter pelo menos {minima} caracteres.")
+    if len(set(senha.lower())) < MINIMO_CARACTERES_DIFERENTES:
+        raise SenhaFraca("A senha repete quase só os mesmos caracteres. Escolha outra.")
+    if usuario_id and usuario_id.lower() in senha.lower():
+        raise SenhaFraca("A senha não pode conter o nome de usuário.")
+    if config.AUTH_SENHA_BLOQUEAR_COMUNS:
+        comuns = senhas_comuns()
+        if senha.strip().lower() in comuns or _base(senha) in comuns:
+            raise SenhaFraca("Essa senha é muito comum e fácil de adivinhar. Escolha outra.")
 
 
 def _derivar(senha: str, sal: bytes, n: int, r: int, p: int) -> bytes:
