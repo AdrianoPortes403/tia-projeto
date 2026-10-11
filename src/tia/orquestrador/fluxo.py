@@ -135,10 +135,26 @@ def _ultima(aluno_id: str, acao: str) -> str | None:
     return decisoes[-1]["ts"] if decisoes else None
 
 
+def _etapas(aluno_id: str) -> list[EtapaEstado]:
+    """Etapas da trilha atual, em ordem, com a conclusão do Planejador ou do Tutor."""
+    trilha = ler_trilha(aluno_id)
+    concluidas = tutor.repositorio.competencias_concluidas(aluno_id)
+    return [EtapaEstado(ordem=e.ordem, competencia_id=e.competencia_id, nome=e.nome,
+                        concluida=e.concluida or e.competencia_id in concluidas)
+            for e in sorted(trilha.etapas, key=lambda e: e.ordem)] if trilha else []
+
+
+def trilha_concluida(aluno_id: str) -> bool:
+    """Tem trilha, todas as etapas concluídas e nenhum reforço em curso."""
+    etapas = _etapas(aluno_id)
+    return bool(etapas) and all(e.concluida for e in etapas) and repositorio.reforco_ativo(aluno_id) is None
+
+
 def avaliar_inatividade(aluno_id: str, dados, agora: datetime) -> Avaliacao:
-    """R3 com o engajamento do Relatório e as últimas ações por inatividade."""
+    """R3 com o engajamento do Relatório e as últimas ações por inatividade;
+    quem concluiu a trilha não entra."""
     return regras.regra_inatividade(indicadores.engajamento(dados, agora), _ultima(aluno_id, "incentivar"),
-                                    _ultima(aluno_id, "refazer_trilha"))
+                                    _ultima(aluno_id, "refazer_trilha"), trilha_concluida=trilha_concluida(aluno_id))
 
 
 def estado(aluno_id: str, agora: datetime | None = None) -> EstadoAluno:
@@ -146,15 +162,12 @@ def estado(aluno_id: str, agora: datetime | None = None) -> EstadoAluno:
     agora = instante(agora)
     matricula = exigir_matricula(aluno_id)
     dados = ler_dados_aluno(aluno_id)
-    trilha = ler_trilha(aluno_id)
-    concluidas = tutor.repositorio.competencias_concluidas(aluno_id)
-    etapas = [EtapaEstado(ordem=e.ordem, competencia_id=e.competencia_id, nome=e.nome,
-                          concluida=e.concluida or e.competencia_id in concluidas)
-              for e in sorted(trilha.etapas, key=lambda e: e.ordem)] if trilha else []
+    etapas = _etapas(aluno_id)
     atual = next((e.competencia_id for e in etapas if not e.concluida), None)
     reforco = repositorio.reforco_ativo(aluno_id)
     engajamento = indicadores.engajamento(dados, agora)
     inatividade = avaliar_inatividade(aluno_id, dados, agora)
+    concluiu = bool(etapas) and atual is None and reforco is None
     decisoes = repositorio.listar_decisoes(aluno_id)
     return EstadoAluno(
         aluno_id=aluno_id,
@@ -169,7 +182,7 @@ def estado(aluno_id: str, agora: datetime | None = None) -> EstadoAluno:
         if reforco else None,
         concluido=atual is None and reforco is None,
         tendencia=indicadores.tendencia(dados.respostas).direcao,
-        inativo=engajamento.inativo,
+        inativo=engajamento.inativo and not concluiu,  # R3: quem concluiu a trilha não é inativo
         dias_inativo=engajamento.dias_inativo,
         replanejamento_pendente=inatividade.motivo if inatividade.dispara else None,
         replanejamentos=sum(d["replanejou"] and d["regra"] != "matricula" for d in decisoes),

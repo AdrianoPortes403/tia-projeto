@@ -33,7 +33,8 @@ class DadosAluno:
     trilha: Trilha | None
     trilha_criada_em: str | None
     # cada resposta: competencia_id, nivel, acertou, ts, origem (None sem auditoria),
-    # item_id e sessao_id (None nas respostas gravadas antes dessas colunas)
+    # item_id e sessao_id (None nas respostas gravadas antes dessas colunas) e
+    # feedback_vetado (None sem texto gravado em tutor_feedbacks; o texto NÃO é lido)
     respostas: list[dict] = field(default_factory=list)
     # cada sessão: competencia_id, nivel, concluida, criado_em, atualizado_em
     sessoes: list[dict] = field(default_factory=list)
@@ -70,9 +71,10 @@ def ler_dados_aluno(aluno_id: str) -> DadosAluno | None:
         ).fetchone()
         respostas = conexao.execute(
             """SELECT h.id, h.topico AS competencia_id, h.nivel, h.acertou, h.timestamp AS ts, a.origem,
-                      h.item_id, h.sessao_id
+                      h.item_id, h.sessao_id, f.vetada AS feedback_vetado
                FROM historico_respostas h
                LEFT JOIN auditoria a ON a.tipo = 'resposta_item' AND a.referencia_id = CAST(h.id AS TEXT)
+               LEFT JOIN tutor_feedbacks f ON f.resposta_id = h.id
                WHERE h.aluno_id = ? AND h.nivel IS NOT NULL
                ORDER BY h.timestamp, h.id""", (aluno_id,),
         ).fetchall()
@@ -93,7 +95,9 @@ def ler_dados_aluno(aluno_id: str) -> DadosAluno | None:
         trilha_criada_em=trilha_info["criado"],
         respostas=[{"competencia_id": r["competencia_id"], "nivel": r["nivel"], "acertou": bool(r["acertou"]),
                     "ts": r["ts"], "origem": r["origem"], "item_id": r["item_id"],
-                    "sessao_id": r["sessao_id"]} for r in respostas],
+                    "sessao_id": r["sessao_id"],
+                    "feedback_vetado": None if r["feedback_vetado"] is None else bool(r["feedback_vetado"])}
+                   for r in respostas],
         sessoes=[{"competencia_id": s["competencia_id"], "nivel": s["nivel"], "concluida": bool(s["concluida"]),
                   "criado_em": s["criado_em"], "atualizado_em": s["atualizado_em"]} for s in sessoes],
         dialogos=[{"competencia_id": d["competencia_id"], "origem": d["origem"], "vetada": bool(d["vetada"]),

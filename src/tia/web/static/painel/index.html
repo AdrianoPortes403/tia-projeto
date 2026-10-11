@@ -132,6 +132,14 @@
       <div id="revisao-resumo"></div>
       <form class="filtros nao-imprimir" id="form-revisao" novalidate>
         <div>
+          <label for="filtro-tipo">Texto</label>
+          <select id="filtro-tipo">
+            <option value="">Feedback das questões e diálogo</option>
+            <option value="feedback">Feedback das questões</option>
+            <option value="dialogo">Respostas do diálogo</option>
+          </select>
+        </div>
+        <div>
           <label for="filtro-situacao">Situação</label>
           <select id="filtro-situacao">
             <option value="a_revisar">A revisar</option>
@@ -149,17 +157,18 @@
             <option value="">Todas</option>
           </select>
         </div>
+        <div>
+          <label for="filtro-competencia">Competência</label>
+          <select id="filtro-competencia">
+            <option value="">Todas</option>
+          </select>
+        </div>
         <button type="submit" class="botao acao">Filtrar</button>
       </form>
-      <h2>Respostas do diálogo</h2>
+      <h2>Textos do tutor</h2>
+      <p class="dica" id="revisao-total" aria-live="polite"></p>
       <ol class="revisao" id="revisao-lista"></ol>
       <nav class="paginacao nao-imprimir" id="revisao-paginas" aria-label="Páginas da revisão"></nav>
-      <section class="cartao" aria-labelledby="titulo-feedbacks">
-        <h2 id="titulo-feedbacks">Feedbacks das questões</h2>
-        <p class="dica">O texto da explicação de cada questão não é gravado: aqui aparecem só a origem e as fontes
-          (pendência). O veto existe só para o diálogo.</p>
-        <div id="revisao-feedbacks"></div>
-      </section>
     </section>
 
     <!-- 5) Auditoria (R11) -->

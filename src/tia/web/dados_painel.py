@@ -13,8 +13,9 @@ A matrícula passa pelo orquestrador (trilha do Planejador com o texto
 padrão, decisão "planejar" na auditoria). As sessões, respostas e
 diálogos são SINTÉTICOS, gravados direto no banco com datas no passado
 (como em python -m tia.agentes.relatorio --demo): a origem dos feedbacks
-(LLM/guarda/fallback) é sorteada e os textos do diálogo são de exemplo,
-marcados "[demonstração]". No fim, roda a verificação de inatividade do
+(LLM/guarda/fallback) é sorteada; o texto do feedback (tutor_feedbacks) é a
+explicação do item e, na origem "LLM", vem marcado "[demonstração]", como os
+textos do diálogo. No fim, roda a verificação de inatividade do
 orquestrador (R3), que registra as decisões de incentivo e de refazer a
 trilha. Aluno que já existe é mantido (rodar de novo não duplica).
 Imprime o tempo gasto.
@@ -37,7 +38,8 @@ from datetime import datetime, timedelta
 
 import tia.core.database as database
 from tia import orquestrador
-from tia.agentes.tutor.repositorio import DIFICULDADE_POR_NIVEL, carregar_itens, vetar_dialogo
+from tia.agentes.tutor.feedback import montar_veredito
+from tia.agentes.tutor.repositorio import DIFICULDADE_POR_NIVEL, carregar_itens, materiais_da_competencia, vetar_dialogo
 from tia.core import auditoria
 from tia.orquestrador.modelos import Matricula
 from tia.web.dados_demo import sem_llm
@@ -108,6 +110,18 @@ def _ts(momento: datetime) -> str:
     return momento.isoformat(timespec="seconds")
 
 
+def texto_feedback(item: dict, origem: str) -> tuple:
+    """explicacao, origem, falha_llm, explicacao_descartada e motivo_descarte de
+    exemplo (sem LLM): na origem "LLM", a explicação do item marcada como
+    demonstração; nas outras, a explicação do item, como o Tutor faz de verdade."""
+    if origem == "LLM":
+        return "[demonstração] " + item["explicacao"], origem, None, None, None
+    if origem == "guarda":
+        return (item["explicacao"], origem, None, "[demonstração] Texto do LLM com um número que não está no item: 42.",
+                "número fora do item: 42")
+    return item["explicacao"], origem, "timeout", None, None
+
+
 def gravar_atividade(aluno_id: str, sessoes: list, dialogos: list, agora: datetime, sorteio: random.Random,
                      itens: dict[str, list[dict]]):
     """Sessões, respostas (com auditoria) e diálogos sintéticos, com datas no passado."""
@@ -123,14 +137,24 @@ def gravar_atividade(aluno_id: str, sessoes: list, dialogos: list, agora: dateti
                     item = itens[competencia][n % len(itens[competencia])]
                     ts = _ts(inicio + timedelta(minutes=4 * n))
                     origem = sorteio.choices(["LLM", "guarda", "fallback"], weights=[7, 2, 1])[0]
-                    fontes = [] if origem == "fallback" else [f"provisorio_{competencia}.txt"]
+                    # como no Tutor: só a explicação do LLM cita fonte; guarda e fallback usam o texto do item
+                    fontes = (materiais_da_competencia(competencia) or [])[:1] if origem == "LLM" else []
                     cursor = conexao.execute(
                         """INSERT INTO historico_respostas (aluno_id, topico, dificuldade, acertou, timestamp, nivel,
                                                             fontes, tempo_ms, item_id, sessao_id)
                            VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?)""",
                         (aluno_id, competencia, DIFICULDADE_POR_NIVEL[nivel], resposta == "1", ts, nivel,
                          sorteio.randint(4000, 60000), item["id"], sessao_id))
-                    auditoria.registrar(conexao, aluno_id, "resposta_item", cursor.lastrowid, origem, fontes, ts=ts)
+                    resposta_id = cursor.lastrowid
+                    indice = item["indice_correto"] if resposta == "1" else (item["indice_correto"] + 1) % 4
+                    conexao.execute(
+                        """INSERT INTO tutor_feedbacks (resposta_id, aluno_id, sessao_id, item_id, competencia_id, ts,
+                                                        veredito, explicacao, origem, falha_llm,
+                                                        explicacao_descartada, motivo_descarte, fontes)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (resposta_id, aluno_id, sessao_id, item["id"], competencia, ts,
+                         montar_veredito(item, indice), *texto_feedback(item, origem), json.dumps(fontes)))
+                    auditoria.registrar(conexao, aluno_id, "resposta_item", resposta_id, origem, fontes, ts=ts)
                     nivel = min(3, nivel + 1) if resposta == "1" else max(1, nivel - 1)
                 conexao.execute(
                     """INSERT INTO tutor_sessoes (id, aluno_id, competencia_id, nivel, item_atual_id, itens_usados,

@@ -23,7 +23,7 @@ flowchart LR
     subgraph API["API FastAPI (src/tia/api)"]
         RORQ["/aluno/{id}/iniciar · proximo · sessao · evento · estado<br/>/orquestrador/verificar-inatividade"]
         RPLAN["/planejador/trilha · /alunos/{id}/trilha"]
-        RTUT["/tutor/sessao · resposta · perguntar<br/>/tutor/dialogo/{id}/veto · /tutor/incentivo"]
+        RTUT["/tutor/sessao · resposta · perguntar<br/>/tutor/dialogo/{id}/veto · /tutor/feedback/{id}/veto<br/>/alunos/{id}/feedbacks · /tutor/incentivo"]
         RREL["/relatorio/aluno/{id} · /relatorio/turma"]
         RAUD["/auditoria/{id}"]
         RPAI["/painel/alunos-em-risco · competencias · revisao<br/>auditoria · exportar/indicadores.csv<br/>/conteudo/ementa · perfis (só leitura)"]
@@ -164,7 +164,7 @@ pedagógica da Pessoa 4 e têm limiar em `core/config.py`.
 | D4 | **Inatividade avaliada por comando/rota chamados por agendador externo** (cron/timer na VM, depois de 15/10; o agendador não faz parte deste pacote) (Pessoa 2) | `python -m tia.orquestrador --verificar-inatividade` e `POST /orquestrador/verificar-inatividade` percorrem os alunos matriculados e registram uma decisão por aluno (inclusive "nenhuma"). Rodar de novo não duplica nada. O `GET /proximo` não pede mais "replanejar" |
 | D5 | **Concluir uma competência avança automaticamente e avisa o aluno.** PROVISÓRIO (Pessoa 4) | R1: `avancar` + aviso por template ("Parabéns! Você concluiu …. Próxima etapa: …") em `DecisaoReplanejamento.aviso` e `ResultadoEvento.avisos` |
 | D6 | **Queda reforça só o pré-requisito direto.** PROVISÓRIO (Pessoa 4) | R2: primeiro pré-requisito da competência na ementa. Sem pré-requisito, não reforça (decisão "nenhuma"). Não há reforço do reforço |
-| D7 | **Inatividade de 3 dias só retoma com incentivo, sem refazer a trilha; a trilha só é refeita após `ORQ_INATIVIDADE_REFAZER_DIAS`** (padrão 14). PROVISÓRIO (Pessoa 4) | R3: `incentivar` (mensagem do incentivo do Tutor, registrada na auditoria) a partir de `INATIVIDADE_DIAS`; `refazer_trilha` a partir de `ORQ_INATIVIDADE_REFAZER_DIAS`. Cada ação vale uma vez por período sem atividade |
+| D7 | **Inatividade de 3 dias só retoma com incentivo, sem refazer a trilha; a trilha só é refeita após `ORQ_INATIVIDADE_REFAZER_DIAS`** (padrão 14). PROVISÓRIO (Pessoa 4) | R3: `incentivar` (mensagem do incentivo do Tutor, registrada na auditoria) a partir de `INATIVIDADE_DIAS`; `refazer_trilha` a partir de `ORQ_INATIVIDADE_REFAZER_DIAS`. Cada ação vale uma vez por período sem atividade. **Desde 11/10/2026:** quem concluiu a trilha (sem reforço em curso) não recebe incentivo, não tem a trilha refeita e sai com `inativo: false` no `estado` (mesmo critério do painel) |
 | D8 | **Autenticação continua adiada** para o pacote 1.4.6 | TODO em todas as rotas abaixo |
 
 ### Rotas da orquestração que dependem da autenticação (1.4.6)
@@ -188,7 +188,7 @@ Também dependem dela, fora da orquestração: `/tutor/*` (incluindo o veto doce
 | R1 conclusão | Sessão do Tutor concluída na competência (2 acertos seguidos no nível 3), conclusão ainda não tratada | `avancar`: Planejador incremental (só o que falta) + aviso | (critério de conclusão do Tutor) | PROVISÓRIO (D5) |
 | R2 queda | Tendência do Relatório "caindo" (última sessão contra as anteriores; sem sessão, janela de respostas). A sessão não é de reforço e ainda não causou reforço, há respostas suficientes desde o último reforço e existe pré-requisito direto | `reforcar`: pausa + reforço do pré-requisito direto no nível 1 (sem Planejador) | `RELATORIO_TENDENCIA_LIMIAR=0.15`, `RELATORIO_TENDENCIA_MIN_RESPOSTAS=3`, `RELATORIO_TENDENCIA_JANELA=5`, `ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS=5` | PROVISÓRIO (D6) |
 | Fim do reforço | A sessão de reforço foi concluída | `retomar_original`: a sessão pausada volta no mesmo nível | - | Decisão D2 |
-| R3 inatividade | Engajamento do Relatório: dias sem atividade (sem atividade: desde a trilha). Avaliada pela verificação agendada | `incentivar` (>= `INATIVIDADE_DIAS`) ou `refazer_trilha` (>= `ORQ_INATIVIDADE_REFAZER_DIAS`, Planejador incremental). Uma vez por período | `INATIVIDADE_DIAS=3`, `ORQ_INATIVIDADE_REFAZER_DIAS=14` | PROVISÓRIO (D7) |
+| R3 inatividade | Engajamento do Relatório: dias sem atividade (sem atividade: desde a trilha). Avaliada pela verificação agendada. Não vale para quem concluiu a trilha (`fluxo.trilha_concluida`) | `incentivar` (>= `INATIVIDADE_DIAS`) ou `refazer_trilha` (>= `ORQ_INATIVIDADE_REFAZER_DIAS`, Planejador incremental). Uma vez por período | `INATIVIDADE_DIAS=3`, `ORQ_INATIVIDADE_REFAZER_DIAS=14` | PROVISÓRIO (D7) |
 
 - **Próxima ação** (`GET /proximo`), por prioridade:
   1. reforço em curso (`iniciar_sessao` ou `continuar_sessao`, com `reforco: true`);
@@ -209,6 +209,10 @@ Também dependem dela, fora da orquestração: `/tutor/*` (incluindo o veto doce
   (pendente, em_andamento ou concluido).
 - `tutor_sessoes.pausada`: sessão suspensa durante um reforço.
 - `trilha_estudo.concluida` e `trilha_estudo.origem_justificativa`.
+- `tutor_feedbacks` (11/10/2026, revisão docente R12): texto do feedback de cada resposta (veredito,
+  explicação que o aluno viu, origem, falha, fontes, texto do LLM barrado pela guarda e motivo), item,
+  sessão, aluno, `vetada` e `correcao_docente`. Uma linha por resposta (`resposta_id` =
+  `historico_respostas.id`); respostas anteriores não têm linha e não são revisáveis.
 - `auditoria.motivo`: motivo de cada decisão.
 
 ## Limitações conhecidas
@@ -296,7 +300,7 @@ HTML, CSS e JavaScript puros em `src/tia/web/static/painel/`, servidos em **`/ap
 | Visão geral | os 5 indicadores agregados do Agente 3 em cartões (progresso médio, acerto por nível, engajamento, pontos fracos, origem dos feedbacks e taxa de veto), alertas da turma só com contagens, regra do grupo mínimo explicada e a interpretação com a origem (LLM, guarda ou fallback) só quando o docente pede. Filtro por perfil no topo. Exportar CSV e Imprimir | `GET /relatorio/turma?narrativa=false` e `?narrativa=true`, `GET /painel/exportar/indicadores.csv` |
 | Alertas de risco | alunos em risco **com código** (nunca nome): inatividade, desempenho em queda, desempenho baixo, com o motivo em texto, dias sem atividade, acerto, tendência e progresso. Aviso "Protótipo, sem login (TODO 1.4.6)". Cada consulta grava `consulta_painel` na auditoria com os códigos exibidos. Atalho para a auditoria do aluno | `GET /painel/alunos-em-risco` |
 | Competências | barras SVG da taxa de acerto por competência (linha de referência em 50%), contagem de alunos por tendência e questões com erro repetido (com enunciado) | `GET /painel/competencias` |
-| Revisão docente (R12) | respostas do diálogo com a original, a correção, a origem e as fontes; Aprovar, Vetar (com a correção/motivo) e Retirar veto; taxa de vetos; origem e fontes dos feedbacks das questões | `GET /painel/revisao`, `PATCH /tutor/dialogo/{id}/veto` (rota existente) |
+| Revisão docente (R12) | feedbacks das questões e respostas do diálogo com o texto original, a questão ou a pergunta, o veredito, a origem, as fontes, o texto barrado pela guarda e a correção; filtros por tipo, situação, origem e competência; Aprovar, Vetar (com a correção/motivo) e Retirar veto; taxa de vetos de cada tipo | `GET /painel/revisao`, `PATCH /tutor/dialogo/{id}/veto`, `PATCH /tutor/feedback/{id}/veto` |
 | Auditoria (R11) | tabela filtrável por agente (orquestrador, planejador, tutor, relatório, painel), código do aluno e período, paginada (25 por página) | `GET /painel/auditoria` |
 
 Todas as telas: carregamento com contador de segundos (`role=status`), botões desativados durante a
@@ -341,6 +345,32 @@ revisão sabe o que já foi revisado. (2) Tipos novos na auditoria: `veto_docent
 | Login (1.4.6) | **Não existe.** Qualquer pessoa com o endereço vê os códigos. A auditoria registra a consulta, mas não **quem** consultou nem quem vetou. Com o login: exigir papel docente em `/painel/*`, `/relatorio/turma` e no veto; gravar o usuário na auditoria; restringir o docente às turmas dele |
 | Turma | **Não existe no banco**: o grupo é a instituição inteira ou um perfil (como no Agente 3) |
 | Visual do EBAULA | PROVISÓRIO: basta trocar `tema.css`; as classes são neutras. Embutir no EBAULA exige liberar o domínio em `frame-ancestors` |
-| Texto do feedback das questões | **Não é gravado** (só origem e fontes): a revisão mostra os feedbacks sem texto e o veto existe só no diálogo |
+| Texto do feedback das questões | **Gravado desde 11/10/2026** (`tutor_feedbacks`) e revisável como o diálogo (ver "Feedback revisável" abaixo). Respostas anteriores ficam sem texto |
 | Teste de navegador automatizado | Não há (sem Playwright). As cinco telas, a impressão (PDF) e a largura de celular foram conferidas no Chrome headless com a turma fictícia |
+
+## Feedback revisável (R12) e amostra para avaliação
+
+Desde 11/10/2026 o Tutor grava o texto de cada feedback de questão (`tutor_feedbacks`, na mesma transação da
+resposta e da auditoria), e o docente pode aprovar ou vetar esse texto do mesmo jeito que o diálogo.
+
+| Rota | O que faz |
+|---|---|
+| `PATCH /tutor/feedback/{resposta_id}/veto` | mesmo corpo do veto do diálogo (`vetada`, `correcao_docente` obrigatória ao vetar). Aprovar = `vetada: false` numa resposta sem veto. Cada uso grava `veto_docente` na auditoria com referência `feedback:<id>` (a do diálogo continua só o id). 404 para resposta sem texto gravado |
+| `GET /alunos/{aluno_id}/feedbacks` | feedbacks do aluno como ele vê: vetado sai com a correção do docente, sem fontes, origem `docente`. Nunca mostra o texto barrado pela guarda. A aplicação do aluno mostra os vetados em "Meu relatório", seção "Correções do professor" |
+| `Feedback.resposta_id` (resposta de `/tutor/resposta` e do evento) | id para o veto; campo novo, opcional |
+| `GET /painel/revisao` | lista única de feedbacks e respostas do diálogo, com o texto original, a pergunta ou o enunciado, o veredito, a origem, as fontes, o texto do LLM barrado pela guarda (só feedback) e a correção. Filtros: `tipo`, `situacao`, `origem`, `competencia_id`. Resumo e taxa de veto separados por tipo |
+
+**LGPD:** o texto fica só em `tutor_feedbacks` e `tutor_dialogo`, e só aparece na revisão do painel (auditada),
+no histórico do próprio aluno e na amostra exportada. O Agente 3 lê apenas a marca `vetada`, para o indicador 5
+(`feedbacks_com_texto`, `feedbacks_vetados`, `taxa_veto_feedback`). As visões agregadas não leem o texto (teste
+`test_texto_nunca_aparece_nas_visoes_agregadas`).
+
+**Amostra:** `python -m tia.painel.amostra --n 100` sorteia, com semente fixa (padrão 2026), até N textos de
+origem `LLM` (feedback e diálogo), estratificados por competência. Grava um CSV em `data/avaliacao/` (fora do
+git), com as colunas "adequado (S/N)" e "observacao" vazias, e registra a exportação na auditoria. O protocolo
+está em `docs/avaliacao/protocolo_amostra.md`.
+
+**Limitação:** um evento reenviado com o mesmo `evento_id` devolve o resultado gravado na hora, com o texto
+original mesmo que o docente já tenha vetado o feedback. O reenvio só acontece segundos depois da resposta
+original, por falha de rede; a correção continua visível no histórico.
 

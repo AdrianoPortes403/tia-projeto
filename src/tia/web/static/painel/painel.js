@@ -3,7 +3,8 @@
  *
  * Telas: visão geral (5 indicadores agregados do Agente 3 e a interpretação),
  * alertas de risco (com código de aluno; consulta auditada), desempenho por
- * competência (barras em SVG), revisão docente (aprovar/vetar, R12) e
+ * competência (barras em SVG), revisão docente (aprovar/vetar o feedback das
+ * questões e as respostas do diálogo, R12) e
  * auditoria (R11). Exportação em CSV pela API e impressão pelo navegador.
  * Rotas em docs/arquitetura/arquitetura.md, "Painel do docente".
  *
@@ -225,8 +226,9 @@
         { LLM: "IA local (LLM)", guarda: "Barrado pela verificação", fallback: "Texto fixo" }[o],
         q.taxa_por_origem[o], fracaoTexto(q.taxa_por_origem[o]) + " (" + (q.por_origem[o] || 0) + ")")))
         : el("p", { texto: "Ainda não há feedbacks registrados." }),
-      el("p", { texto: "Vetos do docente: " + q.vetados + " de " + q.dialogos + " respostas do diálogo (" +
-        fracaoTexto(q.taxa_veto) + ")." }));
+      el("p", { texto: "Vetos do docente: " + q.feedbacks_vetados + " de " + q.feedbacks_com_texto +
+        " feedbacks de questões (" + fracaoTexto(q.taxa_veto_feedback) + ") e " + q.vetados + " de " + q.dialogos +
+        " respostas do diálogo (" + fracaoTexto(q.taxa_veto) + ")." }));
 
     area.replaceChildren(el("div", { classe: "indicadores" }, progresso, desempenho, engajamento, fracos, qualidade));
     $("geral-alertas").replaceChildren(r.alertas.length ? el("ul", { classe: "lista-alertas" }, r.alertas.map((a) =>
@@ -341,48 +343,64 @@
       : el("p", { texto: "Nenhuma questão com erro repetido entre as respondidas por alunos suficientes." }));
   }
 
-  // --- 4) revisão docente (R12) ---
+  // --- 4) revisão docente (R12): feedback das questões e respostas do diálogo ---
+
+  // rota do veto de cada tipo (as duas já existiam no Tutor; vetada=false numa resposta sem veto = aprovação)
+  const ROTA_VETO = { dialogo: "/tutor/dialogo/{id}/veto", feedback: "/tutor/feedback/{id}/veto" };
+  const TIPO_TEXTO = { dialogo: "Resposta do diálogo", feedback: "Feedback de questão" };
+
+  function resumoTipo(titulo, resumo) {
+    return el("div", { classe: "resumo-tipo" },
+      el("h3", { texto: titulo }),
+      el("p", { classe: "numero-grande", texto: fracaoTexto(resumo.taxa_veto) }),
+      el("p", { texto: "Taxa de vetos: " + resumo.vetados + " de " + resumo.total + ". Aprovados: " +
+        resumo.aprovados + ". A revisar: " + resumo.a_revisar + "." }));
+  }
 
   async function carregarRevisao() {
     const parametros = new URLSearchParams({ situacao: $("filtro-situacao").value, pagina: estado.paginaRevisao,
       por_pagina: POR_PAGINA_REVISAO });
-    if ($("filtro-origem").value) parametros.set("origem", $("filtro-origem").value);
-    const r = await chamar("GET", "/painel/revisao?" + parametros, null, "Carregando as respostas…");
+    for (const [chave, campo] of [["tipo", "filtro-tipo"], ["origem", "filtro-origem"],
+      ["competencia_id", "filtro-competencia"]]) {
+      if ($(campo).value) parametros.set(chave, $(campo).value);
+    }
+    const r = await chamar("GET", "/painel/revisao?" + parametros, null, "Carregando os textos…");
+    const f = r.feedbacks_por_origem;
     $("revisao-resumo").replaceChildren(el("div", { classe: "cartao resumo-revisao" },
-      el("p", { classe: "numero-grande", texto: fracaoTexto(r.taxa_veto) }),
-      el("p", { texto: "Taxa de vetos: " + r.vetados + " de " + r.dialogos + " respostas do diálogo vetadas. " +
-        "Aprovadas: " + r.aprovados + ". A revisar: " + r.a_revisar + "." }),
+      el("div", { classe: "resumo-revisao__tipos" },
+        resumoTipo("Feedback das questões", r.feedback), resumoTipo("Respostas do diálogo", r.dialogo)),
+      el("p", { classe: "dica", texto: "Origem de todos os feedbacks de questões: IA local " + f.LLM +
+        " · barrados pela verificação " + f.guarda + " · texto fixo " + f.fallback + "." +
+        (r.feedbacks_sem_texto ? " " + r.feedbacks_sem_texto + " resposta(s) antiga(s) sem texto gravado " +
+          "(não revisáveis)." : "") }),
       el("p", { classe: "dica", texto: "Consulta registrada na auditoria (registro nº " + r.auditoria_id + ")." })));
+    $("revisao-total").textContent = r.total + " texto(s) com estes filtros, do mais recente para o mais antigo.";
     $("revisao-lista").replaceChildren(...(r.itens.length ? r.itens.map(itemRevisao)
-      : [el("li", { classe: "aviso", texto: "Nenhuma resposta com este filtro." })]));
+      : [el("li", { classe: "aviso", texto: "Nenhum texto com este filtro." })]));
     paginacao($("revisao-paginas"), r.pagina, r.total, r.por_pagina, (pagina) => {
       estado.paginaRevisao = pagina;
       carregarRevisao().catch(mostrarErro);
     });
-    const f = r.feedbacks_por_origem;
-    $("revisao-feedbacks").replaceChildren(
-      el("p", { texto: "Origem de todos os feedbacks: IA local " + f.LLM + " · barrados pela verificação " +
-        f.guarda + " · texto fixo " + f.fallback + "." }),
-      r.feedbacks.length ? tabela("Feedbacks mais recentes",
-        ["Data", "Aluno", "Questão", "Competência", "Nível", "Resultado", "Origem", "Fontes"],
-        r.feedbacks.map((x) => [dataHora(x.ts), el("code", { texto: x.aluno_id }), x.item_id || "—",
-          nome(x.competencia_id), x.nivel === null ? "—" : String(x.nivel), x.acertou ? "acertou" : "errou",
-          x.origem || "sem registro", x.fontes.length ? x.fontes.join(", ") : "—"]))
-        : el("p", { texto: "Nenhum feedback com este filtro." }));
+  }
+
+  function blocoTexto(rotulo, texto, classe) {
+    return el("p", { classe }, el("span", { classe: "rotulo", texto: rotulo }), texto || "");
   }
 
   function itemRevisao(item) {
-    const id = "revisao-" + item.dialogo_id;
+    const chave = item.tipo + "-" + item.id;
+    const id = "revisao-" + chave;
+    const ehFeedback = item.tipo === "feedback";
     const acoes = el("div", { classe: "linha-botoes nao-imprimir" });
-    const formVeto = formularioVeto(item);
+    const formVeto = formularioVeto(item, chave);
     if (item.situacao !== "aprovada" && !item.vetada) {
       acoes.append(el("button", { type: "button", classe: "botao acao", texto: "Aprovar",
-        "aria-describedby": id, onclick: () => revisar(item.dialogo_id, { vetada: false }, "Aprovando…") }));
+        "aria-describedby": id, onclick: () => revisar(item, { vetada: false }, "Aprovando…") }));
     }
     if (item.vetada) {
       acoes.append(el("button", { type: "button", classe: "botao botao--secundario acao",
         texto: "Retirar veto (aprovar a original)", "aria-describedby": id,
-        onclick: () => revisar(item.dialogo_id, { vetada: false }, "Retirando o veto…") }));
+        onclick: () => revisar(item, { vetada: false }, "Retirando o veto…") }));
     }
     acoes.append(el("button", { type: "button", classe: "botao botao--secundario acao",
       texto: item.vetada ? "Editar correção" : "Vetar…", "aria-describedby": id, "aria-expanded": "false",
@@ -391,28 +409,35 @@
         e.currentTarget.setAttribute("aria-expanded", String(!formVeto.hidden));
         if (!formVeto.hidden) formVeto.querySelector("textarea").focus();
       } }));
+    const original = item.vetada ? (ehFeedback ? "Explicação original (vetada): " : "Resposta original (vetada): ")
+      : (ehFeedback ? "Explicação que o aluno viu: " : "Resposta do tutor: ");
     return el("li", { classe: "cartao item-revisao" },
       el("div", { classe: "item-revisao__cabeca" },
         el("p", { classe: "etapa__dados", id },
-          "Resposta nº " + item.dialogo_id + " · aluno ", el("code", { texto: item.aluno_id }),
-          " · " + nome(item.competencia_id) + " · " + dataHora(item.ts)),
+          (TIPO_TEXTO[item.tipo] || item.tipo) + " nº " + item.id + " · aluno ", el("code", { texto: item.aluno_id }),
+          " · " + nome(item.competencia_id) + (ehFeedback && item.item_id ? " · questão " + item.item_id +
+            (item.nivel ? " (nível " + item.nivel + ")" : "") : "") + " · " + dataHora(item.ts)),
         selo(SITUACAO[item.situacao] || item.situacao,
           item.vetada ? "selo--erro" : item.situacao === "aprovada" ? "selo--sucesso" : "")),
-      el("p", { classe: "conversa__pergunta" }, el("span", { classe: "rotulo", texto: "Pergunta: " }), item.pergunta),
-      el("p", { classe: "conversa__resposta" + (item.vetada ? " riscado" : "") },
-        el("span", { classe: "rotulo", texto: item.vetada ? "Resposta original (vetada): " : "Resposta do tutor: " }),
-        item.resposta),
-      el("p", { classe: "origem", texto: "Origem: " + item.origem + " — " + (ORIGEM[item.origem] || "") }),
+      blocoTexto(ehFeedback ? "Questão: " : "Pergunta do aluno: ", item.pergunta, "conversa__pergunta"),
+      ehFeedback && item.veredito ? blocoTexto("Veredito automático: ", item.veredito,
+        "veredito-texto " + (item.acertou ? "veredito--acerto" : "veredito--erro")) : null,
+      blocoTexto(original, item.resposta, "conversa__resposta" + (item.vetada ? " riscado" : "")),
+      el("p", { classe: "origem", texto: "Origem: " + item.origem + " — " + (ORIGEM[item.origem] || "") +
+        (item.falha_llm ? " Motivo: " + (FALHA[item.falha_llm] || item.falha_llm) + "." : "") }),
+      item.explicacao_descartada ? el("div", { classe: "descartado" },
+        blocoTexto("Texto da IA barrado pela verificação (o aluno não viu): ", item.explicacao_descartada),
+        item.motivo_descarte ? blocoTexto("Motivo do descarte: ", item.motivo_descarte, "origem") : null) : null,
       item.fontes.length ? el("div", { classe: "fontes" }, "Fontes citadas (R03):",
-        el("ul", {}, item.fontes.map((f) => el("li", {}, el("code", { texto: f })))))
-        : el("p", { classe: "fontes", texto: "Sem fonte citada." }),
-      item.vetada ? el("p", { classe: "correcao" }, el("span", { classe: "rotulo", texto: "Correção do docente: " }),
-        item.correcao_docente || "") : null,
+        el("ul", {}, item.fontes.map((fonte) => el("li", {}, el("code", { texto: fonte })))))
+        : el("p", { classe: "fontes", texto: ehFeedback ? "Sem fonte do material: texto do próprio item."
+          : "Sem fonte citada." }),
+      item.vetada ? blocoTexto("Correção do docente (o aluno vê esta): ", item.correcao_docente, "correcao") : null,
       acoes, formVeto);
   }
 
-  function formularioVeto(item) {
-    const campo = "correcao-" + item.dialogo_id;
+  function formularioVeto(item, chave) {
+    const campo = "correcao-" + chave;
     const form = el("form", { classe: "form-veto", novalidate: true, hidden: true,
       onsubmit: (e) => {
         e.preventDefault();
@@ -422,7 +447,7 @@
           form.querySelector("textarea").focus();
           return;
         }
-        revisar(item.dialogo_id, { vetada: true, correcao_docente: texto }, "Gravando o veto…");
+        revisar(item, { vetada: true, correcao_docente: texto }, "Gravando o veto…");
       } },
     el("label", { for: campo, texto: "Correção que o aluno vai ver (explique o motivo do veto)" }),
     el("textarea", { id: campo, rows: 3, maxlength: 2000, required: true }),
@@ -434,10 +459,10 @@
     return form;
   }
 
-  // única escrita do painel: a rota do veto que já existia (vetada=false numa resposta sem veto = aprovação)
-  async function revisar(dialogoId, corpo, texto) {
+  // única escrita do painel: as rotas de veto do Tutor (cada uso grava veto_docente na auditoria)
+  async function revisar(item, corpo, texto) {
     try {
-      await chamar("PATCH", "/tutor/dialogo/" + encodeURIComponent(dialogoId) + "/veto", corpo, texto);
+      await chamar("PATCH", ROTA_VETO[item.tipo].replace("{id}", encodeURIComponent(item.id)), corpo, texto);
       await carregarRevisao();
       $("revisao-resumo").focus();
     } catch (erro) { mostrarErro(erro); }
@@ -487,7 +512,10 @@
   async function carregarConteudo() {
     const ementa = await chamar("GET", "/conteudo/ementa", null, "Carregando a ementa…");
     const perfis = await chamar("GET", "/conteudo/perfis", null, "Carregando os perfis…");
-    for (const c of ementa) estado.nomes[c.id] = c.nome;
+    for (const c of ementa) {
+      estado.nomes[c.id] = c.nome;
+      $("filtro-competencia").append(el("option", { value: c.id, texto: c.nome }));
+    }
     const select = $("campo-perfil");
     for (const p of perfis) {
       estado.perfis[p.id] = p.nome;

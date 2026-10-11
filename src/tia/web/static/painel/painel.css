@@ -112,6 +112,18 @@ a.botao { text-decoration: none; }
 .form-veto { margin-top: var(--espaco-3); }
 .form-veto textarea { max-width: none; }
 .resumo-revisao:focus { outline: none; }
+.resumo-revisao__tipos { display: grid; gap: var(--espaco-3); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.resumo-tipo h3 { margin-bottom: var(--espaco-1); }
+.veredito-texto { white-space: pre-wrap; font-weight: 600; }
+.conversa__pergunta, .conversa__resposta { white-space: pre-wrap; }
+.descartado {
+  padding: var(--espaco-2) var(--espaco-3);
+  border-left: 4px solid var(--cor-alerta);
+  background: var(--cor-alerta-fundo);
+  border-radius: var(--raio);
+  margin-bottom: var(--espaco-2);
+  white-space: pre-wrap;
+}
 
 .paginacao { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espaco-3); margin: var(--espaco-3) 0; }
 .paginacao .botao { margin-top: 0; }

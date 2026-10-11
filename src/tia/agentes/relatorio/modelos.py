@@ -116,6 +116,10 @@ class QualidadeFeedback(BaseModel):
     dialogos: int
     vetados: int
     taxa_veto: float | None
+    # feedback das questões (R12): só as respostas com texto gravado (tutor_feedbacks)
+    feedbacks_com_texto: int = 0
+    feedbacks_vetados: int = 0
+    taxa_veto_feedback: float | None = None
 
 
 class Narrativa(BaseModel):

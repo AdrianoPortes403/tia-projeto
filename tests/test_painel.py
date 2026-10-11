@@ -154,7 +154,8 @@ CAMPOS_USADOS = {
     relatorio.GrupoTaxa: {"chave", "alunos", "suprimido", "respostas", "taxa"},
     relatorio.EngajamentoTurma: {"media_sessoes", "media_dias_ativos", "media_perguntas_dialogo", "inativos"},
     relatorio.AlertaTurma: {"tipo", "descricao", "alunos"},
-    relatorio.QualidadeFeedback: {"por_origem", "taxa_por_origem", "vetados", "dialogos", "taxa_veto"},
+    relatorio.QualidadeFeedback: {"por_origem", "taxa_por_origem", "vetados", "dialogos", "taxa_veto",
+                                  "feedbacks_vetados", "feedbacks_com_texto", "taxa_veto_feedback"},
     relatorio.Narrativa: {"texto", "origem", "falha_llm"},
     painel.CompetenciaEmenta: {"id", "nome"},
     painel.PerfilResumo: {"id", "nome"},
@@ -166,11 +167,12 @@ CAMPOS_USADOS = {
     painel.CompetenciaTurma: {"nome", "taxa", "suprimido", "alunos", "respostas", "tendencia"},
     painel.ItemTurma: {"item_id", "nome_competencia", "nivel", "enunciado", "taxa_erro", "alunos_com_erro",
                        "respostas"},
-    painel.ListaRevisao: {"taxa_veto", "vetados", "dialogos", "aprovados", "a_revisar", "auditoria_id", "itens",
-                          "pagina", "total", "por_pagina", "feedbacks_por_origem", "feedbacks"},
-    painel.ItemRevisao: {"dialogo_id", "aluno_id", "competencia_id", "ts", "situacao", "vetada", "pergunta",
-                         "resposta", "origem", "fontes", "correcao_docente"},
-    painel.FeedbackRegistro: {"ts", "aluno_id", "item_id", "competencia_id", "nivel", "acertou", "origem", "fontes"},
+    painel.ListaRevisao: {"dialogo", "feedback", "feedbacks_sem_texto", "auditoria_id", "itens", "pagina", "total",
+                          "por_pagina", "feedbacks_por_origem"},
+    painel.ResumoRevisao: {"taxa_veto", "vetados", "total", "aprovados", "a_revisar"},
+    painel.ItemRevisao: {"tipo", "id", "aluno_id", "competencia_id", "ts", "situacao", "vetada", "pergunta",
+                         "item_id", "nivel", "acertou", "veredito", "resposta", "origem", "falha_llm", "fontes",
+                         "explicacao_descartada", "motivo_descarte", "correcao_docente"},
     painel.PaginaAuditoria: {"total", "registros", "pagina", "por_pagina"},
     painel.RegistroPainel: {"ts", "agentes", "tipo", "aluno_id", "origem", "origem_justificativas",
                             "referencia_id", "motivo", "fontes"},
@@ -190,7 +192,8 @@ def test_valores_que_o_painel_traduz():
                + list(auditoria.AGENTES) + ["a_revisar", "aprovada", "vetada"])
     for valor in valores:
         assert re.search(rf"\b{valor}:", js), valor
-    for valor in list(get_args(painel.TipoRisco)) + list(get_args(painel.SituacaoRevisao)) + list(auditoria.AGENTES):
+    for valor in (list(get_args(painel.TipoRisco)) + list(get_args(painel.SituacaoRevisao)) + list(auditoria.AGENTES)
+                  + list(get_args(painel.TipoRevisao))):
         assert f'value="{valor}"' in html, valor
 
 
@@ -298,26 +301,28 @@ def dialogo_por_texto(itens: list[dict], trecho: str) -> dict:
 
 
 def test_revisao_lista_aprova_e_veta_pela_rota_existente(turma):
-    r = client.get("/painel/revisao?situacao=todas").json()
-    assert (r["dialogos"], r["vetados"], r["aprovados"], r["a_revisar"]) == (10, 1, 0, 9)
-    assert r["taxa_veto"] == 0.1
+    r = client.get("/painel/revisao?situacao=todas&tipo=dialogo").json()
+    resumo = r["dialogo"]
+    assert (resumo["total"], resumo["vetados"], resumo["aprovados"], resumo["a_revisar"]) == (10, 1, 0, 9)
+    assert resumo["taxa_veto"] == 0.1
     vetada = next(i for i in r["itens"] if i["vetada"])
     assert vetada["situacao"] == "vetada" and vetada["correcao_docente"] and "[demonstração]" in vetada["resposta"]
 
-    a_revisar = client.get("/painel/revisao?origem=LLM").json()["itens"]
+    a_revisar = client.get("/painel/revisao?origem=LLM&tipo=dialogo").json()["itens"]
     assert a_revisar and all(i["origem"] == "LLM" and i["situacao"] == "a_revisar" for i in a_revisar)
     aprovar = dialogo_por_texto(a_revisar, "range(3)")
     vetar = dialogo_por_texto(a_revisar, "parâmetro e argumento")
 
-    assert client.patch(f"/tutor/dialogo/{aprovar['dialogo_id']}/veto", json={"vetada": False}).status_code == 200
-    assert client.patch(f"/tutor/dialogo/{vetar['dialogo_id']}/veto",
+    assert client.patch(f"/tutor/dialogo/{aprovar['id']}/veto", json={"vetada": False}).status_code == 200
+    assert client.patch(f"/tutor/dialogo/{vetar['id']}/veto",
                         json={"vetada": True, "correcao_docente": "Não são a mesma coisa."}).status_code == 200
 
-    depois = client.get("/painel/revisao?situacao=todas").json()
+    depois = client.get("/painel/revisao?situacao=todas").json()["dialogo"]
     assert (depois["vetados"], depois["aprovados"], depois["a_revisar"], depois["taxa_veto"]) == (2, 1, 7, 0.2)
-    aprovadas = client.get("/painel/revisao?situacao=aprovadas").json()["itens"]
-    assert [i["dialogo_id"] for i in aprovadas] == [aprovar["dialogo_id"]]
-    assert vetar["dialogo_id"] in [i["dialogo_id"] for i in client.get("/painel/revisao?situacao=vetadas").json()["itens"]]
+    aprovadas = client.get("/painel/revisao?situacao=aprovadas&tipo=dialogo").json()["itens"]
+    assert [i["id"] for i in aprovadas] == [aprovar["id"]]
+    vetadas = client.get("/painel/revisao?situacao=vetadas&tipo=dialogo").json()["itens"]
+    assert vetar["id"] in [i["id"] for i in vetadas]
     # o aluno vê a correção; a revisão continua mostrando a original
     historico = client.get(f"/alunos/{vetar['aluno_id']}/dialogo").json()
     assert any(i["resposta"] == "Não são a mesma coisa." for i in historico)
@@ -329,18 +334,17 @@ def test_revisao_lista_aprova_e_veta_pela_rota_existente(turma):
 
 
 def test_retirar_veto_fica_registrado(turma):
-    vetada = next(i for i in client.get("/painel/revisao?situacao=vetadas").json()["itens"])
-    client.patch(f"/tutor/dialogo/{vetada['dialogo_id']}/veto", json={"vetada": False})
+    vetada = client.get("/painel/revisao?situacao=vetadas&tipo=dialogo").json()["itens"][0]
+    client.patch(f"/tutor/dialogo/{vetada['id']}/veto", json={"vetada": False})
     ultimo = client.get(f"/painel/auditoria?aluno_id={vetada['aluno_id']}").json()["registros"][0]
     assert (ultimo["tipo"], ultimo["motivo"]) == ("veto_docente", "veto retirado")
 
 
 def test_consulta_de_revisao_e_auditada_e_paginada(turma):
-    pagina1 = client.get("/painel/revisao?situacao=todas&por_pagina=4").json()
-    pagina3 = client.get("/painel/revisao?situacao=todas&por_pagina=4&pagina=3").json()
+    pagina1 = client.get("/painel/revisao?situacao=todas&tipo=dialogo&por_pagina=4").json()
+    pagina3 = client.get("/painel/revisao?situacao=todas&tipo=dialogo&por_pagina=4&pagina=3").json()
     assert (pagina1["total"], len(pagina1["itens"]), len(pagina3["itens"])) == (10, 4, 2)
     assert len(consultas_auditadas("revisao")) == 2
-    assert pagina1["feedbacks"] and all("explicacao" not in f for f in pagina1["feedbacks"])
     assert sum(pagina1["feedbacks_por_origem"].values()) > 0
 
 
@@ -348,6 +352,8 @@ def test_revisao_valida_filtros():
     assert client.get("/painel/revisao?situacao=qualquer").status_code == 422
     assert client.get("/painel/revisao?origem=docente").status_code == 422
     assert client.get("/painel/revisao?pagina=0").status_code == 422
+    assert client.get("/painel/revisao?tipo=outro").status_code == 422
+    assert client.get("/painel/revisao?competencia_id=a b").status_code == 422
 
 
 # --- auditoria filtrável (R11) ---
@@ -410,7 +416,7 @@ def test_texto_com_html_chega_cru_no_json():
     ("Funções", "Funções"), (0.125, "0,125"), (5, "5"), (None, ""),
 ])
 def test_celula_csv_sem_formula(valor, esperado):
-    assert consultas._celula(valor) == esperado
+    assert consultas.celula(valor) == esperado
 
 
 # --- exportação ---

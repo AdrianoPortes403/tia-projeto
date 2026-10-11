@@ -461,6 +461,22 @@
     $("relatorio-indicadores").replaceChildren(el("div", { classe: "indicadores" },
       progresso, desempenho, engajamento, fracos, qualidade));
     mostrarNarrativa(null);
+    await carregarCorrecoes();
+  }
+
+  // feedbacks de questões vetados pelo professor (R12): a correção substitui a explicação original
+  async function carregarCorrecoes() {
+    const feedbacks = await chamar("GET", rota("/alunos/{id}/feedbacks"), null, "Buscando as correções…");
+    const vetados = feedbacks.filter((f) => f.vetada).reverse();
+    $("relatorio-correcoes").replaceChildren(vetados.length ? el("ul", { classe: "correcoes" }, vetados.map((f) =>
+      el("li", { classe: "cartao" },
+        el("p", { classe: "etapa__dados", texto: nomeCompetencia(f.competencia_id) + " · questão " +
+          (f.item_id || "") }),
+        f.enunciado ? el("p", { classe: "enunciado", texto: f.enunciado }) : null,
+        f.veredito ? el("p", { classe: "veredito", texto: f.veredito }) : null,
+        el("p", { classe: "explicacao", texto: f.explicacao }),
+        el("p", { classe: "origem", texto: "Origem: professor. " + ORIGEM_FEEDBACK.docente }))))
+      : el("p", { texto: "Nenhuma explicação corrigida pelo professor." }));
   }
 
   function mostrarNarrativa(narrativa) {

@@ -202,7 +202,9 @@ def formatar_texto_turma(rel: RelatorioTurma) -> str:
     linhas += ["", "5. Qualidade do feedback",
                "   Origem: " + ", ".join(f"{o} {n} ({pct(q.taxa_por_origem[o])})" for o, n in q.por_origem.items())
                + f"; sem registro: {q.respostas_sem_registro}",
-               f"   Veto docente: {q.vetados} de {q.dialogos} respostas do diálogo ({pct(q.taxa_veto)})", "",
+               f"   Veto docente: {q.vetados} de {q.dialogos} respostas do diálogo ({pct(q.taxa_veto)}); "
+               f"{q.feedbacks_vetados} de {q.feedbacks_com_texto} feedbacks de questões ({pct(q.taxa_veto_feedback)})",
+               "",
                "Alertas de risco"]
     linhas += ([f"   [{a.tipo}] {a.descricao} Alunos: {a.alunos.texto}" for a in rel.alertas] or ["   Nenhum."])
     linhas += ["", f"Interpretação ({rel.narrativa.origem}): {rel.narrativa.texto}"]

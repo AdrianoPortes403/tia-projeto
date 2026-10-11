@@ -109,7 +109,7 @@ class EstadoAluno(BaseModel):
     reforco: Reforco | None = None  # reforço em curso (tem prioridade sobre a competência atual)
     concluido: bool
     tendencia: str                  # direção do Relatório: subindo, caindo, estavel, insuficiente
-    inativo: bool
+    inativo: bool                   # sem atividade há INATIVIDADE_DIAS ou mais; False com a trilha concluída (R3)
     dias_inativo: int | None
     # motivo, se a regra de inatividade (R3) pede ação; quem age é a verificação
     # agendada (POST /orquestrador/verificar-inatividade), não o aluno

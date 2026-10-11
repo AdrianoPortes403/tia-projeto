@@ -173,6 +173,7 @@ CAMPOS_USADOS = {
     tutor.PerguntaAluno: {"aluno_id", "pergunta", "competencia_id"},
     tutor.RespostaDialogo: {"resposta", "fontes", "origem", "falha_llm", "tempo_ms"},
     tutor.ItemDialogo: {"pergunta", "resposta", "fontes", "origem", "vetada"},
+    tutor.ItemFeedback: {"vetada", "competencia_id", "item_id", "enunciado", "veredito", "explicacao"},
     relatorio.RelatorioAluno: {"progresso", "desempenho", "engajamento", "pontos_fracos", "itens_fracos",
                                "qualidade_feedback", "narrativa"},
     relatorio.Progresso: {"tem_trilha", "etapas", "concluidas", "percentual", "por_competencia"},

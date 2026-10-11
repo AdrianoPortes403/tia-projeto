@@ -6,8 +6,8 @@ Consultas SOMENTE DE LEITURA do painel do docente (EAP 1.4.5).
                                           COM código; a consulta é auditada (R11)
     desempenho_competencias(perfil_id)    acerto e tendência por competência e itens com
                                           erro repetido; só agregados (grupo mínimo, R08)
-    listar_revisao(situacao, origem, ...) respostas do diálogo para o veto docente (R12) e
-                                          origem dos feedbacks; a consulta é auditada
+    listar_revisao(situacao, origem, ...) respostas do diálogo e feedbacks das questões para
+                                          aprovar ou vetar (R12); a consulta é auditada
     exportar_indicadores_csv(perfil_id)   os indicadores agregados do Agente 3 em CSV
 
 Os números vêm das funções do Agente 3 (tia.agentes.relatorio.indicadores):
@@ -31,17 +31,16 @@ from tia.agentes.planejador.planejar import carregar_ementa, carregar_perfis
 from tia.agentes.relatorio import gerar_relatorio_turma, indicadores
 from tia.agentes.relatorio.modelos import Direcao, GrupoTaxa
 from tia.agentes.relatorio.repositorio import ler_dados_aluno, listar_alunos
-from tia.agentes.tutor.repositorio import carregar_itens
+from tia.agentes.tutor.repositorio import PREFIXO_VETO_FEEDBACK, carregar_itens
 from tia.core import auditoria
 from tia.core.config import INATIVIDADE_DIAS, PAINEL_DESEMPENHO_BAIXO, PAINEL_MIN_RESPOSTAS, RELATORIO_MIN_GRUPO, \
     RELATORIO_TENDENCIA_LIMIAR
 from tia.core.database import obter_conexao
 from tia.painel.modelos import (AlunoEmRisco, CompetenciaEmenta, CompetenciaTurma, ConsultaRisco,
-                                DesempenhoCompetencias, FeedbackRegistro, ItemRevisao, ItemTurma, ListaRevisao,
-                                MotivoRisco, PerfilResumo)
+                                DesempenhoCompetencias, ItemRevisao, ItemTurma, ListaRevisao, MotivoRisco,
+                                PerfilResumo, ResumoRevisao)
 
 ORIGENS = ("LLM", "guarda", "fallback")
-FEEDBACKS_RECENTES = 20
 
 
 def _texto(agora: datetime) -> str:
@@ -52,7 +51,7 @@ def _porcento(fracao: float | None) -> str:
     return "sem dados" if fracao is None else f"{round(fracao * 100)}%"
 
 
-def _auditar_consulta(referencia: str, motivo: str) -> int:
+def auditar_consulta(referencia: str, motivo: str) -> int:
     """Uma linha de auditoria por consulta que mostra códigos de aluno. Quem
     consultou só será conhecido com o login (TODO 1.4.6)."""
     conexao = obter_conexao()
@@ -120,7 +119,7 @@ def alunos_em_risco(perfil_id: str | None = None, agora: datetime | None = None)
     em_risco = [r for r in (avaliar_risco(d, agora, nomes) for d in todos) if r]
     em_risco.sort(key=lambda r: (-len(r.motivos), -(r.dias_inativo or 0), r.aluno_id))
     codigos = ", ".join(r.aluno_id for r in em_risco) or "nenhum"
-    auditoria_id = _auditar_consulta(
+    auditoria_id = auditar_consulta(
         "alunos_em_risco", f"perfil={perfil_id or 'todos'}; {len(em_risco)} aluno(s) exibido(s): {codigos}")
     return ConsultaRisco(
         gerado_em=_texto(agora), perfil_id=perfil_id, alunos_avaliados=len(todos), alunos=em_risco,
@@ -173,74 +172,96 @@ def desempenho_competencias(perfil_id: str | None = None, agora: datetime | None
 
 # --- revisão docente (R12) ---
 
-# revisada = existe veto_docente na auditoria (veto, retirada ou aprovação pela rota do veto)
-_REVISADA = """EXISTS (SELECT 1 FROM auditoria a WHERE a.tipo = 'veto_docente'
-                         AND a.referencia_id = CAST(t.id AS TEXT))"""
+# diálogo e feedback numa só lista. revisada = existe veto_docente na auditoria
+# (veto, retirada ou aprovação pela rota do veto); a referência do feedback tem
+# o prefixo "feedback:" (tutor.repositorio.PREFIXO_VETO_FEEDBACK)
+_REVISADA = """EXISTS (SELECT 1 FROM auditoria a WHERE a.tipo = 'veto_docente' AND a.referencia_id = {ref})"""
+_TEXTOS = f"""
+    SELECT 'dialogo' AS tipo, t.id, t.ts, t.aluno_id, t.competencia_id, t.pergunta, NULL AS item_id,
+           NULL AS acertou, NULL AS veredito, t.resposta, t.origem, t.fontes, NULL AS falha_llm,
+           NULL AS explicacao_descartada, NULL AS motivo_descarte, t.vetada, t.correcao_docente,
+           {_REVISADA.format(ref="CAST(t.id AS TEXT)")} AS revisada
+    FROM tutor_dialogo t
+    UNION ALL
+    SELECT 'feedback', f.resposta_id, f.ts, f.aluno_id, f.competencia_id, NULL, f.item_id,
+           h.acertou, f.veredito, f.explicacao, f.origem, f.fontes, f.falha_llm,
+           f.explicacao_descartada, f.motivo_descarte, f.vetada, f.correcao_docente,
+           {_REVISADA.format(ref="'" + PREFIXO_VETO_FEEDBACK + "' || f.resposta_id")}
+    FROM tutor_feedbacks f LEFT JOIN historico_respostas h ON h.id = f.resposta_id"""
 _FILTRO_SITUACAO = {
-    "a_revisar": f"NOT t.vetada AND NOT {_REVISADA}",
-    "aprovadas": f"NOT t.vetada AND {_REVISADA}",
-    "vetadas": "t.vetada",
+    "a_revisar": "NOT x.vetada AND NOT x.revisada",
+    "aprovadas": "NOT x.vetada AND x.revisada",
+    "vetadas": "x.vetada",
     "todas": "1",
 }
 
 
-def listar_revisao(situacao: str = "a_revisar", origem: str | None = None, pagina: int = 1,
-                   por_pagina: int = 20) -> ListaRevisao:
-    """Respostas do diálogo (mais recentes primeiro) com a resposta ORIGINAL do
-    Tutor, a correção do docente e a situação; mais a origem dos feedbacks de
-    item, cujo texto não é gravado. Mostra códigos e textos: auditada."""
-    condicao, parametros = _FILTRO_SITUACAO[situacao], []
-    if origem is not None:
-        condicao += " AND t.origem = ?"
-        parametros.append(origem)
+def _resumo(conexao, tipo: str):
+    linha = conexao.execute(
+        f"""SELECT COUNT(*) AS total, COALESCE(SUM(x.vetada), 0) AS vetados,
+                   COALESCE(SUM(NOT x.vetada AND x.revisada), 0) AS aprovados
+            FROM ({_TEXTOS}) x WHERE x.tipo = ?""", (tipo,)).fetchone()
+    total, vetados, aprovados = linha["total"], linha["vetados"], linha["aprovados"]
+    return ResumoRevisao(total=total, vetados=vetados, aprovados=aprovados, a_revisar=total - vetados - aprovados,
+                         taxa_veto=round(vetados / total, 3) if total else None)
+
+
+def listar_revisao(situacao: str = "a_revisar", origem: str | None = None, pagina: int = 1, por_pagina: int = 20,
+                   tipo: str | None = None, competencia_id: str | None = None) -> ListaRevisao:
+    """Respostas do diálogo e feedbacks das questões (mais recentes primeiro),
+    com o texto ORIGINAL do Tutor, a correção do docente e a situação. Mostra
+    códigos e textos: a consulta é auditada. Só para as telas do docente; as
+    visões agregadas nunca leem estes textos (R08)."""
+    condicoes, parametros = [_FILTRO_SITUACAO[situacao]], []
+    for campo, valor in (("tipo", tipo), ("origem", origem), ("competencia_id", competencia_id)):
+        if valor is not None:
+            condicoes.append(f"x.{campo} = ?")
+            parametros.append(valor)
+    onde = " AND ".join(condicoes)
     conexao = obter_conexao()
     try:
-        total = conexao.execute(f"SELECT COUNT(*) FROM tutor_dialogo t WHERE {condicao}", parametros).fetchone()[0]
+        total = conexao.execute(f"SELECT COUNT(*) FROM ({_TEXTOS}) x WHERE {onde}", parametros).fetchone()[0]
         linhas = conexao.execute(
-            f"""SELECT t.*, {_REVISADA} AS revisada FROM tutor_dialogo t WHERE {condicao}
-                ORDER BY t.ts DESC, t.id DESC LIMIT ? OFFSET ?""",
+            f"""SELECT x.* FROM ({_TEXTOS}) x WHERE {onde}
+                ORDER BY x.ts DESC, x.tipo, x.id DESC LIMIT ? OFFSET ?""",
             parametros + [por_pagina, (pagina - 1) * por_pagina]).fetchall()
-        contagens = conexao.execute(
-            f"""SELECT COUNT(*) AS dialogos, COALESCE(SUM(t.vetada), 0) AS vetados,
-                       COALESCE(SUM(NOT t.vetada AND {_REVISADA}), 0) AS aprovados
-                FROM tutor_dialogo t""").fetchone()
+        resumo_dialogo, resumo_feedback = _resumo(conexao, "dialogo"), _resumo(conexao, "feedback")
+        sem_texto = conexao.execute(
+            """SELECT COUNT(*) FROM historico_respostas h
+               WHERE h.nivel IS NOT NULL AND NOT EXISTS (SELECT 1 FROM tutor_feedbacks f WHERE f.resposta_id = h.id)"""
+        ).fetchone()[0]
         por_origem = dict(conexao.execute(
-            """SELECT a.origem, COUNT(*) FROM auditoria a WHERE a.tipo = 'resposta_item'
-               GROUP BY a.origem""").fetchall())
-        feedbacks = conexao.execute(
-            f"""SELECT h.id, h.timestamp AS ts, h.aluno_id, h.item_id, h.topico AS competencia_id, h.nivel,
-                       h.acertou, a.origem, COALESCE(a.fontes, h.fontes) AS fontes
-                FROM historico_respostas h
-                LEFT JOIN auditoria a ON a.tipo = 'resposta_item' AND a.referencia_id = CAST(h.id AS TEXT)
-                WHERE h.nivel IS NOT NULL {'AND a.origem = ?' if origem else ''}
-                ORDER BY h.timestamp DESC, h.id DESC LIMIT ?""",
-            ([origem] if origem else []) + [FEEDBACKS_RECENTES]).fetchall()
+            "SELECT origem, COUNT(*) FROM auditoria WHERE tipo = 'resposta_item' GROUP BY origem").fetchall())
     finally:
         conexao.close()
-    itens = [ItemRevisao(
-        dialogo_id=t["id"], ts=t["ts"], aluno_id=t["aluno_id"], competencia_id=t["competencia_id"],
-        pergunta=t["pergunta"], resposta=t["resposta"], origem=t["origem"], fontes=json.loads(t["fontes"] or "[]"),
-        vetada=bool(t["vetada"]), correcao_docente=t["correcao_docente"],
-        situacao="vetada" if t["vetada"] else "aprovada" if t["revisada"] else "a_revisar") for t in linhas]
-    dialogos, vetados, aprovados = contagens["dialogos"], contagens["vetados"], contagens["aprovados"]
+    banco = {i["id"]: i for i in carregar_itens()}
+    itens = []
+    for x in linhas:
+        item = banco.get(x["item_id"], {}) if x["tipo"] == "feedback" else {}
+        itens.append(ItemRevisao(
+            tipo=x["tipo"], id=x["id"], ts=x["ts"], aluno_id=x["aluno_id"], competencia_id=x["competencia_id"],
+            pergunta=x["pergunta"] if x["tipo"] == "dialogo" else item.get("enunciado", "(item fora do banco atual)"),
+            item_id=x["item_id"], nivel=item.get("nivel"),
+            acertou=None if x["acertou"] is None else bool(x["acertou"]), veredito=x["veredito"],
+            resposta=x["resposta"], origem=x["origem"], fontes=json.loads(x["fontes"] or "[]"),
+            falha_llm=x["falha_llm"], explicacao_descartada=x["explicacao_descartada"],
+            motivo_descarte=x["motivo_descarte"], vetada=bool(x["vetada"]), correcao_docente=x["correcao_docente"],
+            situacao="vetada" if x["vetada"] else "aprovada" if x["revisada"] else "a_revisar"))
     codigos = ", ".join(dict.fromkeys(i.aluno_id for i in itens)) or "nenhum"
-    auditoria_id = _auditar_consulta(
-        "revisao", f"situacao={situacao}; origem={origem or 'todas'}; pagina={pagina}; "
-                   f"{len(itens)} resposta(s) exibida(s) de: {codigos}")
+    auditoria_id = auditar_consulta(
+        "revisao", f"tipo={tipo or 'todos'}; situacao={situacao}; origem={origem or 'todas'}; "
+                   f"competencia={competencia_id or 'todas'}; pagina={pagina}; "
+                   f"{len(itens)} texto(s) exibido(s) de: {codigos}")
     return ListaRevisao(
-        situacao=situacao, origem=origem, total=total, pagina=pagina, por_pagina=por_pagina, itens=itens,
-        dialogos=dialogos, vetados=vetados, aprovados=aprovados, a_revisar=dialogos - vetados - aprovados,
-        taxa_veto=round(vetados / dialogos, 3) if dialogos else None,
-        feedbacks_por_origem={o: por_origem.get(o, 0) for o in ORIGENS},
-        feedbacks=[FeedbackRegistro(resposta_id=f["id"], ts=f["ts"], aluno_id=f["aluno_id"], item_id=f["item_id"],
-                                    competencia_id=f["competencia_id"], nivel=f["nivel"], acertou=bool(f["acertou"]),
-                                    origem=f["origem"], fontes=json.loads(f["fontes"] or "[]")) for f in feedbacks],
+        tipo=tipo, situacao=situacao, origem=origem, competencia_id=competencia_id, total=total, pagina=pagina,
+        por_pagina=por_pagina, itens=itens, dialogo=resumo_dialogo, feedback=resumo_feedback,
+        feedbacks_sem_texto=sem_texto, feedbacks_por_origem={o: por_origem.get(o, 0) for o in ORIGENS},
         auditoria_id=auditoria_id)
 
 
 # --- exportação ---
 
-def _celula(valor) -> str:
+def celula(valor) -> str:
     """Texto seguro para planilha: sem fórmula (=, +, -, @ no início) e com
     vírgula decimal (Excel/LibreOffice em pt-BR)."""
     if valor is None:
@@ -287,10 +308,12 @@ def exportar_indicadores_csv(perfil_id: str | None = None, agora: datetime | Non
         q = relatorio.qualidade_feedback
         linhas += [["5. qualidade do feedback", "origem " + o, None, q.por_origem.get(o), "fração das respostas",
                     q.taxa_por_origem.get(o), ""] for o in ORIGENS]
-        linhas.append(["5. qualidade do feedback", "veto docente", None, q.dialogos, "taxa de veto", q.taxa_veto,
-                       f"{q.vetados} vetada(s)"])
+        linhas.append(["5. qualidade do feedback", "veto docente (diálogo)", None, q.dialogos, "taxa de veto",
+                       q.taxa_veto, f"{q.vetados} vetada(s)"])
+        linhas.append(["5. qualidade do feedback", "veto docente (feedback das questões)", None,
+                       q.feedbacks_com_texto, "taxa de veto", q.taxa_veto_feedback, f"{q.feedbacks_vetados} vetado(s)"])
     saida = io.StringIO()
     escritor = csv.writer(saida, delimiter=";", lineterminator="\r\n")
     for linha in linhas:
-        escritor.writerow([_celula(v) for v in linha])
+        escritor.writerow([celula(v) for v in linha])
     return "﻿" + saida.getvalue()

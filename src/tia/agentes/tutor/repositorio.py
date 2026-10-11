@@ -1,7 +1,9 @@
 """
 Persistência do Agente 2 (Tutor): leitura do banco de itens e da ementa,
 estado das sessões (tabela tutor_sessoes), histórico de respostas
-(tabela historico_respostas) e diálogo livre (tabela tutor_dialogo).
+(tabela historico_respostas), texto do feedback de cada resposta (tabela
+tutor_feedbacks) e diálogo livre (tabela tutor_dialogo). O veto docente
+(R12) vale para o diálogo e para o feedback das questões.
 Toda interação grava também a auditoria (R11), na mesma transação.
 
 Nada fica em memória entre requisições: cada pedido lê o estado do SQLite
@@ -104,9 +106,12 @@ def ler_sessao(sessao_id: str, aluno_id: str) -> EstadoSessao | None:
 
 
 def registrar_resposta(sessao_id: str, aluno_id: str, item_respondido: dict, novo_estado: EstadoSessao,
-                       acertou: bool, fontes: list[str], tempo_ms: int, origem: str) -> bool:
-    """Atualiza a sessão, grava a resposta no histórico e a auditoria (R11),
-    numa transação. Devolve False (sem gravar nada) se a sessão já saiu deste item."""
+                       acertou: bool, fontes: list[str], tempo_ms: int, origem: str,
+                       feedback: dict | None = None) -> int | None:
+    """Atualiza a sessão, grava a resposta no histórico, o texto do feedback
+    (tutor_feedbacks) e a auditoria (R11), numa transação. feedback: veredito,
+    explicacao, falha_llm, explicacao_descartada, motivo_descarte. Devolve o id
+    da resposta, ou None (sem gravar nada) se a sessão já saiu deste item."""
     agora = _agora()
     conexao = obter_conexao()
     try:
@@ -122,7 +127,7 @@ def registrar_resposta(sessao_id: str, aluno_id: str, item_respondido: dict, nov
                  sessao_id, aluno_id, item_respondido["id"]),
             )
             if cursor.rowcount != 1:
-                return False
+                return None
             nivel = item_respondido["nivel"]
             cursor = conexao.execute(
                 """INSERT INTO historico_respostas
@@ -132,10 +137,21 @@ def registrar_resposta(sessao_id: str, aluno_id: str, item_respondido: dict, nov
                  agora, nivel, json.dumps(fontes, ensure_ascii=False), tempo_ms,
                  item_respondido["id"], sessao_id),
             )
-            auditoria.registrar(conexao, aluno_id, "resposta_item", cursor.lastrowid, origem, fontes, ts=agora)
+            resposta_id = cursor.lastrowid
+            if feedback is not None:
+                conexao.execute(
+                    """INSERT INTO tutor_feedbacks
+                       (resposta_id, aluno_id, sessao_id, item_id, competencia_id, ts, veredito, explicacao, origem,
+                        falha_llm, fontes, explicacao_descartada, motivo_descarte)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (resposta_id, aluno_id, sessao_id, item_respondido["id"], item_respondido["competencia_id"], agora,
+                     feedback.get("veredito"), feedback.get("explicacao"), origem, feedback.get("falha_llm"),
+                     json.dumps(fontes, ensure_ascii=False), feedback.get("explicacao_descartada") or None,
+                     feedback.get("motivo_descarte") or None))
+            auditoria.registrar(conexao, aluno_id, "resposta_item", resposta_id, origem, fontes, ts=agora)
     finally:
         conexao.close()
-    return True
+    return resposta_id
 
 
 def registrar_dialogo(aluno_id: str, competencia_id: str | None, pergunta: str, resposta: str,
@@ -161,31 +177,88 @@ def registrar_dialogo(aluno_id: str, competencia_id: str | None, pergunta: str, 
     return dialogo_id
 
 
-def vetar_dialogo(dialogo_id: int, vetada: bool, correcao_docente: str | None) -> bool:
-    """Marca ou desmarca o veto docente (R12) e grava a auditoria (R11) na mesma
-    transação. A resposta original nunca é apagada; ao desmarcar, a correção
-    fica guardada. False se o id não existe."""
+def _vetar(tabela: str, chave: str, registro_id: int, referencia: str, vetada: bool,
+           correcao_docente: str | None) -> bool:
+    """Veto docente (R12) numa linha de tutor_dialogo ou tutor_feedbacks e a
+    auditoria (R11), na mesma transação. A resposta original nunca é apagada;
+    ao desmarcar, a correção fica guardada. False se o id não existe."""
     conexao = obter_conexao()
     try:
         with conexao:
-            linha = conexao.execute("SELECT aluno_id, vetada FROM tutor_dialogo WHERE id = ?",
-                                    (dialogo_id,)).fetchone()
+            linha = conexao.execute(f"SELECT aluno_id, vetada FROM {tabela} WHERE {chave} = ?",
+                                    (registro_id,)).fetchone()
             if linha is None:
                 return False
             if vetada:
-                conexao.execute("UPDATE tutor_dialogo SET vetada = 1, correcao_docente = ? WHERE id = ?",
-                                (correcao_docente, dialogo_id))
+                conexao.execute(f"UPDATE {tabela} SET vetada = 1, correcao_docente = ? WHERE {chave} = ?",
+                                (correcao_docente, registro_id))
             else:
-                conexao.execute("UPDATE tutor_dialogo SET vetada = 0 WHERE id = ?", (dialogo_id,))
-            # sem o texto da correção (fica só em tutor_dialogo); quem vetou depende do login (TODO 1.4.6).
+                conexao.execute(f"UPDATE {tabela} SET vetada = 0 WHERE {chave} = ?", (registro_id,))
+            # sem o texto da correção (fica só na tabela de origem); quem vetou depende do login (TODO 1.4.6).
             # vetada=False numa resposta sem veto é a APROVAÇÃO do docente: fica só aqui, na auditoria
             motivo = ("resposta vetada e corrigida" if vetada else
                       "veto retirado" if linha["vetada"] else "resposta aprovada")
-            auditoria.registrar(conexao, linha["aluno_id"], "veto_docente", dialogo_id,
+            auditoria.registrar(conexao, linha["aluno_id"], "veto_docente", referencia,
                                 "vetada" if vetada else "aprovada", [], ts=_agora(), motivo=motivo)
     finally:
         conexao.close()
     return True
+
+
+def vetar_dialogo(dialogo_id: int, vetada: bool, correcao_docente: str | None) -> bool:
+    """Veto docente (R12) de uma resposta do diálogo (auditoria: referência = id do diálogo)."""
+    return _vetar("tutor_dialogo", "id", dialogo_id, str(dialogo_id), vetada, correcao_docente)
+
+
+# referência do veto de feedback na auditoria: "feedback:<id da resposta>" (o do diálogo é só o id)
+PREFIXO_VETO_FEEDBACK = "feedback:"
+
+
+def vetar_feedback(resposta_id: int, vetada: bool, correcao_docente: str | None) -> bool:
+    """Veto docente (R12) do feedback de uma questão. False se a resposta não
+    tem feedback gravado (inexistente ou anterior à tabela tutor_feedbacks)."""
+    return _vetar("tutor_feedbacks", "resposta_id", resposta_id, PREFIXO_VETO_FEEDBACK + str(resposta_id),
+                  vetada, correcao_docente)
+
+
+def _feedback_visivel(linha, enunciados: dict[str, str]) -> dict:
+    """Feedback como o aluno vê: se vetado, a correção do docente no lugar da
+    explicação, sem fontes, origem "docente". Nunca o texto descartado pela guarda."""
+    vetada = bool(linha["vetada"])
+    return {
+        "resposta_id": linha["resposta_id"], "ts": linha["ts"], "sessao_id": linha["sessao_id"],
+        "item_id": linha["item_id"], "enunciado": enunciados.get(linha["item_id"]),
+        "competencia_id": linha["competencia_id"], "veredito": linha["veredito"],
+        "explicacao": linha["correcao_docente"] if vetada else linha["explicacao"],
+        "fontes": [] if vetada else json.loads(linha["fontes"] or "[]"),
+        "origem": "docente" if vetada else linha["origem"],
+        "vetada": vetada,
+    }
+
+
+def listar_feedbacks(aluno_id: str) -> list[dict]:
+    """Feedbacks gravados do aluno, mais antigo primeiro (ver _feedback_visivel)."""
+    conexao = obter_conexao()
+    try:
+        linhas = conexao.execute("SELECT * FROM tutor_feedbacks WHERE aluno_id = ? ORDER BY ts, resposta_id",
+                                 (aluno_id,)).fetchall()
+    finally:
+        conexao.close()
+    return [_feedback_visivel(linha, _enunciados()) for linha in linhas]
+
+
+def _enunciados() -> dict[str, str]:
+    return {item["id"]: item["enunciado"] for item in carregar_itens()}
+
+
+def ler_feedback(resposta_id: int) -> dict | None:
+    """Um feedback como o aluno vê; None se não houver."""
+    conexao = obter_conexao()
+    try:
+        linha = conexao.execute("SELECT * FROM tutor_feedbacks WHERE resposta_id = ?", (resposta_id,)).fetchone()
+    finally:
+        conexao.close()
+    return None if linha is None else _feedback_visivel(linha, _enunciados())
 
 
 def _dialogo_visivel(linha) -> dict:

@@ -8,15 +8,16 @@ Rotas SOMENTE DE LEITURA do painel do docente/instituição (EAP 1.4.5).
                                         auditoria (R11). ?perfil_id=
     GET /painel/competencias            acerto e tendência por competência e itens com erro
                                         repetido; só agregados (grupo mínimo, R08). ?perfil_id=
-    GET /painel/revisao                 respostas do diálogo para o veto docente (R12) e
-                                        origem dos feedbacks; auditada.
-                                        ?situacao=a_revisar|aprovadas|vetadas|todas&origem=&pagina=
+    GET /painel/revisao                 respostas do diálogo e feedbacks das questões para o
+                                        veto docente (R12); auditada. ?tipo=dialogo|feedback
+                                        &situacao=a_revisar|aprovadas|vetadas|todas&origem=
+                                        &competencia_id=&pagina=
     GET /painel/auditoria               trilha de auditoria filtrável e paginada
                                         ?agente=&aluno_id=&desde=&ate=&pagina=&por_pagina=
     GET /painel/exportar/indicadores.csv  indicadores agregados do Agente 3 em CSV. ?perfil_id=
 
-A escrita do painel (aprovar e vetar) usa a rota que já existia:
-PATCH /tutor/dialogo/{id}/veto (tia.api.rotas_tutor).
+A escrita do painel (aprovar e vetar) usa as rotas do Tutor (tia.api.rotas_tutor):
+PATCH /tutor/dialogo/{id}/veto e PATCH /tutor/feedback/{resposta_id}/veto.
 
 Incluídas em tia.api.main; para subir a API:
     uvicorn tia.api.main:app --reload
@@ -34,7 +35,7 @@ from tia.agentes.planejador.modelos import PADRAO_CODIGO_ALUNO
 from tia.core import auditoria
 from tia.painel import consultas
 from tia.painel.modelos import (CompetenciaEmenta, ConsultaRisco, DesempenhoCompetencias, ListaRevisao,
-                                PaginaAuditoria, PerfilResumo, SituacaoRevisao)
+                                PaginaAuditoria, PerfilResumo, SituacaoRevisao, TipoRevisao)
 
 router = APIRouter(prefix="/painel", tags=["painel"])
 router_conteudo = APIRouter(prefix="/conteudo", tags=["painel"])
@@ -73,10 +74,12 @@ def competencias(perfil_id: Perfil = None) -> DesempenhoCompetencias:
 @router.get("/revisao", response_model=ListaRevisao)
 def revisao(situacao: SituacaoRevisao = "a_revisar",
             origem: Literal["LLM", "guarda", "fallback"] | None = None,
+            tipo: TipoRevisao | None = None,
+            competencia_id: Annotated[str | None, Query(pattern=r"^[A-Za-z0-9_-]{1,64}$")] = None,
             pagina: Annotated[int, Query(ge=1)] = 1,
             por_pagina: Annotated[int, Query(ge=1, le=100)] = 20) -> ListaRevisao:
-    """Respostas do diálogo para revisão (original + correção) e origem dos feedbacks."""
-    return consultas.listar_revisao(situacao, origem, pagina, por_pagina)
+    """Respostas do diálogo e feedbacks das questões para revisão (original + correção)."""
+    return consultas.listar_revisao(situacao, origem, pagina, por_pagina, tipo, competencia_id)
 
 
 # TODO 1.4.6: exigir autenticação de docente

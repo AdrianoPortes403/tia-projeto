@@ -102,12 +102,17 @@ def responder(resposta: RespostaAluno, modo: str | None = None) -> Feedback:
     novo = adaptativo.avancar(estado, itens, acertou)
     tempo_ms = round((time.perf_counter() - inicio) * 1000)
 
-    if not repositorio.registrar_resposta(resposta.sessao_id, resposta.aluno_id, item, novo,
-                                          acertou, resultado.fontes, tempo_ms, resultado.origem):
+    # o texto do feedback é gravado para a revisão docente (R12); o descartado pela guarda também
+    resposta_id = repositorio.registrar_resposta(
+        resposta.sessao_id, resposta.aluno_id, item, novo, acertou, resultado.fontes, tempo_ms, resultado.origem,
+        feedback={"veredito": resultado.veredito, "explicacao": resultado.explicacao,
+                  "falha_llm": resultado.falha_llm, "explicacao_descartada": resultado.explicacao_descartada,
+                  "motivo_descarte": resultado.motivo_descarte})
+    if resposta_id is None:
         raise RespostaForaDeOrdem("A resposta não corresponde à pergunta atual da sessão.")
 
     proxima = None if novo.concluida else _pergunta(_item_por_id(itens, novo.item_atual_id))
     return Feedback(acertou=acertou, indice_correto=item["indice_correto"], veredito=resultado.veredito,
                     explicacao=resultado.explicacao, origem=resultado.origem, falha_llm=resultado.falha_llm,
                     fontes=resultado.fontes, nivel_atual=novo.nivel, concluida=novo.concluida,
-                    proxima_pergunta=proxima, tempo_ms=tempo_ms)
+                    proxima_pergunta=proxima, tempo_ms=tempo_ms, resposta_id=resposta_id)

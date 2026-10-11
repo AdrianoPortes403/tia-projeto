@@ -71,6 +71,9 @@ class Feedback(BaseModel):
     # None quando a competência foi concluída
     proxima_pergunta: Pergunta | None = None
     tempo_ms: int
+    # id da resposta (historico_respostas); o feedback fica gravado para a revisão
+    # docente (R12) e o veto usa este id: PATCH /tutor/feedback/{resposta_id}/veto
+    resposta_id: int | None = None
 
 
 # --- parte 2b: diálogo livre ---
@@ -115,7 +118,8 @@ class RegistroAuditoria(BaseModel):
 
 
 class Veto(BaseModel):
-    """Veto docente (R12) a uma resposta do diálogo. Vetar exige a correção;
+    """Veto docente (R12) a uma resposta do diálogo ou ao feedback de uma
+    questão. Vetar exige a correção;
     retirar o veto (vetada=False) volta a mostrar a resposta original."""
     vetada: bool
     correcao_docente: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1,
@@ -136,6 +140,22 @@ class ItemDialogo(BaseModel):
     competencia_id: str | None
     pergunta: str
     resposta: str
+    fontes: list[str] = []
+    origem: str
+    vetada: bool
+
+
+class ItemFeedback(BaseModel):
+    """Feedback de uma questão já respondida, como o aluno vê. Se vetado,
+    "explicacao" é a correção do docente, sem fontes, e "origem" é "docente"."""
+    resposta_id: int
+    ts: str
+    sessao_id: str | None
+    item_id: str | None
+    enunciado: str | None = None  # do banco de itens atual
+    competencia_id: str | None
+    veredito: str | None
+    explicacao: str | None
     fontes: list[str] = []
     origem: str
     vetada: bool

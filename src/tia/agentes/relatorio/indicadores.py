@@ -13,6 +13,7 @@ validação dos critérios com a Pessoa 4 (docs/arquitetura/relatorio_indicadore
     4. pontos fracos:      competências e itens (com item_id) com erro repetido
                            (+ perguntas no diálogo)
     5. qualidade feedback: taxa de origem LLM/guarda/fallback e taxa de veto docente
+                           (diálogo e feedback das questões)
 
 Turma/instituição (agregar_turma): só agregados; grupo com menos de
 min_grupo alunos é suprimido e contagens abaixo disso viram "menos de N" (R08).
@@ -193,11 +194,12 @@ def itens_fracos(respostas: list[dict]) -> list[ItemFraco]:
 
 def qualidade_feedback(respostas: list[dict], dialogos: list[dict]) -> QualidadeFeedback:
     """Origens das respostas de item (pela auditoria) e do diálogo; veto docente
-    só existe no diálogo."""
+    no diálogo e no feedback das questões (só respostas com texto gravado)."""
     origens = [r["origem"] for r in respostas if r["origem"]] + [d["origem"] for d in dialogos if d["origem"]]
     por_origem = {o: origens.count(o) for o in ORIGENS}
     total = sum(por_origem.values())
     vetados = sum(d["vetada"] for d in dialogos)
+    com_texto = [r["feedback_vetado"] for r in respostas if r.get("feedback_vetado") is not None]
     return QualidadeFeedback(
         respostas_com_origem=sum(bool(r["origem"]) for r in respostas),
         respostas_sem_registro=sum(not r["origem"] for r in respostas),
@@ -206,6 +208,9 @@ def qualidade_feedback(respostas: list[dict], dialogos: list[dict]) -> Qualidade
         dialogos=len(dialogos),
         vetados=vetados,
         taxa_veto=round(vetados / len(dialogos), 3) if dialogos else None,
+        feedbacks_com_texto=len(com_texto),
+        feedbacks_vetados=sum(com_texto),
+        taxa_veto_feedback=round(sum(com_texto) / len(com_texto), 3) if com_texto else None,
     )
 
 

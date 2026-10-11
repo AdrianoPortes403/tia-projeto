@@ -10,6 +10,9 @@ Rotas da API do Agente 2 (Tutor), parte 2a: questionário adaptativo.
     GET  /alunos/{aluno_id}/dialogo   histórico do diálogo (resposta vetada sai trocada
                                       pela correção do docente)
     PATCH /tutor/dialogo/{id}/veto    veto docente (R12): vetada + correcao_docente
+    GET  /alunos/{aluno_id}/feedbacks feedbacks das questões respondidas (vetado sai trocado
+                                      pela correção do docente)
+    PATCH /tutor/feedback/{resposta_id}/veto  veto docente (R12) do feedback de uma questão
     GET  /tutor/incentivo/{aluno_id}  inatividade e mensagem de incentivo (template, sem LLM)
 
 aluno_id é validado como código (mesmo padrão do Planejador, R08). Os logs
@@ -34,7 +37,7 @@ from tia.agentes.tutor import (
 from tia.agentes.tutor.dialogo import perguntar
 from tia.agentes.tutor.incentivo import montar_incentivo
 from tia.agentes.tutor.modelos import (
-    Feedback, Incentivo, IniciarSessao, ItemDialogo, PerguntaAluno, RespostaAluno, RespostaDialogo,
+    Feedback, Incentivo, IniciarSessao, ItemDialogo, ItemFeedback, PerguntaAluno, RespostaAluno, RespostaDialogo,
     SessaoIniciada, Veto,
 )
 
@@ -83,6 +86,23 @@ def vetar(dialogo_id: int, veto: Veto) -> dict:
     if not repositorio.vetar_dialogo(dialogo_id, veto.vetada, veto.correcao_docente):
         raise HTTPException(status_code=404, detail="Diálogo não encontrado.")
     return repositorio.ler_dialogo(dialogo_id)
+
+
+# TODO 1.4.6: exigir autenticação (o próprio aluno ou um docente)
+@router.get("/alunos/{aluno_id}/feedbacks", response_model=list[ItemFeedback])
+def obter_feedbacks(aluno_id: Annotated[str, Path(pattern=PADRAO_CODIGO_ALUNO)]) -> list[dict]:
+    """Feedbacks gravados das questões do aluno; o vetado vem com a correção do docente."""
+    return repositorio.listar_feedbacks(aluno_id)
+
+
+# TODO 1.4.6: exigir autenticação de docente
+@router.patch("/tutor/feedback/{resposta_id}/veto", response_model=ItemFeedback)
+def vetar_feedback(resposta_id: int, veto: Veto) -> dict:
+    """Veta (ou aprova / retira o veto de) o feedback de uma questão (R12)."""
+    if not repositorio.vetar_feedback(resposta_id, veto.vetada, veto.correcao_docente):
+        raise HTTPException(status_code=404, detail="Feedback não encontrado (resposta inexistente ou anterior "
+                                                    "à gravação do texto).")
+    return repositorio.ler_feedback(resposta_id)
 
 
 @router.get("/tutor/incentivo/{aluno_id}", response_model=Incentivo)

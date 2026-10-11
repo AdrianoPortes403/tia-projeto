@@ -15,7 +15,8 @@ Detecção (reaproveita o Agente 3, sem duplicar cálculo):
         DIRETO, no nível 1; sem pré-requisito, não reforça;
     fim do reforço: a sessão de reforço foi concluída -> "retomar_original": a
         sessão pausada volta no nível em que parou;
-    R3 inatividade (PROVISÓRIO): avaliada pela verificação agendada.
+    R3 inatividade (PROVISÓRIO): avaliada pela verificação agendada. Não vale
+        para quem concluiu a trilha (sem reforço em curso).
         A partir de INATIVIDADE_DIAS -> "incentivar" (só incentivo, sem refazer a
         trilha), uma vez por período sem atividade; a partir de
         ORQ_INATIVIDADE_REFAZER_DIAS -> "refazer_trilha" (replaneja o que falta a
@@ -114,9 +115,14 @@ def _tratada(ultima_acao_ts: str | None, ultima_interacao: str | None) -> bool:
 
 
 def regra_inatividade(engajamento: Engajamento, ultimo_incentivo_ts: str | None, ultimo_refazer_ts: str | None,
-                      refazer_dias: int = ORQ_INATIVIDADE_REFAZER_DIAS) -> Avaliacao:
-    """R3. Os ts são os das últimas decisões "incentivar" e "refazer_trilha"."""
+                      refazer_dias: int = ORQ_INATIVIDADE_REFAZER_DIAS, trilha_concluida: bool = False) -> Avaliacao:
+    """R3. Os ts são os das últimas decisões "incentivar" e "refazer_trilha".
+    Quem concluiu a trilha (e não tem reforço em curso) não é inativo: não
+    recebe incentivo nem tem a trilha refeita (mesmo critério do painel)."""
     dias = engajamento.dias_inativo
+    if trilha_concluida:
+        return Avaliacao("inatividade", False, "nenhuma", None,
+                         f"Trilha concluída: sem incentivo nem replanejamento ({dias} dias desde a última atividade).")
     if not engajamento.inativo:
         return Avaliacao("inatividade", False, "nenhuma", None,
                          f"Ativo: {dias} dias desde a última atividade (limite {INATIVIDADE_DIAS}).")

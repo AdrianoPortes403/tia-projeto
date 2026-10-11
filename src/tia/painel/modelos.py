@@ -101,48 +101,58 @@ class DesempenhoCompetencias(BaseModel):
 
 # --- revisão docente (R12) ---
 
+TipoRevisao = Literal["dialogo", "feedback"]
+
+
 class ItemRevisao(BaseModel):
-    """Resposta do diálogo como o docente vê: a original e, se vetada, a correção."""
-    dialogo_id: int
+    """Texto gerado pelo Tutor como o docente vê: o ORIGINAL (o que o aluno viu
+    antes de um veto) e, se vetado, a correção. tipo "dialogo": resposta a uma
+    pergunta livre (id = dialogo_id); tipo "feedback": explicação de uma questão
+    respondida (id = resposta_id; pergunta = enunciado do item)."""
+    tipo: TipoRevisao
+    id: int
     ts: str
     aluno_id: str
     competencia_id: str | None
     pergunta: str
-    resposta: str  # sempre a resposta original do Tutor
+    item_id: str | None = None
+    nivel: int | None = None
+    acertou: bool | None = None
+    veredito: str | None = None
+    resposta: str | None  # texto original do Tutor (resposta do diálogo ou explicação do feedback)
     origem: str
     fontes: list[str] = []
+    falha_llm: str | None = None
+    # só feedback com origem "guarda": o texto do LLM barrado (o aluno não viu) e o motivo
+    explicacao_descartada: str | None = None
+    motivo_descarte: str | None = None
     vetada: bool
     correcao_docente: str | None = None
     situacao: Literal["a_revisar", "aprovada", "vetada"]
 
 
-class FeedbackRegistro(BaseModel):
-    """Feedback de item: o texto da explicação NÃO é gravado, só a origem e as fontes."""
-    resposta_id: int
-    ts: str
-    aluno_id: str
-    item_id: str | None
-    competencia_id: str
-    nivel: int | None
-    acertou: bool
-    origem: str | None
-    fontes: list[str] = []
-
-
-class ListaRevisao(BaseModel):
-    situacao: SituacaoRevisao
-    origem: str | None
-    total: int  # itens do diálogo com o filtro, antes da paginação
-    pagina: int
-    por_pagina: int
-    itens: list[ItemRevisao]
-    dialogos: int
+class ResumoRevisao(BaseModel):
+    """Contagens de um tipo (sem filtro): taxa_veto = vetados / total."""
+    total: int
     vetados: int
     aprovados: int
     a_revisar: int
-    taxa_veto: float | None  # vetados / respostas do diálogo (mesma do Agente 3)
-    feedbacks_por_origem: dict[str, int]
-    feedbacks: list[FeedbackRegistro]  # os mais recentes
+    taxa_veto: float | None
+
+
+class ListaRevisao(BaseModel):
+    tipo: TipoRevisao | None
+    situacao: SituacaoRevisao
+    origem: str | None
+    competencia_id: str | None
+    total: int  # itens com o filtro, antes da paginação
+    pagina: int
+    por_pagina: int
+    itens: list[ItemRevisao]
+    dialogo: ResumoRevisao
+    feedback: ResumoRevisao
+    feedbacks_sem_texto: int  # respostas anteriores à gravação do texto (não revisáveis)
+    feedbacks_por_origem: dict[str, int]  # todas as respostas de questões, pela auditoria
     auditoria_id: int
 
 

@@ -153,6 +153,36 @@ def criar_tabelas():
         )
     """)
 
+    # Feedback de cada resposta do questionário (R12): o texto que o aluno viu,
+    # para o docente revisar e vetar como no diálogo. Uma linha por resposta
+    # (resposta_id = historico_respostas.id); respostas anteriores a esta tabela
+    # não têm linha. É texto gerado pelo sistema, mas fica SÓ aqui (como o
+    # diálogo): o Agente 3 lê apenas "vetada", nunca o texto (R08).
+    # explicacao_descartada/motivo_descarte: texto do LLM barrado pela guarda
+    # (origem "guarda"), que o aluno não viu; só para a revisão docente.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tutor_feedbacks (
+            resposta_id INTEGER PRIMARY KEY,
+            aluno_id TEXT,
+            sessao_id TEXT,
+            item_id TEXT,
+            competencia_id TEXT,
+            ts DATETIME,
+            veredito TEXT,
+            explicacao TEXT,
+            origem TEXT,
+            falha_llm TEXT,
+            fontes TEXT,
+            explicacao_descartada TEXT,
+            motivo_descarte TEXT,
+            vetada INTEGER NOT NULL DEFAULT 0,
+            correcao_docente TEXT,
+            FOREIGN KEY (resposta_id) REFERENCES historico_respostas(id),
+            FOREIGN KEY (aluno_id) REFERENCES alunos(id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_feedbacks_aluno ON tutor_feedbacks (aluno_id, ts)")
+
     # Auditoria (R11): uma linha por interação do Tutor (resposta de item,
     # diálogo, incentivo). Sem texto livre: só o tipo, a referência à linha
     # da tabela de origem, a origem da resposta e as fontes citadas.

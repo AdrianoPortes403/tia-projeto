@@ -238,6 +238,7 @@ textarea { max-width: none; resize: vertical; }
 .indicadores .cartao { margin: 0; }
 .indicadores ul { padding-left: var(--espaco-4); margin: var(--espaco-1) 0 0; }
 progress { width: 100%; height: 1rem; accent-color: var(--cor-primaria); }
+.correcoes { list-style: none; padding: 0; margin: 0; }
 
 @media (max-width: 30rem) {
   h1 { font-size: 1.3rem; }
