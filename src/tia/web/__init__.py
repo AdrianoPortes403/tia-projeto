@@ -1,19 +1,23 @@
 """
-Aplicação web standalone do aluno (EAP 1.4.4): HTML, CSS e JavaScript puros
-em src/tia/web/static/, servidos pelo FastAPI em /app (sem Node, sem build).
+Aplicação web standalone do aluno (EAP 1.4.4) e painel do docente (EAP 1.4.5):
+HTML, CSS e JavaScript puros em src/tia/web/static/, servidos pelo FastAPI em
+/app e /app/painel (sem Node, sem build).
 
-    static/index.html  telas: entrada, trilha, estudo, diálogo livre, relatório
+    static/index.html  telas do aluno: entrada, trilha, estudo, diálogo livre, relatório
     static/tema.css    SÓ variáveis de tema (trocar pelo visual do EBAULA)
     static/estilo.css  layout, usando só as variáveis do tema
-    static/app.js      chamadas às rotas da API e montagem das telas (textContent)
+    static/comum.js    utilidades compartilhadas: el/svg (textContent), chamar (contador), erros
+    static/app.js      chamadas às rotas da API e montagem das telas do aluno
+    static/painel/     painel do docente: index.html, painel.css, painel.js
 
 As respostas de /app levam cabeçalhos de segurança (CSP só com a própria
 origem, sem script inline). Sem login: TODO 1.4.6.
 
 Como rodar (a partir da raiz, com o venv ativo):
     python -m tia.web.dados_demo        # alunos fictícios DEMO-W01..W03 (opcional)
+    python -m tia.web.dados_painel      # turma fictícia DEMO-P01..P12 para o painel (opcional)
     uvicorn tia.api.main:app --reload
-    # abrir http://localhost:8000/app/
+    # abrir http://localhost:8000/app/ (aluno) e http://localhost:8000/app/painel/ (docente)
 
 Pré-requisitos:
     - pip install -e . (na raiz)
@@ -28,6 +32,7 @@ from fastapi.staticfiles import StaticFiles
 
 PASTA_ESTATICA = Path(__file__).parent / "static"
 PREFIXO = "/app"
+PAINEL = PREFIXO + "/painel"
 
 # CSP: tudo da própria origem; sem script/estilo inline nem eval; sem iframe de terceiros
 CABECALHOS_SEGURANCA = {
@@ -46,6 +51,10 @@ def montar(app: FastAPI) -> None:
     def raiz_app() -> RedirectResponse:
         # caminhos relativos do index.html (tema.css, app.js) exigem a barra final
         return RedirectResponse(url=PREFIXO + "/")
+
+    @app.get(PAINEL, include_in_schema=False)
+    def raiz_painel() -> RedirectResponse:
+        return RedirectResponse(url=PAINEL + "/")
 
     app.mount(PREFIXO, StaticFiles(directory=PASTA_ESTATICA, html=True), name="web")
 

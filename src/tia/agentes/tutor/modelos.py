@@ -105,7 +105,7 @@ class RegistroAuditoria(BaseModel):
     id: int
     ts: str
     tipo: Literal["resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma",
-                  "decisao_orquestrador"]
+                  "decisao_orquestrador", "veto_docente", "consulta_painel"]
     # id da linha na tabela de origem (historico_respostas, tutor_dialogo) ou,
     # no incentivo, a competência da próxima etapa citada
     referencia_id: str | None

@@ -162,20 +162,30 @@ def registrar_dialogo(aluno_id: str, competencia_id: str | None, pergunta: str, 
 
 
 def vetar_dialogo(dialogo_id: int, vetada: bool, correcao_docente: str | None) -> bool:
-    """Marca ou desmarca o veto docente (R12). A resposta original nunca é
-    apagada; ao desmarcar, a correção fica guardada. False se o id não existe."""
+    """Marca ou desmarca o veto docente (R12) e grava a auditoria (R11) na mesma
+    transação. A resposta original nunca é apagada; ao desmarcar, a correção
+    fica guardada. False se o id não existe."""
     conexao = obter_conexao()
     try:
         with conexao:
+            linha = conexao.execute("SELECT aluno_id, vetada FROM tutor_dialogo WHERE id = ?",
+                                    (dialogo_id,)).fetchone()
+            if linha is None:
+                return False
             if vetada:
-                cursor = conexao.execute(
-                    "UPDATE tutor_dialogo SET vetada = 1, correcao_docente = ? WHERE id = ?",
-                    (correcao_docente, dialogo_id))
+                conexao.execute("UPDATE tutor_dialogo SET vetada = 1, correcao_docente = ? WHERE id = ?",
+                                (correcao_docente, dialogo_id))
             else:
-                cursor = conexao.execute("UPDATE tutor_dialogo SET vetada = 0 WHERE id = ?", (dialogo_id,))
+                conexao.execute("UPDATE tutor_dialogo SET vetada = 0 WHERE id = ?", (dialogo_id,))
+            # sem o texto da correção (fica só em tutor_dialogo); quem vetou depende do login (TODO 1.4.6).
+            # vetada=False numa resposta sem veto é a APROVAÇÃO do docente: fica só aqui, na auditoria
+            motivo = ("resposta vetada e corrigida" if vetada else
+                      "veto retirado" if linha["vetada"] else "resposta aprovada")
+            auditoria.registrar(conexao, linha["aluno_id"], "veto_docente", dialogo_id,
+                                "vetada" if vetada else "aprovada", [], ts=_agora(), motivo=motivo)
     finally:
         conexao.close()
-    return cursor.rowcount == 1
+    return True
 
 
 def _dialogo_visivel(linha) -> dict:

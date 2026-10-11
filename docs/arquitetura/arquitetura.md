@@ -12,7 +12,7 @@ Legenda: caixas com borda contínua **existem** e têm testes. Caixas tracejadas
 flowchart LR
     subgraph Clientes
         WEB["Web standalone 1.4.4<br/>/app (src/tia/web)"]
-        DASH["Dashboard 1.4.5<br/>(não existe)"]:::futuro
+        DASH["Painel do docente 1.4.5<br/>/app/painel (src/tia/web)"]
         EBA["Plug-in EBAULA<br/>(não existe)"]:::futuro
         CLI["Demonstrações<br/>python -m tia..."]
     end
@@ -26,6 +26,7 @@ flowchart LR
         RTUT["/tutor/sessao · resposta · perguntar<br/>/tutor/dialogo/{id}/veto · /tutor/incentivo"]
         RREL["/relatorio/aluno/{id} · /relatorio/turma"]
         RAUD["/auditoria/{id}"]
+        RPAI["/painel/alunos-em-risco · competencias · revisao<br/>auditoria · exportar/indicadores.csv<br/>/conteudo/ementa · perfis (só leitura)"]
     end
 
     ORQ["Orquestrador 1.3.5<br/>fluxo · eventos · regras"]
@@ -45,8 +46,8 @@ flowchart LR
         CONT["conteudo/*.json<br/>ementa · perfis · itens (PROVISÓRIO)"]
     end
 
-    WEB -->|"sem login (TODO 1.4.6)"| API
-    DASH & EBA -.-> AUTH -.-> API
+    WEB & DASH -->|"sem login (TODO 1.4.6)"| API
+    EBA -.-> AUTH -.-> API
     CRON -.->|"verificar-inatividade"| RORQ
     CLI --> ORQ & A1 & A2 & A3
     RORQ --> ORQ
@@ -54,6 +55,8 @@ flowchart LR
     RTUT --> A2
     RREL --> A3
     RAUD --> AUD
+    RPAI --> A3
+    RPAI -->|"consultas com código"| AUD
 
     ORQ -->|"planejar_e_salvar"| A1
     ORQ -->|"responder · competências concluídas · sessão aberta"| A2
@@ -88,7 +91,7 @@ flowchart LR
 | API FastAPI | **Real**, **sem autenticação** (TODO 1.4.6 nas rotas) |
 | Autenticação de aluno/docente (1.4.6) | **Não existe** |
 | Web standalone (1.4.4, `src/tia/web/`, em `/app`) | **Real**, sem login e com visual PROVISÓRIO (ver "Web standalone" abaixo) |
-| Dashboard institucional (1.4.5, `dashboard/`) | **Não existe**. Vai consumir o JSON de `/relatorio/...` |
+| Painel do docente/instituição (1.4.5, `src/tia/web/static/painel/`, em `/app/painel`) | **Real**, sem login e com visual PROVISÓRIO (ver "Painel do docente" abaixo). A pasta `dashboard/` da raiz ficou vazia |
 | Plug-in EBAULA (`plugin-ebaula/`) | **Não existe** |
 | VM institucional (medição do R09) | **Não disponível**. Os tempos foram medidos em notebook (CPU) |
 
@@ -175,8 +178,8 @@ pedagógica da Pessoa 4 e têm limiar em `core/config.py`.
 | `GET /aluno/{id}/estado` | o próprio aluno ou um docente |
 | `POST /orquestrador/verificar-inatividade` | só o agendador/sistema ou um docente |
 
-Também dependem dela, fora da orquestração: `/tutor/*` (incluindo o veto docente), `/relatorio/*` e
-`/auditoria/{id}`.
+Também dependem dela, fora da orquestração: `/tutor/*` (incluindo o veto docente), `/relatorio/*`,
+`/auditoria/{id}` e `/painel/*` (só docente; ver "Painel do docente").
 
 ## Regras (todas em `src/tia/orquestrador/regras.py`)
 
@@ -273,7 +276,71 @@ o código do aluno fica só no `sessionStorage` da aba (para sobreviver a recarr
 - **Diagnóstico na matrícula:** a tela não pergunta o diagnóstico (todas as notas 0). Depende de quem
   aplica o diagnóstico (Pessoa 2/4).
 - **Nomes de competência fora da trilha:** o reforço de um pré-requisito dispensado aparece pelo código
-  (ex.: `repeticao`) no cartão de revisão, porque nenhuma rota lista a ementa; o aviso do orquestrador já
-  traz o nome. Resolver com uma rota da ementa ou com o nome no `Reforco`.
+  (ex.: `repeticao`) no cartão de revisão; o aviso do orquestrador já traz o nome. A rota da ementa agora
+  existe (`GET /conteudo/ementa`, criada para o painel); falta o `app.js` usá-la.
 - **Roteiro de navegador automatizado:** o Playwright não está instalado; ver
   `docs/relatorios/web_standalone.md`.
+
+## Painel do docente/instituição (EAP 1.4.5)
+
+HTML, CSS e JavaScript puros em `src/tia/web/static/painel/`, servidos em **`/app/painel/`** pelo mesmo
+`tia.web.montar` (mesma CSP, sem script inline). Reaproveita `tema.css`, `estilo.css` e o novo `comum.js`
+(utilidades extraídas de `app.js`: `el`/`svg` com `textContent`, `chamar` com contador de segundos e botões
+`.acao` desativados, faixa de erro). As consultas ficam em `src/tia/painel/` (só leitura) e as rotas em
+`tia.api.rotas_painel`. Dados de demonstração: `python -m tia.web.dados_painel` (12 alunos DEMO-P01..P12, sem LLM).
+
+### Telas e rotas consumidas
+
+| Tela | O que mostra | Rotas |
+|---|---|---|
+| Visão geral | os 5 indicadores agregados do Agente 3 em cartões (progresso médio, acerto por nível, engajamento, pontos fracos, origem dos feedbacks e taxa de veto), alertas da turma só com contagens, regra do grupo mínimo explicada e a interpretação com a origem (LLM, guarda ou fallback) só quando o docente pede. Filtro por perfil no topo. Exportar CSV e Imprimir | `GET /relatorio/turma?narrativa=false` e `?narrativa=true`, `GET /painel/exportar/indicadores.csv` |
+| Alertas de risco | alunos em risco **com código** (nunca nome): inatividade, desempenho em queda, desempenho baixo, com o motivo em texto, dias sem atividade, acerto, tendência e progresso. Aviso "Protótipo, sem login (TODO 1.4.6)". Cada consulta grava `consulta_painel` na auditoria com os códigos exibidos. Atalho para a auditoria do aluno | `GET /painel/alunos-em-risco` |
+| Competências | barras SVG da taxa de acerto por competência (linha de referência em 50%), contagem de alunos por tendência e questões com erro repetido (com enunciado) | `GET /painel/competencias` |
+| Revisão docente (R12) | respostas do diálogo com a original, a correção, a origem e as fontes; Aprovar, Vetar (com a correção/motivo) e Retirar veto; taxa de vetos; origem e fontes dos feedbacks das questões | `GET /painel/revisao`, `PATCH /tutor/dialogo/{id}/veto` (rota existente) |
+| Auditoria (R11) | tabela filtrável por agente (orquestrador, planejador, tutor, relatório, painel), código do aluno e período, paginada (25 por página) | `GET /painel/auditoria` |
+
+Todas as telas: carregamento com contador de segundos (`role=status`), botões desativados durante a
+chamada, erro com o `detail` da API (`role=alert`), aba atual no endereço (`/app/painel/#risco`). CSS de
+impressão: só a tela aberta, sem abas nem botões, sempre no tema claro (cores de impressão em `tema.css`).
+
+### Rotas novas (somente leitura)
+
+| Rota | Devolve | Observação |
+|---|---|---|
+| `GET /conteudo/ementa` | competências (id, nome, pré-requisitos) | PROVISÓRIO (Pessoa 4). Resolve também a pendência da web do aluno |
+| `GET /conteudo/perfis` | perfis (id, nome) | PROVISÓRIO (Pessoa 4) |
+| `GET /painel/alunos-em-risco?perfil_id=` | `ConsultaRisco` com códigos | **auditada** a cada chamada |
+| `GET /painel/competencias?perfil_id=` | `DesempenhoCompetencias` | só agregados (usa `indicadores.agregar_turma`) |
+| `GET /painel/revisao?situacao=&origem=&pagina=&por_pagina=` | `ListaRevisao` | **auditada**; mostra códigos e textos do diálogo |
+| `GET /painel/auditoria?agente=&aluno_id=&desde=&ate=&pagina=&por_pagina=` | `PaginaAuditoria` | mais recente primeiro; `planejador` = decisões que acionaram o Planejador |
+| `GET /painel/exportar/indicadores.csv?perfil_id=` | CSV `;`, vírgula decimal, UTF-8 com BOM | sem códigos; células que começam com `= + - @` levam `'` (sem fórmula) |
+
+Escrita: só a rota do veto que já existia. **Mudanças no que existia:** (1) `vetar_dialogo` passou a gravar
+`veto_docente` na auditoria na mesma transação (`origem` = `vetada` ou `aprovada`; motivo "resposta vetada
+e corrigida", "veto retirado" ou "resposta aprovada"; sem o texto da correção). **Aprovar** = `PATCH` com
+`vetada: false` numa resposta sem veto: não muda a resposta, só fica registrado na auditoria, e é assim que a
+revisão sabe o que já foi revisado. (2) Tipos novos na auditoria: `veto_docente` e `consulta_painel`
+(`auditoria.TIPOS` e `RegistroAuditoria`). (3) `auditoria.registrar` devolve o id. (4) Configuração nova:
+`PAINEL_DESEMPENHO_BAIXO=0.5` e `PAINEL_MIN_RESPOSTAS=5` (PROVISÓRIOS).
+
+### Regras de privacidade (R08)
+
+- Visões agregadas (visão geral, competências, CSV): mesma regra do Agente 3. Grupo inteiro abaixo de
+  `RELATORIO_MIN_GRUPO` (5) não mostra nada; competência, nível ou contagem abaixo disso sai "menos de 5";
+  questões com erro repetido só entram se respondidas por pelo menos 5 alunos. Nenhum código de aluno.
+  O filtro por perfil "iniciante" da turma de demonstração (4 alunos) mostra o grupo suprimido.
+- Alertas de risco e revisão: mostram códigos (é o que o docente precisa para agir), nunca nomes, e cada
+  consulta vai para a auditoria com os códigos exibidos.
+
+### O que é real e o que depende de outras entregas
+
+| Parte | Situação |
+|---|---|
+| Telas, rotas, auditoria das consultas, veto/aprovação, CSV, impressão | **Real**, com testes (`tests/test_painel.py`) |
+| Critérios de risco e indicadores | **PROVISÓRIOS** (Pessoa 4): limiares em `core/config.py` |
+| Login (1.4.6) | **Não existe.** Qualquer pessoa com o endereço vê os códigos. A auditoria registra a consulta, mas não **quem** consultou nem quem vetou. Com o login: exigir papel docente em `/painel/*`, `/relatorio/turma` e no veto; gravar o usuário na auditoria; restringir o docente às turmas dele |
+| Turma | **Não existe no banco**: o grupo é a instituição inteira ou um perfil (como no Agente 3) |
+| Visual do EBAULA | PROVISÓRIO: basta trocar `tema.css`; as classes são neutras. Embutir no EBAULA exige liberar o domínio em `frame-ancestors` |
+| Texto do feedback das questões | **Não é gravado** (só origem e fontes): a revisão mostra os feedbacks sem texto e o veto existe só no diálogo |
+| Teste de navegador automatizado | Não há (sem Playwright). As cinco telas, a impressão (PDF) e a largura de celular foram conferidas no Chrome headless com a turma fictícia |
+

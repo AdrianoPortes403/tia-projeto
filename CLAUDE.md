@@ -30,7 +30,9 @@ Ollama (`qwen3:*` para chat, `nomic-embed-text` para embeddings).
 - `src/tia/orquestrador/`: orquestração dos agentes (EAP 1.3.5): fluxo, eventos, regras
 - `src/tia/api/`: FastAPI e rotas
 - `conteudo/`: dados pedagógicos em JSON (ementa, perfis, trilha, banco_itens, materiais)
-- `web/`: aplicação standalone. `dashboard/`: painel institucional. `plugin-ebaula/`: por último.
+- `src/tia/web/`: aplicação web standalone do aluno (`/app`) e painel do docente/instituição
+  (`/app/painel`), em HTML/CSS/JS puros servidos pelo FastAPI. As pastas `web/` e `dashboard/` da raiz
+  ficaram vazias. `src/tia/painel/`: consultas somente de leitura do painel. `plugin-ebaula/`: por último.
 - `docs/`: referência, arquitetura, seguranca-lgpd, evidencias. `infra/`: scripts de ambiente.
 
 ## Quem faz o quê no projeto real

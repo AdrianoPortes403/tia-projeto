@@ -44,8 +44,9 @@ Detalhes: `docs/arquitetura/arquitetura.md` (seção "Web standalone").
 docs/          referência, arquitetura, segurança/LGPD, evidências
 conteudo/      dados pedagógicos (ementa, perfis, trilha, banco de itens, materiais)
 src/tia/       core, rag, agentes (planejador, tutor, relatório), orquestrador, api,
-               web (aplicação web standalone, servida em /app)
-dashboard/     painel institucional
+               web (aplicação do aluno em /app e painel do docente em /app/painel),
+               painel (consultas somente de leitura do painel)
+dashboard/     vazia: o painel institucional fica em src/tia/web/static/painel
 plugin-ebaula/ plug-in para o EBAULA (por último)
 infra/         scripts de ambiente
 tests/         testes automatizados

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TIA · Painel do docente</title>
+  <!-- mesmo tema da aplicação do aluno (só variáveis; trocar pelo visual do EBAULA) -->
+  <link rel="stylesheet" href="../tema.css">
+  <link rel="stylesheet" href="../estilo.css">
+  <link rel="stylesheet" href="painel.css">
+  <script src="../comum.js" defer></script>
+  <script src="painel.js" defer></script>
+</head>
+<body class="painel">
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="topo__linha">
+      <p class="marca">TIA <span class="marca__sub">Painel do docente</span></p>
+      <div class="filtro-grupo nao-imprimir">
+        <label for="campo-perfil">Grupo</label>
+        <select id="campo-perfil">
+          <option value="">Instituição inteira</option>
+        </select>
+      </div>
+    </div>
+    <p class="aviso-prototipo" role="note">
+      Protótipo, sem login (TODO 1.4.6). Qualquer pessoa com o endereço vê estes dados; use só turmas fictícias.
+    </p>
+    <nav class="abas nao-imprimir" id="abas" aria-label="Telas do painel">
+      <button type="button" class="aba" data-tela="geral">Visão geral</button>
+      <button type="button" class="aba" data-tela="risco">Alertas de risco</button>
+      <button type="button" class="aba" data-tela="competencias">Competências</button>
+      <button type="button" class="aba" data-tela="revisao">Revisão docente</button>
+      <button type="button" class="aba" data-tela="auditoria">Auditoria</button>
+    </nav>
+  </header>
+
+  <div class="carregando" id="carregando" role="status" aria-live="polite" hidden>
+    <span class="carregando__giro" aria-hidden="true"></span>
+    <span id="carregando-texto">Carregando…</span>
+    <span id="carregando-segundos" class="carregando__segundos">0 s</span>
+  </div>
+
+  <div class="erro" id="erro" role="alert" hidden>
+    <p id="erro-texto"></p>
+    <button type="button" class="botao botao--secundario" id="erro-fechar">Fechar</button>
+  </div>
+
+  <main id="conteudo" tabindex="-1">
+
+    <!-- 1) Visão geral: os 5 indicadores agregados do Agente 3 -->
+    <section class="tela" id="tela-geral" aria-labelledby="titulo-geral" hidden>
+      <div class="cabeca-tela">
+        <h1 id="titulo-geral">Visão geral</h1>
+        <div class="linha-botoes nao-imprimir">
+          <a class="botao botao--secundario" id="exportar-csv" href="/painel/exportar/indicadores.csv" download>
+            Exportar indicadores (CSV)</a>
+          <button type="button" class="botao botao--secundario" id="imprimir">Imprimir</button>
+          <button type="button" class="botao botao--secundario acao" id="atualizar-geral">Atualizar</button>
+        </div>
+      </div>
+      <p class="dica" id="geral-grupo"></p>
+      <div id="geral-indicadores"></div>
+      <section class="cartao" aria-labelledby="titulo-alertas-turma">
+        <h2 id="titulo-alertas-turma">Alertas da turma (só contagens)</h2>
+        <div id="geral-alertas"></div>
+      </section>
+      <section class="cartao" aria-labelledby="titulo-narrativa">
+        <h2 id="titulo-narrativa">Interpretação</h2>
+        <div id="geral-narrativa"></div>
+        <button type="button" class="botao botao--secundario acao nao-imprimir" id="gerar-narrativa">
+          Gerar interpretação (IA local)</button>
+      </section>
+    </section>
+
+    <!-- 2) Alertas de risco: COM código de aluno; cada consulta é auditada -->
+    <section class="tela" id="tela-risco" aria-labelledby="titulo-risco" hidden>
+      <div class="cabeca-tela">
+        <h1 id="titulo-risco">Alertas de risco</h1>
+        <div class="linha-botoes nao-imprimir">
+          <button type="button" class="botao botao--secundario acao" id="atualizar-risco">Atualizar</button>
+        </div>
+      </div>
+      <p class="aviso aviso--alerta" role="note">
+        Protótipo, sem login (TODO 1.4.6). Esta tela mostra códigos de aluno (nunca nomes) e cada consulta é
+        registrada na auditoria. O relatório agregado nunca mostra códigos.
+      </p>
+      <div class="filtros nao-imprimir">
+        <label for="filtro-motivo">Mostrar</label>
+        <select id="filtro-motivo">
+          <option value="">Todos os motivos</option>
+          <option value="inatividade">Inatividade</option>
+          <option value="desempenho_em_queda">Desempenho em queda</option>
+          <option value="desempenho_baixo">Desempenho baixo</option>
+        </select>
+      </div>
+      <p class="dica" id="risco-criterios"></p>
+      <div id="risco-lista"></div>
+      <p class="rodape-tela" id="risco-auditoria"></p>
+    </section>
+
+    <!-- 3) Desempenho por competência: só agregados -->
+    <section class="tela" id="tela-competencias" aria-labelledby="titulo-competencias" hidden>
+      <div class="cabeca-tela">
+        <h1 id="titulo-competencias">Desempenho por competência</h1>
+        <div class="linha-botoes nao-imprimir">
+          <button type="button" class="botao botao--secundario acao" id="atualizar-competencias">Atualizar</button>
+        </div>
+      </div>
+      <p class="dica" id="competencias-grupo"></p>
+      <section class="cartao" aria-labelledby="titulo-barras">
+        <h2 id="titulo-barras">Taxa de acerto e tendência</h2>
+        <div id="competencias-barras"></div>
+      </section>
+      <section class="cartao" aria-labelledby="titulo-itens">
+        <h2 id="titulo-itens">Itens com erro repetido</h2>
+        <p class="dica" id="itens-regra"></p>
+        <div id="competencias-itens"></div>
+      </section>
+    </section>
+
+    <!-- 4) Revisão docente (R12): aprovar ou vetar respostas do diálogo -->
+    <section class="tela" id="tela-revisao" aria-labelledby="titulo-revisao" hidden>
+      <div class="cabeca-tela">
+        <h1 id="titulo-revisao">Revisão docente</h1>
+      </div>
+      <p class="aviso aviso--alerta" role="note">
+        Protótipo, sem login (TODO 1.4.6): o veto não registra quem vetou. Cada consulta desta tela vai para a
+        auditoria.
+      </p>
+      <div id="revisao-resumo"></div>
+      <form class="filtros nao-imprimir" id="form-revisao" novalidate>
+        <div>
+          <label for="filtro-situacao">Situação</label>
+          <select id="filtro-situacao">
+            <option value="a_revisar">A revisar</option>
+            <option value="aprovadas">Aprovadas</option>
+            <option value="vetadas">Vetadas</option>
+            <option value="todas">Todas</option>
+          </select>
+        </div>
+        <div>
+          <label for="filtro-origem">Origem</label>
+          <select id="filtro-origem">
+            <option value="LLM">Escritas pela IA (LLM)</option>
+            <option value="guarda">Barradas pela verificação (guarda)</option>
+            <option value="fallback">Texto fixo (fallback)</option>
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <button type="submit" class="botao acao">Filtrar</button>
+      </form>
+      <h2>Respostas do diálogo</h2>
+      <ol class="revisao" id="revisao-lista"></ol>
+      <nav class="paginacao nao-imprimir" id="revisao-paginas" aria-label="Páginas da revisão"></nav>
+      <section class="cartao" aria-labelledby="titulo-feedbacks">
+        <h2 id="titulo-feedbacks">Feedbacks das questões</h2>
+        <p class="dica">O texto da explicação de cada questão não é gravado: aqui aparecem só a origem e as fontes
+          (pendência). O veto existe só para o diálogo.</p>
+        <div id="revisao-feedbacks"></div>
+      </section>
+    </section>
+
+    <!-- 5) Auditoria (R11) -->
+    <section class="tela" id="tela-auditoria" aria-labelledby="titulo-auditoria" hidden>
+      <div class="cabeca-tela">
+        <h1 id="titulo-auditoria">Auditoria</h1>
+      </div>
+      <form class="filtros nao-imprimir" id="form-auditoria" novalidate>
+        <div>
+          <label for="filtro-agente">Agente</label>
+          <select id="filtro-agente">
+            <option value="">Todos</option>
+            <option value="orquestrador">Orquestrador</option>
+            <option value="planejador">Planejador</option>
+            <option value="tutor">Tutor</option>
+            <option value="relatorio">Relatório</option>
+            <option value="painel">Painel (consultas do docente)</option>
+          </select>
+        </div>
+        <div>
+          <label for="filtro-aluno">Código do aluno</label>
+          <input id="filtro-aluno" type="text" maxlength="32" pattern="[A-Za-z0-9_\-]{1,32}" autocomplete="off"
+                 spellcheck="false" aria-describedby="dica-filtro-aluno">
+          <p class="dica" id="dica-filtro-aluno">Opcional. Exemplo: DEMO-P03.</p>
+        </div>
+        <div>
+          <label for="filtro-desde">De</label>
+          <input id="filtro-desde" type="date">
+        </div>
+        <div>
+          <label for="filtro-ate">Até</label>
+          <input id="filtro-ate" type="date">
+        </div>
+        <button type="submit" class="botao acao">Filtrar</button>
+      </form>
+      <p class="dica" id="auditoria-total" aria-live="polite"></p>
+      <div id="auditoria-tabela"></div>
+      <nav class="paginacao nao-imprimir" id="auditoria-paginas" aria-label="Páginas da auditoria"></nav>
+    </section>
+  </main>
+</body>
+</html>

@@ -69,3 +69,24 @@
     --sombra: none;
   }
 }
+
+/* Impressão (painel do docente): sempre o tema claro, mesmo com o sistema no escuro. */
+@media print {
+  :root {
+    --cor-fundo: #ffffff;
+    --cor-superficie: #ffffff;
+    --cor-texto: #000000;
+    --cor-texto-suave: #333333;
+    --cor-borda: #888888;
+    --cor-primaria: #1f5fa8;
+    --cor-destaque-fundo: #eef4fc;
+    --cor-sucesso: #1d6b3a;
+    --cor-sucesso-fundo: #e5f4ea;
+    --cor-erro: #a32020;
+    --cor-erro-fundo: #fbe9e9;
+    --cor-alerta: #7a4b00;
+    --cor-alerta-fundo: #fff4d6;
+    --cor-info-fundo: #e8f0fa;
+    --sombra: none;
+  }
+}

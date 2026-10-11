@@ -6,7 +6,7 @@
  * (docs/arquitetura/arquitetura.md, "Web standalone").
  *
  * Segurança: todo texto vindo da API entra na página por textContent (função
- * el), nunca por innerHTML; nada é escrito no console (R08); não há chave nem
+ * el, em comum.js), nunca por innerHTML; nada é escrito no console (R08); não há chave nem
  * segredo aqui. Sem login: TODO 1.4.6.
  */
 "use strict";
@@ -33,41 +33,15 @@
 
   const estado = {
     aluno: null,
-    ocupado: false,
     etapas: [],          // EstadoAluno.etapas (nomes das competências)
     sessaoId: null,      // sessão do Tutor em andamento
     pergunta: null,      // pergunta em aberto
     eventoPendente: null // evento que falhou: reenviado com o mesmo evento_id (idempotente)
   };
 
-  // --- utilidades de DOM (sempre textContent) ---
-
-  function $(id) { return document.getElementById(id); }
-
-  function el(tag, atributos, ...filhos) {
-    const no = document.createElement(tag);
-    for (const [nome, valor] of Object.entries(atributos || {})) {
-      if (valor === null || valor === undefined || valor === false) continue;
-      if (nome === "classe") no.className = valor;
-      else if (nome === "texto") no.textContent = String(valor);
-      else if (nome.startsWith("on")) no.addEventListener(nome.slice(2), valor);
-      else no.setAttribute(nome, valor === true ? "" : String(valor));
-    }
-    for (const filho of filhos.flat()) {
-      if (filho === null || filho === undefined || filho === false) continue;
-      no.append(filho instanceof Node ? filho : document.createTextNode(String(filho)));
-    }
-    return no;
-  }
-
-  // tempo gasto no servidor (R09 a medir na VM; a tela sempre mostra o número)
-  function tempo(ms) {
-    return typeof ms === "number" ? " Tempo: " + (ms / 1000).toFixed(1).replace(".", ",") + " s." : "";
-  }
-
-  function porcento(fracao) {
-    return fracao === null || fracao === undefined ? "sem dados" : Math.round(fracao * 100) + "%";
-  }
+  // utilidades compartilhadas com o painel do docente (comum.js): el, chamar, erros
+  const { $, el, tempo, porcento, ErroApi, chamar, mostrarErro, esconderErro } = window.TIA;
+  TIA.configurar({ esperaMaximaMs: ESPERA_MAXIMA_MS, quem: "O tutor", textoEspera: "Aguardando o tutor…" });
 
   function nomeCompetencia(id) {
     const etapa = estado.etapas.find((e) => e.competencia_id === id);
@@ -78,76 +52,6 @@
     const aleatorio = Math.random().toString(36).slice(2, 10);
     return "web-" + Date.now().toString(36) + "-" + aleatorio;
   }
-
-  // --- chamadas à API, com contador de segundos e erros claros ---
-
-  class ErroApi extends Error {
-    constructor(mensagem, status) { super(mensagem); this.status = status; }
-  }
-
-  function detalheDoErro(corpo, status) {
-    const detalhe = corpo && corpo.detail;
-    if (typeof detalhe === "string") return detalhe;
-    if (Array.isArray(detalhe) && detalhe.length) {
-      return "Dados inválidos: " + detalhe.map((d) => d.msg).join("; ");
-    }
-    return "O servidor respondeu com erro " + status + ".";
-  }
-
-  function marcarOcupado(ocupado, texto) {
-    estado.ocupado = ocupado;
-    document.querySelectorAll(".acao").forEach((b) => { b.disabled = ocupado; });
-    document.body.setAttribute("aria-busy", ocupado ? "true" : "false");
-    $("carregando").hidden = !ocupado;
-    if (ocupado) $("carregando-texto").textContent = texto || "Aguardando o tutor…";
-  }
-
-  async function chamar(metodo, caminho, corpo, textoEspera) {
-    if (estado.ocupado) throw new ErroApi("Aguarde a resposta anterior.", 0);
-    esconderErro();
-    marcarOcupado(true, textoEspera);
-    const inicio = Date.now();
-    const segundos = $("carregando-segundos");
-    segundos.textContent = "0 s";
-    const relogio = setInterval(() => {
-      segundos.textContent = Math.floor((Date.now() - inicio) / 1000) + " s";
-    }, 1000);
-    const controle = new AbortController();
-    const limite = setTimeout(() => controle.abort(), ESPERA_MAXIMA_MS);
-    try {
-      let resposta;
-      try {
-        resposta = await fetch(caminho, {
-          method: metodo,
-          headers: corpo ? { "Content-Type": "application/json" } : {},
-          body: corpo ? JSON.stringify(corpo) : undefined,
-          signal: controle.signal,
-        });
-      } catch (erro) {
-        if (erro.name === "AbortError") {
-          throw new ErroApi("O tutor demorou mais de " + ESPERA_MAXIMA_MS / 1000 +
-            " s para responder. Tente de novo em instantes.", 0);
-        }
-        throw new ErroApi("Sem conexão com o servidor do TIA. Confira se a API está no ar e tente de novo.", 0);
-      }
-      let dados = null;
-      try { dados = await resposta.json(); } catch (_) { dados = null; }
-      if (!resposta.ok) throw new ErroApi(detalheDoErro(dados, resposta.status), resposta.status);
-      return dados;
-    } finally {
-      clearTimeout(limite);
-      clearInterval(relogio);
-      marcarOcupado(false);
-    }
-  }
-
-  function mostrarErro(erro) {
-    $("erro-texto").textContent = erro instanceof ErroApi ? erro.message : "Erro inesperado na página.";
-    $("erro").hidden = false;
-    $("erro-fechar").focus();
-  }
-
-  function esconderErro() { $("erro").hidden = true; }
 
   // --- navegação ---
 
@@ -166,7 +70,7 @@
       else aba.removeAttribute("aria-current");
     });
     $("conteudo").focus();
-    if (AO_ABRIR[tela] && !estado.ocupado) AO_ABRIR[tela]().catch(mostrarErro);
+    if (AO_ABRIR[tela] && !TIA.estaOcupado()) AO_ABRIR[tela]().catch(mostrarErro);
   }
 
   function definirAluno(codigo) {
@@ -361,7 +265,7 @@
         (reforco ? " · revisão" : "")),
       el("h2", { classe: "enunciado", id: "enunciado", texto: p.enunciado }),
       grupo,
-      el("button", { type: "submit", classe: "botao acao", texto: "Enviar resposta", disabled: estado.ocupado }));
+      el("button", { type: "submit", classe: "botao acao", texto: "Enviar resposta", disabled: TIA.estaOcupado() }));
     form.setAttribute("aria-labelledby", "enunciado");
     $("estudo-conteudo").replaceChildren(form);
     const primeira = form.querySelector("input");

@@ -124,6 +124,12 @@ ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS = int(os.getenv("ORQ_QUEDA_RESPOSTAS_ENTRE_RE
 # sem refazer a trilha; a trilha só é refeita a partir de ORQ_INATIVIDADE_REFAZER_DIAS.
 ORQ_INATIVIDADE_REFAZER_DIAS = int(os.getenv("ORQ_INATIVIDADE_REFAZER_DIAS", "14"))
 
+# --- Painel do docente (EAP 1.4.5) ---
+# Alerta de desempenho baixo: taxa de acerto geral abaixo deste valor, desde que o
+# aluno tenha pelo menos PAINEL_MIN_RESPOSTAS respostas. PROVISÓRIO (Pessoa 4).
+PAINEL_DESEMPENHO_BAIXO = float(os.getenv("PAINEL_DESEMPENHO_BAIXO", "0.5"))
+PAINEL_MIN_RESPOSTAS = int(os.getenv("PAINEL_MIN_RESPOSTAS", "5"))
+
 
 if __name__ == "__main__":
     for nome in ("OLLAMA_URL", "CHAT_MODEL", "EMBED_MODEL", "OLLAMA_KEEP_ALIVE", "DB_PATH",
@@ -135,5 +141,6 @@ if __name__ == "__main__":
                  "INATIVIDADE_DIAS", "RELATORIO_MIN_GRUPO", "RELATORIO_TIMEOUT_LLM", "RELATORIO_MAX_TOKENS",
                  "RELATORIO_TEMPERATURA", "RELATORIO_SEED", "RELATORIO_TENDENCIA_JANELA",
                  "RELATORIO_TENDENCIA_MIN_RESPOSTAS", "RELATORIO_TENDENCIA_LIMIAR",
-                 "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_INATIVIDADE_REFAZER_DIAS"):
+                 "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_INATIVIDADE_REFAZER_DIAS",
+                 "PAINEL_DESEMPENHO_BAIXO", "PAINEL_MIN_RESPOSTAS"):
         print(f"{nome} = {globals()[nome]}")

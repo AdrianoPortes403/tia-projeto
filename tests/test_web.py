@@ -41,7 +41,8 @@ ALUNO = "A2026-W01"
 GABARITO = {i["id"]: i["indice_correto"] for i in carregar_itens()}
 DIAGNOSTICO = {"variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
                "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0}
-ESTATICOS = {"index.html": "text/html", "app.js": "javascript", "tema.css": "text/css", "estilo.css": "text/css"}
+ESTATICOS = {"index.html": "text/html", "comum.js": "javascript", "app.js": "javascript", "tema.css": "text/css",
+             "estilo.css": "text/css"}
 
 
 def ler(nome: str) -> str:
@@ -106,21 +107,24 @@ def sem_comentarios(js: str) -> str:
     return re.sub(r"/\*.*?\*/", "", js, flags=re.S)
 
 
-def test_js_nao_usa_innerhtml_console_nem_eval():
-    js = sem_comentarios(ler("app.js"))
+@pytest.mark.parametrize("arquivo", ["app.js", "comum.js"])
+def test_js_nao_usa_innerhtml_console_nem_eval(arquivo):
+    js = sem_comentarios(ler(arquivo))
     for proibido in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "console.", "eval(",
                      "new Function"):
         assert proibido not in js, proibido
 
 
-def test_js_sem_segredos_nem_endereco_fixo():
-    js = ler("app.js").lower()
+@pytest.mark.parametrize("arquivo", ["app.js", "comum.js"])
+def test_js_sem_segredos_nem_endereco_fixo(arquivo):
+    # o namespace do SVG é um identificador (createElementNS), não um endereço chamado
+    js = ler(arquivo).lower().replace('"http://www.w3.org/2000/svg"', "")
     for proibido in ("api_key", "apikey", "token", "secret", "senha", "password", "http://", "https://", "11434"):
         assert proibido not in js, proibido
 
 
 def test_ids_usados_pelo_js_existem_no_html():
-    html, js = ler("index.html"), ler("app.js")
+    html, js = ler("index.html"), ler("app.js") + ler("comum.js")
     ids_html = set(re.findall(r'id="([^"]+)"', html))
     usados = set(re.findall(r'\$\("([^"]+)"\)', js))
     usados |= {"tela-" + t for t in re.findall(r'"(entrada|trilha|estudo|dialogo|relatorio)"', js)}
@@ -131,6 +135,11 @@ def test_campos_do_html_tem_rotulo():
     html = ler("index.html")
     for campo in re.findall(r'<(?:input|select|textarea)[^>]*id="([^"]+)"', html):
         assert f'for="{campo}"' in html, campo
+
+
+def test_comum_carregado_antes_do_app():
+    html = ler("index.html")
+    assert html.index('src="comum.js"') < html.index('src="app.js"')
 
 
 def test_cores_e_fontes_so_no_tema():

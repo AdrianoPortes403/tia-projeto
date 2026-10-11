@@ -6,7 +6,8 @@ Como rodar (a partir da raiz do projeto):
 
 Depois, abra http://localhost:8000/docs para ver a documentação
 interativa gerada automaticamente pelo FastAPI, ou
-http://localhost:8000/app/ para a aplicação web standalone (tia.web).
+http://localhost:8000/app/ para a aplicação web standalone (tia.web) e
+http://localhost:8000/app/painel/ para o painel do docente.
 
 Ou, equivalente:
     python -m tia.api.main
@@ -22,6 +23,8 @@ from fastapi import FastAPI
 from tia.api.rotas_auditoria import router as rotas_auditoria
 from tia.api.rotas_orquestrador import router as rotas_orquestrador
 from tia.api.rotas_orquestrador import router_sistema as rotas_orquestrador_sistema
+from tia.api.rotas_painel import router as rotas_painel
+from tia.api.rotas_painel import router_conteudo as rotas_conteudo
 from tia.api.rotas_planejador import router as rotas_planejador
 from tia.api.rotas_relatorio import router as rotas_relatorio
 from tia.api.rotas_tutor import router as rotas_tutor
@@ -44,7 +47,9 @@ app.include_router(rotas_auditoria)
 app.include_router(rotas_relatorio)
 app.include_router(rotas_orquestrador)
 app.include_router(rotas_orquestrador_sistema)
-web.montar(app)  # aplicação web standalone em /app (EAP 1.4.4)
+app.include_router(rotas_painel)
+app.include_router(rotas_conteudo)
+web.montar(app)  # aplicação web standalone em /app (EAP 1.4.4) e painel em /app/painel (1.4.5)
 
 
 @app.get("/health")
