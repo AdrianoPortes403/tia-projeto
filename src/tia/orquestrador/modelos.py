@@ -16,7 +16,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field, model_validator
 
 from tia.agentes.planejador.modelos import Nota, Trilha
-from tia.agentes.tutor.modelos import Feedback, SessaoIniciada
+from tia.agentes.tutor.modelos import Feedback, Pergunta, SessaoIniciada
 
 TipoEvento = Literal["resposta", "conclusao", "inatividade"]
 # matricula: trilha inicial; conclusao (R1), queda (R2), inatividade (R3): regras;
@@ -129,6 +129,9 @@ class ProximaAcao(BaseModel):
     sessao_id: str | None = None
     reforco: bool = False  # a sessão é de reforço de pré-requisito (R2)
     motivo: str
+    # só em "continuar_sessao": a pergunta em aberto da sessão (sem gabarito), para o
+    # cliente (web standalone) retomar a sessão depois de recarregar ou de um reforço
+    pergunta: Pergunta | None = None
 
 
 class PedidoSessao(BaseModel):

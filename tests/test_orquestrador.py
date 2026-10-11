@@ -284,10 +284,38 @@ def test_ciclo_completo_queda_pausa_reforco_e_retomada():
                                                                          antes.itens_usados)
     assert not pausada(sessao_listas) and estado()["reforco"] is None
     assert final["proxima"]["acao"] == "continuar_sessao" and final["proxima"]["sessao_id"] == sessao_listas
+    assert final["proxima"]["pergunta"] == pergunta_pausada  # o cliente retoma sem ter guardado a pergunta
     assert "repeticao" not in a_fazer()  # o reforço não entra na trilha
     # a sessão original volta a aceitar resposta, sem novo reforço pela mesma queda
     seguinte = responder(sessao_listas, pergunta_pausada, True).json()
     assert seguinte["decisoes"] == []
+
+
+def test_reforco_concluido_nao_conta_no_progresso_da_trilha():
+    """O reforço de 'repeticao' (dispensada no diagnóstico) é concluído no Tutor,
+    mas a trilha e os indicadores continuam com as 3 competências originais."""
+    iniciar()
+    estudar("1111")                                     # conclui funcoes
+    sessao_listas, pergunta = abrir_sessao()
+    pergunta = responder_varias(sessao_listas, pergunta, "000")[-1]["feedback"]["proxima_pergunta"]
+    estudar("1111")                                     # reforço de repeticao, concluído
+    final = responder_varias(sessao_listas, pergunta, "1" * 12)[-1]  # retoma e conclui listas_strings
+    assert final["feedback"]["concluida"] is True
+    assert final["decisoes"][0]["acao"] == "avancar"
+
+    trilha = client.get(f"/alunos/{ALUNO}/trilha").json()
+    assert [e["competencia_id"] for e in trilha["etapas"]] == ["funcoes", "listas_strings", "recursao"]
+    atual = estado()
+    assert [(e["competencia_id"], e["concluida"]) for e in atual["etapas"]] == [
+        ("funcoes", True), ("listas_strings", True), ("recursao", False)]
+    assert atual["competencia_atual"] == "recursao"
+    progresso = client.get(f"/relatorio/aluno/{ALUNO}?narrativa=false").json()["progresso"]
+    assert (progresso["etapas"], progresso["concluidas"]) == (3, 2)  # antes: 3 de 4
+    assert "repeticao" not in [p["competencia_id"] for p in progresso["por_competencia"]]
+
+    estudar("1111")                                     # conclui recursao
+    progresso = client.get(f"/relatorio/aluno/{ALUNO}?narrativa=false").json()["progresso"]
+    assert (progresso["etapas"], progresso["concluidas"], progresso["percentual"]) == (3, 3, 1.0)  # antes: 4 de 4
 
 
 def test_queda_reforca_uma_vez_por_sessao():

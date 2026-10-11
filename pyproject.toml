@@ -21,3 +21,7 @@ dev = ["pytest==8.3.3", "httpx==0.27.2"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# arquivos da aplicação web standalone (tia.web), servidos em /app
+[tool.setuptools.package-data]
+"tia.web" = ["static/*"]

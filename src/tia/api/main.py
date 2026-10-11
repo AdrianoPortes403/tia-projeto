@@ -5,7 +5,8 @@ Como rodar (a partir da raiz do projeto):
     uvicorn tia.api.main:app --reload
 
 Depois, abra http://localhost:8000/docs para ver a documentação
-interativa gerada automaticamente pelo FastAPI.
+interativa gerada automaticamente pelo FastAPI, ou
+http://localhost:8000/app/ para a aplicação web standalone (tia.web).
 
 Ou, equivalente:
     python -m tia.api.main
@@ -25,6 +26,7 @@ from tia.api.rotas_planejador import router as rotas_planejador
 from tia.api.rotas_relatorio import router as rotas_relatorio
 from tia.api.rotas_tutor import router as rotas_tutor
 from tia.core.database import criar_tabelas
+from tia import web
 
 
 @asynccontextmanager
@@ -42,6 +44,7 @@ app.include_router(rotas_auditoria)
 app.include_router(rotas_relatorio)
 app.include_router(rotas_orquestrador)
 app.include_router(rotas_orquestrador_sistema)
+web.montar(app)  # aplicação web standalone em /app (EAP 1.4.4)
 
 
 @app.get("/health")

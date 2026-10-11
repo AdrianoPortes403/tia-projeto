@@ -33,7 +33,7 @@ from datetime import datetime
 from tia.agentes import tutor
 from tia.agentes.planejador import planejar_e_salvar
 from tia.agentes.planejador.modelos import EntradaPlanejador, Trilha
-from tia.agentes.planejador.planejar import carregar_ementa
+from tia.agentes.planejador.planejar import carregar_ementa, gerar_trilha
 from tia.agentes.planejador.repositorio import ler_trilha
 from tia.agentes.relatorio import indicadores
 from tia.agentes.relatorio.repositorio import ler_dados_aluno
@@ -82,15 +82,28 @@ def exigir_matricula(aluno_id: str) -> dict:
     return matricula
 
 
+def competencias_originais(aluno_id: str, matricula: dict) -> set[str]:
+    """Competências da trilha original: a que o Planejador monta com o perfil e o
+    diagnóstico da matrícula, sem nenhuma concluída (determinístico, sem LLM)."""
+    trilha = gerar_trilha(EntradaPlanejador(
+        aluno_id=aluno_id, perfil_id=matricula["perfil_id"], diagnostico=matricula["diagnostico"],
+        horas_semanais=matricula["horas_semanais"]))
+    return {e.competencia_id for e in trilha.etapas}
+
+
 def _planejar(aluno_id: str, matricula: dict) -> tuple[Trilha, dict]:
     """Aciona o Planejador com as competências já concluídas (só planeja o
     que falta). Devolve a trilha e o resumo para a decisão: origem das
-    justificativas (só das etapas que faltam), motivo de falha e tempo."""
+    justificativas (só das etapas que faltam), motivo de falha e tempo.
+
+    Só passam as concluídas que pertencem à trilha original: um reforço (R2) de
+    pré-requisito que o aluno tinha dispensado no diagnóstico é concluído no Tutor,
+    mas não vira etapa da trilha nem conta no progresso."""
     inicio = time.perf_counter()
+    concluidas = tutor.repositorio.competencias_concluidas(aluno_id) & competencias_originais(aluno_id, matricula)
     trilha = planejar_e_salvar(EntradaPlanejador(
         aluno_id=aluno_id, perfil_id=matricula["perfil_id"], diagnostico=matricula["diagnostico"],
-        horas_semanais=matricula["horas_semanais"],
-        concluidas=sorted(tutor.repositorio.competencias_concluidas(aluno_id))))
+        horas_semanais=matricula["horas_semanais"], concluidas=sorted(concluidas)))
     origens = {e.origem_justificativa for e in trilha.etapas if not e.concluida}
     origem = None if not origens else "LLM" if origens == {"LLM"} else \
         "fallback" if origens <= {"fallback", None} else "parcial"
@@ -174,7 +187,13 @@ def estado(aluno_id: str, agora: datetime | None = None) -> EstadoAluno:
 
 
 def proxima(aluno_id: str, agora: datetime | None = None) -> ProximaAcao:
-    return regras.proxima_acao(estado(aluno_id, agora))
+    """Próxima ação; em "continuar_sessao", com a pergunta em aberto da sessão
+    (o cliente retoma a sessão sem ter guardado a pergunta, ex.: após recarregar
+    a página ou na volta de um reforço)."""
+    acao = regras.proxima_acao(estado(aluno_id, agora))
+    if acao.acao == "continuar_sessao" and acao.sessao_id:
+        acao.pergunta = tutor.pergunta_atual(acao.sessao_id, aluno_id)
+    return acao
 
 
 def _registrar(aluno_id: str, avaliacao: Avaliacao, acao: str, motivo: str, evento_id: str | None,

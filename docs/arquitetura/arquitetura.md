@@ -1,6 +1,6 @@
 # Arquitetura do Sistema TIA (EAP 1.3.1) e Orquestração (EAP 1.3.5)
 
-> Protótipo integrado (fatia vertical) da frente A3. Situação em 10/10/2026.
+> Protótipo integrado (fatia vertical) da frente A3. Situação em 11/10/2026.
 > Dados pedagógicos (ementa, perfis, banco de itens, material) e regras marcadas como
 > **PROVISÓRIO** dependem da Pessoa 2 (agentes) e da Pessoa 4 (conteúdo).
 
@@ -11,7 +11,7 @@ Legenda: caixas com borda contínua **existem** e têm testes. Caixas tracejadas
 ```mermaid
 flowchart LR
     subgraph Clientes
-        WEB["Web standalone<br/>(não existe)"]:::futuro
+        WEB["Web standalone 1.4.4<br/>/app (src/tia/web)"]
         DASH["Dashboard 1.4.5<br/>(não existe)"]:::futuro
         EBA["Plug-in EBAULA<br/>(não existe)"]:::futuro
         CLI["Demonstrações<br/>python -m tia..."]
@@ -45,7 +45,8 @@ flowchart LR
         CONT["conteudo/*.json<br/>ementa · perfis · itens (PROVISÓRIO)"]
     end
 
-    WEB & DASH & EBA -.-> AUTH -.-> API
+    WEB -->|"sem login (TODO 1.4.6)"| API
+    DASH & EBA -.-> AUTH -.-> API
     CRON -.->|"verificar-inatividade"| RORQ
     CLI --> ORQ & A1 & A2 & A3
     RORQ --> ORQ
@@ -86,7 +87,7 @@ flowchart LR
 | Auditoria (R11) | **Real** (tabela `auditoria`, `GET /auditoria/{id}`) |
 | API FastAPI | **Real**, **sem autenticação** (TODO 1.4.6 nas rotas) |
 | Autenticação de aluno/docente (1.4.6) | **Não existe** |
-| Web standalone (`web/`) | **Não existe** |
+| Web standalone (1.4.4, `src/tia/web/`, em `/app`) | **Real**, sem login e com visual PROVISÓRIO (ver "Web standalone" abaixo) |
 | Dashboard institucional (1.4.5, `dashboard/`) | **Não existe**. Vai consumir o JSON de `/relatorio/...` |
 | Plug-in EBAULA (`plugin-ebaula/`) | **Não existe** |
 | VM institucional (medição do R09) | **Não disponível**. Os tempos foram medidos em notebook (CPU) |
@@ -154,7 +155,7 @@ pedagógica da Pessoa 4 e têm limiar em `core/config.py`.
 
 | # | Decisão | Como está implementada |
 |---|---|---|
-| D1 | **Replanejar só o que falta** (Pessoa 2) | `EntradaPlanejador.concluidas`: as competências concluídas entram na trilha marcadas `concluida` (horas 0, semana 0, sem justificativa do LLM) e nunca voltam a ficar pendentes. Contam como pré-requisito cumprido. Só as que faltam são agendadas, a partir da semana 1. Todo replanejamento do orquestrador passa as concluídas do Tutor |
+| D1 | **Replanejar só o que falta** (Pessoa 2) | `EntradaPlanejador.concluidas`: as competências concluídas entram na trilha marcadas `concluida` (horas 0, semana 0, sem justificativa do LLM) e nunca voltam a ficar pendentes. Contam como pré-requisito cumprido. Só as que faltam são agendadas, a partir da semana 1. Todo replanejamento do orquestrador passa as concluídas do Tutor **que pertencem à trilha original** (perfil + diagnóstico da matrícula, sem concluídas; `fluxo.competencias_originais`) |
 | D2 | **Na queda: pausar, reforçar o pré-requisito direto a partir do nível 1 e retomar a original no nível em que parou, sem zerar** (Pessoa 2) | `tutor_sessoes.pausada` (ADD COLUMN): a sessão pausada guarda nível, item e itens usados, e recusa resposta. `orquestrador_reforcos` liga a sessão pausada à de reforço. A sessão de reforço é uma sessão nova do Tutor (nível 1). Ao concluí-la, a original é retomada (`retomar_original`) e o aluno é avisado do nível |
 | D3 | **Abertura de sessão no fluxo gerenciado passa pelo orquestrador** (Pessoa 2) | `POST /aluno/{id}/sessao`. `/tutor/sessao` fica só para uso standalone |
 | D4 | **Inatividade avaliada por comando/rota chamados por agendador externo** (cron/timer na VM, depois de 15/10; o agendador não faz parte deste pacote) (Pessoa 2) | `python -m tia.orquestrador --verificar-inatividade` e `POST /orquestrador/verificar-inatividade` percorrem os alunos matriculados e registram uma decisão por aluno (inclusive "nenhuma"). Rodar de novo não duplica nada. O `GET /proximo` não pede mais "replanejar" |
@@ -209,12 +210,70 @@ Também dependem dela, fora da orquestração: `/tutor/*` (incluindo o veto doce
 
 ## Limitações conhecidas
 
-- **Competência de reforço concluída entra na trilha** como etapa concluída nos replanejamentos
-  seguintes. O replanejamento recebe todas as competências concluídas no Tutor, e a sessão de reforço é
-  uma sessão normal. O indicador de progresso conta essa etapa ("4 de 4" na demonstração, com uma
-  competência a mais que a trilha original).
+- ~~Competência de reforço concluída entra na trilha~~ **Corrigido em 11/10/2026:** o replanejamento só
+  recebe as concluídas que pertencem à trilha original, então o reforço de um pré-requisito dispensado
+  no diagnóstico não vira etapa e o progresso e os indicadores contam só as competências originais
+  (`test_reforco_concluido_nao_conta_no_progresso_da_trilha`). O reforço continua no histórico do Tutor
+  (sessões, respostas, desempenho por competência).
 - **Uma sessão de reforço aberta por `/tutor/sessao` (standalone)** não é vinculada ao reforço. O
   `proximo` continua pedindo para abrir o reforço por `/aluno/{id}/sessao`.
 - **Sem agendador:** até a VM, a verificação de inatividade só acontece quando alguém roda o comando ou
   chama a rota.
 - **Sem autenticação** (D8).
+
+## Web standalone (EAP 1.4.4)
+
+HTML, CSS e JavaScript puros em `src/tia/web/static/` (sem Node, framework ou build), servidos pelo
+próprio FastAPI em **`/app/`** (`tia.web.montar`). O caminho segue o pedido da tarefa (dentro do pacote,
+para ir junto no `pip install`); a pasta `web/` da raiz ficou vazia.
+
+| Arquivo | Papel |
+|---|---|
+| `static/index.html` | as cinco telas, com rótulos, região de status e foco |
+| `static/tema.css` | **só variáveis** de cor, fonte e espaçamento (claro e escuro). Trocar pelo visual do EBAULA = trocar este arquivo |
+| `static/estilo.css` | layout responsivo; usa só as variáveis do tema (teste confere que não há cor fixa) |
+| `static/app.js` | chamadas à API e montagem das telas; texto da API sempre por `textContent` |
+| `__init__.py` | monta `/app` e põe cabeçalhos de segurança (CSP só com a própria origem, `nosniff`, `no-referrer`) |
+| `dados_demo.py` | `python -m tia.web.dados_demo`: alunos fictícios DEMO-W01..W03 |
+
+### Telas e rotas consumidas
+
+| Tela | O que mostra | Rotas |
+|---|---|---|
+| Entrada | código do aluno (validado com o padrão do R08) e aviso "Protótipo, sem login (TODO 1.4.6)". Código sem matrícula abre o formulário de matrícula (perfil e horas; diagnóstico vazio) | `GET /aluno/{id}/estado` (404 = sem matrícula), `POST /aluno/{id}/iniciar` |
+| Trilha | etapas em ordem, etapa atual destacada, concluídas marcadas, horas e semana, justificativa do Planejador com a origem (LLM ou texto padrão), origem e falha do último planejamento, aviso da última decisão e reforço em curso | `GET /aluno/{id}/estado`, `GET /alunos/{id}/trilha` |
+| Estudo | uma pergunta por vez com alternativas (rádio), envio, veredito fixo, explicação com a origem (LLM, guarda ou fallback) e o motivo da falha, fontes citadas (R03), nível, avisos do orquestrador (conclusão, reforço, retomada, incentivo). Abre a sessão só pelo orquestrador | `GET /aluno/{id}/proximo`, `POST /aluno/{id}/sessao`, `POST /aluno/{id}/evento` |
+| Perguntar ao tutor | pergunta livre (até 500 caracteres, filtro por competência da trilha), resposta com origem: `LLM` (ancorada no material, com fontes), `guarda` (trecho do material transcrito, com a fonte) ou `fallback` (mensagem fixa quando o material não cobre). Histórico com as correções do docente (R12) | `POST /tutor/perguntar`, `GET /alunos/{id}/dialogo` |
+| Meu relatório | os 5 indicadores em linguagem simples; o resumo (narrativa do LLM) só quando o aluno pede, porque leva até um minuto | `GET /relatorio/aluno/{id}?narrativa=false` e `?narrativa=true` |
+
+Comportamento comum: durante uma chamada, faixa "Aguardando…" com contador de segundos (`role=status`),
+botões de ação desativados e a página continua navegável. Espera máxima no navegador: 300 s (uma resposta
+pode acionar Tutor e Planejador, 120 s cada no servidor). Estouro de tempo, falta de conexão e erros da
+API aparecem numa faixa de erro (`role=alert`) com o `detail` da API. Uma resposta que falhou por rede é
+reenviada com o **mesmo `evento_id`** (o orquestrador não processa duas vezes). Nada vai para o console;
+o código do aluno fica só no `sessionStorage` da aba (para sobreviver a recarregar a página).
+
+### Mudança na API (indispensável)
+
+- `ProximaAcao.pergunta` (opcional, preenchida só em `continuar_sessao`, por `fluxo.proxima`): a pergunta
+  em aberto da sessão, sem gabarito. **Motivo:** nenhuma rota devolvia a pergunta de uma sessão já
+  aberta. Depois de recarregar a página, de voltar outro dia ou na retomada após um reforço (a última
+  resposta do reforço traz `proxima_pergunta = null`), o aluno ficava preso: `POST /aluno/{id}/sessao`
+  recusa (409, "continue-a") e o cliente não tinha a pergunta. O campo é opcional, então os clientes
+  atuais não mudam.
+
+### O que falta
+
+- **Login (1.4.6):** hoje qualquer pessoa digita qualquer código. A entrada deve virar a autenticação e o
+  código deve vir da sessão, não de um campo.
+- **Visual do EBAULA:** cores, fontes, logotipo e componentes. Basta trocar `tema.css` (e, se preciso,
+  ajustar `estilo.css`); a estrutura HTML usa classes neutras.
+- **Plug-in EBAULA (1.4.3):** a mesma aplicação deve poder rodar dentro do EBAULA; a CSP atual proíbe ser
+  embutida em iframe (`frame-ancestors 'none'`) e terá de liberar o domínio do EBAULA.
+- **Diagnóstico na matrícula:** a tela não pergunta o diagnóstico (todas as notas 0). Depende de quem
+  aplica o diagnóstico (Pessoa 2/4).
+- **Nomes de competência fora da trilha:** o reforço de um pré-requisito dispensado aparece pelo código
+  (ex.: `repeticao`) no cartão de revisão, porque nenhuma rota lista a ementa; o aviso do orquestrador já
+  traz o nome. Resolver com uma rota da ementa ou com o nome no `Reforco`.
+- **Roteiro de navegador automatizado:** o Playwright não está instalado; ver
+  `docs/relatorios/web_standalone.md`.
