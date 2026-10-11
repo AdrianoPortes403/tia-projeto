@@ -30,12 +30,18 @@ PADRAO_LINHA = re.compile(r"^\s*(\d+)\s*[.)\-:]\s*(.+?)\s*$")
 TAMANHO_MAXIMO_FRASE = 240
 
 
+def _pendentes(trilha: Trilha) -> list:
+    """Etapas que o LLM justifica: as não concluídas, na ordem da trilha."""
+    return [e for e in trilha.etapas if not e.concluida]
+
+
 def montar_prompt(trilha: Trilha, diagnostico: dict[str, float]) -> str:
-    """Monta o pedido único ao LLM, com uma linha numerada por etapa."""
+    """Monta o pedido único ao LLM, com uma linha numerada por etapa que falta
+    (as concluídas ficam de fora)."""
     linhas = []
-    for etapa in trilha.etapas:
+    for numero, etapa in enumerate(_pendentes(trilha), 1):
         nota = diagnostico.get(etapa.competencia_id, 0.0)
-        linhas.append(f"{etapa.ordem}. {etapa.nome} (nota no diagnóstico: {nota:.2f}; {etapa.horas} h)")
+        linhas.append(f"{numero}. {etapa.nome} (nota no diagnóstico: {nota:.2f}; {etapa.horas} h)")
     return (
         "Você é o planejador de estudos de uma disciplina de programação introdutória.\n"
         "Abaixo está a trilha de um aluno, já em ordem. Para CADA etapa, escreva UMA frase "
@@ -75,24 +81,29 @@ def justificar_trilha(trilha: Trilha, diagnostico: dict[str, float],
     """Devolve uma cópia da trilha com as justificativas do LLM onde houver;
     nas demais etapas mantém o texto padrão. Marca a origem de cada etapa e,
     se alguma caiu no texto padrão, o motivo em trilha.falha_llm."""
-    if not trilha.etapas:
+    pendentes = _pendentes(trilha)
+    if not pendentes:  # nada a justificar (trilha vazia ou toda concluída)
         return trilha
-    padrao = [e.model_copy(update={"origem_justificativa": "fallback"}) for e in trilha.etapas]
+    numero = {e.ordem: n for n, e in enumerate(pendentes, 1)}  # ordem na trilha -> número no prompt
+
+    def com_origem(etapa, frases: dict[int, str] | None):
+        if etapa.concluida:
+            return etapa  # texto fixo "já concluída", sem origem
+        n = numero[etapa.ordem]
+        if frases and n in frases:
+            return etapa.model_copy(update={"justificativa": _sem_prefixo_do_nome(frases[n], etapa.nome),
+                                            "origem_justificativa": "LLM"})
+        return etapa.model_copy(update={"origem_justificativa": "fallback"})
+
     try:
         resposta = chamar_llm(montar_prompt(trilha, diagnostico), think=False, timeout=timeout)
-        frases = extrair_frases(resposta, len(trilha.etapas))
+        frases = extrair_frases(resposta, len(pendentes))
     except Exception as erro:  # qualquer falha do LLM: segue com o texto padrão
         falha = descrever_falha(erro)
         log.warning("Justificativas do LLM indisponíveis (%s); usando texto padrão.", falha)
-        return trilha.model_copy(update={"etapas": padrao, "falha_llm": falha})
+        return trilha.model_copy(update={"etapas": [com_origem(e, None) for e in trilha.etapas], "falha_llm": falha})
 
-    if len(frases) < len(trilha.etapas):
-        log.info("LLM justificou %d de %d etapas; restante com texto padrão.", len(frases), len(trilha.etapas))
-    etapas = [
-        etapa.model_copy(update={"justificativa": _sem_prefixo_do_nome(frases[etapa.ordem], etapa.nome),
-                                 "origem_justificativa": "LLM"})
-        if etapa.ordem in frases else sem_frase
-        for etapa, sem_frase in zip(trilha.etapas, padrao)
-    ]
-    falha = None if len(frases) == len(trilha.etapas) else "formato"
-    return trilha.model_copy(update={"etapas": etapas, "falha_llm": falha})
+    if len(frases) < len(pendentes):
+        log.info("LLM justificou %d de %d etapas; restante com texto padrão.", len(frases), len(pendentes))
+    falha = None if len(frases) == len(pendentes) else "formato"
+    return trilha.model_copy(update={"etapas": [com_origem(e, frases) for e in trilha.etapas], "falha_llm": falha})

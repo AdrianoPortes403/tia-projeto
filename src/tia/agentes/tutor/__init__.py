@@ -73,9 +73,9 @@ def iniciar_sessao(entrada: IniciarSessao) -> SessaoIniciada:
 
 def pergunta_atual(sessao_id: str, aluno_id: str) -> Pergunta | None:
     """Pergunta em aberto da sessão (sem gabarito); None se a sessão não existe,
-    é de outro aluno ou já foi concluída."""
+    é de outro aluno, já foi concluída ou está pausada."""
     estado = repositorio.ler_sessao(sessao_id, aluno_id)
-    if estado is None or estado.concluida:
+    if estado is None or estado.concluida or repositorio.sessao_pausada(sessao_id, aluno_id):
         return None
     return _pergunta(_item_por_id(repositorio.carregar_itens(), estado.item_atual_id))
 
@@ -89,6 +89,8 @@ def responder(resposta: RespostaAluno, modo: str | None = None) -> Feedback:
         raise SessaoInexistente("Sessão não encontrada para este aluno.")
     if estado.concluida:
         raise RespostaForaDeOrdem("Esta sessão já foi concluída.")
+    if repositorio.sessao_pausada(resposta.sessao_id, resposta.aluno_id):
+        raise RespostaForaDeOrdem("Esta sessão está pausada para um reforço; ela será retomada de onde parou.")
     if resposta.item_id != estado.item_atual_id:
         raise RespostaForaDeOrdem("A resposta não corresponde à pergunta atual da sessão.")
 

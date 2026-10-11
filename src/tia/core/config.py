@@ -116,15 +116,13 @@ RELATORIO_TENDENCIA_MIN_RESPOSTAS = int(os.getenv("RELATORIO_TENDENCIA_MIN_RESPO
 # Variação da taxa de acerto que conta como subida/queda (0.15 = 15 pontos).
 RELATORIO_TENDENCIA_LIMIAR = float(os.getenv("RELATORIO_TENDENCIA_LIMIAR", "0.15"))
 
-# --- Orquestração (EAP 1.3.5): regras de replanejamento. Todas PROVISÓRIAS. ---
-# Queda: depois de um replanejamento por queda, só replaneja de novo por queda
-# após pelo menos estas respostas novas (evita replanejar a cada resposta).
+# --- Orquestração (EAP 1.3.5): regras (docs/arquitetura/arquitetura.md, "Decisões de orquestração") ---
+# Queda (R2, PROVISÓRIO): depois de um reforço por queda, só reforça de novo após
+# pelo menos estas respostas novas (além de no máximo um reforço por sessão).
 ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS = int(os.getenv("ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "5"))
-# Queda: nota dada no diagnóstico aos pré-requisitos diretos (não concluídos) da
-# competência em queda; abaixo do limiar de dispensa do perfil, eles voltam à trilha.
-ORQ_NOTA_PREREQ_REFORCO = float(os.getenv("ORQ_NOTA_PREREQ_REFORCO", "0.0"))
-# Inatividade: usa INATIVIDADE_DIAS (acima); replaneja no máximo uma vez por
-# período sem atividade.
+# Inatividade (R3, PROVISÓRIO): a partir de INATIVIDADE_DIAS (acima), só incentivo,
+# sem refazer a trilha; a trilha só é refeita a partir de ORQ_INATIVIDADE_REFAZER_DIAS.
+ORQ_INATIVIDADE_REFAZER_DIAS = int(os.getenv("ORQ_INATIVIDADE_REFAZER_DIAS", "14"))
 
 
 if __name__ == "__main__":
@@ -137,5 +135,5 @@ if __name__ == "__main__":
                  "INATIVIDADE_DIAS", "RELATORIO_MIN_GRUPO", "RELATORIO_TIMEOUT_LLM", "RELATORIO_MAX_TOKENS",
                  "RELATORIO_TEMPERATURA", "RELATORIO_SEED", "RELATORIO_TENDENCIA_JANELA",
                  "RELATORIO_TENDENCIA_MIN_RESPOSTAS", "RELATORIO_TENDENCIA_LIMIAR",
-                 "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_NOTA_PREREQ_REFORCO"):
+                 "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_INATIVIDADE_REFAZER_DIAS"):
         print(f"{nome} = {globals()[nome]}")

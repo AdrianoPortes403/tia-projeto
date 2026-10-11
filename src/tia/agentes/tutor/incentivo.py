@@ -68,7 +68,8 @@ def etapas_pendentes(aluno_id: str, trilha: Trilha) -> list:
     PROVISÓRIO: etapa concluída = sessão do questionário concluída na
     competência, até o critério oficial do Agente 2 (Pessoa 2)."""
     concluidas = repositorio.competencias_concluidas(aluno_id)
-    return [e for e in sorted(trilha.etapas, key=lambda e: e.ordem) if e.competencia_id not in concluidas]
+    return [e for e in sorted(trilha.etapas, key=lambda e: e.ordem)
+            if e.competencia_id not in concluidas and not e.concluida]
 
 
 def montar_incentivo(aluno_id: str, agora: datetime | None = None) -> Incentivo:

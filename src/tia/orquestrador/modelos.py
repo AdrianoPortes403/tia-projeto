@@ -16,15 +16,20 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field, model_validator
 
 from tia.agentes.planejador.modelos import Nota, Trilha
-from tia.agentes.tutor.modelos import Feedback
+from tia.agentes.tutor.modelos import Feedback, SessaoIniciada
 
 TipoEvento = Literal["resposta", "conclusao", "inatividade"]
-# "matricula" planeja a trilha inicial; as outras três são as regras de replanejamento
-Regra = Literal["matricula", "conclusao", "queda", "inatividade"]
-# planejar: trilha inicial; avancar: competência concluída; reforcar: desempenho
-# em queda; retomar: inatividade; nenhuma: a regra avaliou e não replanejou
-Acao = Literal["planejar", "avancar", "reforcar", "retomar", "nenhuma"]
-AcaoProxima = Literal["iniciar_sessao", "continuar_sessao", "replanejar", "concluido"]
+# matricula: trilha inicial; conclusao (R1), queda (R2), inatividade (R3): regras;
+# reforco: fim de um reforço; sessao: pedido de abertura de sessão
+Regra = Literal["matricula", "conclusao", "queda", "reforco", "inatividade", "sessao"]
+# planejar: trilha inicial; avancar: competência concluída, replaneja o que falta;
+# reforcar: pausa a sessão e abre reforço do pré-requisito direto; retomar_original:
+# reforço concluído, volta à sessão pausada; incentivar: inatividade, só incentivo;
+# refazer_trilha: inatividade longa, replaneja a partir de hoje; abrir_sessao /
+# recusar_sessao: pedido de sessão; nenhuma: a regra avaliou e não fez nada
+Acao = Literal["planejar", "avancar", "reforcar", "retomar_original", "incentivar", "refazer_trilha",
+               "abrir_sessao", "recusar_sessao", "nenhuma"]
+AcaoProxima = Literal["iniciar_sessao", "continuar_sessao", "concluido"]
 IdEvento = Annotated[str, Field(pattern=r"^[A-Za-z0-9_.:-]{1,64}$", examples=["evt-0001"])]
 
 
@@ -73,6 +78,7 @@ class DecisaoReplanejamento(BaseModel):
     origem_justificativas: Literal["LLM", "parcial", "fallback"] | None = None
     falha_llm: str | None = None
     tempo_planejador_ms: int | None = None
+    aviso: str | None = None  # mensagem ao aluno (conclusão, reforço, retomada, incentivo); template
 
 
 class EtapaEstado(BaseModel):
@@ -80,6 +86,15 @@ class EtapaEstado(BaseModel):
     competencia_id: str
     nome: str
     concluida: bool
+
+
+class Reforco(BaseModel):
+    """Reforço por queda (R2) em curso: a sessão original fica pausada."""
+    competencia_original: str
+    sessao_original_id: str
+    competencia_reforco: str            # pré-requisito direto
+    sessao_reforco_id: str | None       # None até a sessão de reforço ser aberta
+    estado: Literal["pendente", "em_andamento"]
 
 
 class EstadoAluno(BaseModel):
@@ -90,12 +105,15 @@ class EstadoAluno(BaseModel):
     diagnostico: dict[str, float]  # diagnóstico em uso (atualizado a cada replanejamento)
     etapas: list[EtapaEstado]
     competencia_atual: str | None   # primeira etapa não concluída
-    sessao_aberta_id: str | None    # sessão não concluída na competência atual
+    sessao_aberta_id: str | None    # sessão não concluída nem pausada na competência atual
+    reforco: Reforco | None = None  # reforço em curso (tem prioridade sobre a competência atual)
     concluido: bool
     tendencia: str                  # direção do Relatório: subindo, caindo, estavel, insuficiente
     inativo: bool
     dias_inativo: int | None
-    replanejamento_pendente: str | None  # motivo, se uma regra pede replanejar agora
+    # motivo, se a regra de inatividade (R3) pede ação; quem age é a verificação
+    # agendada (POST /orquestrador/verificar-inatividade), não o aluno
+    replanejamento_pendente: str | None
     replanejamentos: int
     ultima_decisao: DecisaoReplanejamento | None = None
     dialogos: int
@@ -109,7 +127,30 @@ class ProximaAcao(BaseModel):
     acao: AcaoProxima
     competencia_id: str | None = None
     sessao_id: str | None = None
+    reforco: bool = False  # a sessão é de reforço de pré-requisito (R2)
     motivo: str
+
+
+class PedidoSessao(BaseModel):
+    """Entrada de POST /aluno/{id}/sessao: só é aceita a competência atual ou o reforço."""
+    competencia_id: str = Field(min_length=1, max_length=64, examples=["funcoes"])
+
+
+class SessaoOrquestrada(BaseModel):
+    sessao: SessaoIniciada
+    reforco: bool
+    decisao: DecisaoReplanejamento
+
+
+class DecisaoDeAluno(BaseModel):
+    aluno_id: str
+    decisao: DecisaoReplanejamento
+
+
+class ResultadoVerificacao(BaseModel):
+    """Resultado de uma rodada da verificação de inatividade (R3) em todos os alunos."""
+    verificados: int
+    decisoes: list[DecisaoDeAluno]
 
 
 class ResultadoMatricula(BaseModel):
@@ -124,4 +165,5 @@ class ResultadoEvento(BaseModel):
     repetido: bool = False      # True: evento já processado; resultado gravado
     feedback: Feedback | None = None  # só no evento "resposta"
     decisoes: list[DecisaoReplanejamento] = []
+    avisos: list[str] = []      # mensagens ao aluno das decisões (ex.: "Você concluiu...")
     proxima: ProximaAcao

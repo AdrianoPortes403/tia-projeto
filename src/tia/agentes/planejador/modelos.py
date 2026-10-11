@@ -27,6 +27,10 @@ class EntradaPlanejador(BaseModel):
     # nota do diagnóstico (0..1) por id de competência; competência ausente conta como 0
     diagnostico: dict[str, Nota] = {}
     horas_semanais: float = Field(gt=0, le=60)
+    # replanejamento incremental: competências já concluídas entram na trilha
+    # marcadas como concluídas e não são planejadas de novo; só as que faltam
+    # são agendadas (a partir da semana 1)
+    concluidas: list[str] = []
 
 
 class EtapaTrilha(BaseModel):
@@ -40,6 +44,9 @@ class EtapaTrilha(BaseModel):
     # "LLM": frase do LLM; "fallback": texto padrão (LLM falhou ou não deu frase
     # válida para a etapa); None: trilha lida do banco (origem não é gravada)
     origem_justificativa: Literal["LLM", "fallback"] | None = None
+    # já concluída (replanejamento incremental): fica na trilha para o histórico e
+    # o progresso, sem horas nem semana (0) e sem justificativa do LLM
+    concluida: bool = False
 
 
 class Trilha(BaseModel):

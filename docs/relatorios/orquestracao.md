@@ -1,5 +1,9 @@
 # Orquestração (EAP 1.3.5) e diagrama de arquitetura (1.3.1): resumo (10/10/2026)
 
+> **Atualizado:** as regras R2 e R3, a abertura de sessão e o replanejamento mudaram depois deste
+> resumo. Ver `docs/relatorios/orquestracao_pendencias.md` e a seção "Decisões de orquestração" de
+> `docs/arquitetura/arquitetura.md`. Este arquivo fica como histórico.
+
 Sem commit. Detalhes de arquitetura, regras e limitações em `docs/arquitetura/arquitetura.md`.
 
 ## Arquivos

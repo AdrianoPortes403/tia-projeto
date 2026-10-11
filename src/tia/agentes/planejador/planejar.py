@@ -4,10 +4,13 @@ Lógica determinística do Agente 1 (Planejador): monta a trilha de estudo.
 Passos de gerar_trilha:
     1. ordena as competências da ementa pelos pré-requisitos (ordenação
        topológica; empate desfeito pela ordem do arquivo da ementa);
-    2. remove as competências que o perfil permite pular e em que o aluno
+    2. competências já concluídas (entrada.concluidas, replanejamento
+       incremental) entram marcadas como concluídas, sem horas nem semana:
+       nunca voltam a ficar pendentes e contam como pré-requisito cumprido;
+    3. remove as competências que o perfil permite pular e em que o aluno
        tirou nota >= limiar no diagnóstico;
-    3. ajusta as horas pelo ritmo do perfil e distribui as etapas em
-       semanas conforme as horas semanais do aluno.
+    4. ajusta as horas pelo ritmo do perfil e distribui só as etapas que
+       faltam em semanas, a partir da semana 1, conforme as horas semanais.
 
 Não usa LLM: mesma entrada, mesma trilha. As frases de justificativa
 geradas aqui são o texto padrão; justificar.py tenta melhorá-las com o LLM.
@@ -101,6 +104,12 @@ def gerar_trilha(entrada: EntradaPlanejador, ementa: list[dict] | None = None,
         raise CompetenciaInexistente(
             f"Diagnóstico cita competência(s) fora da ementa: {', '.join(desconhecidas)}."
         )
+    desconhecidas = sorted(set(entrada.concluidas) - ids_ementa)
+    if desconhecidas:
+        raise CompetenciaInexistente(
+            f"Competência(s) concluída(s) fora da ementa: {', '.join(desconhecidas)}."
+        )
+    concluidas = set(entrada.concluidas)
 
     limiares = perfil.get("competencias_dispensaveis", {})
     etapas = []
@@ -108,6 +117,13 @@ def gerar_trilha(entrada: EntradaPlanejador, ementa: list[dict] | None = None,
     for competencia in ordenar_por_prerequisitos(ementa):
         cid = competencia["id"]
         nota = entrada.diagnostico.get(cid, 0.0)
+        if cid in concluidas:  # histórico: não é planejada de novo
+            etapas.append(EtapaTrilha(
+                ordem=len(etapas) + 1, competencia_id=cid, nome=competencia["nome"],
+                materiais=competencia.get("materiais", []), horas=0, semana_inicio=0,
+                justificativa="Competência já concluída.", concluida=True,
+            ))
+            continue
         if cid in limiares and nota >= limiares[cid]:
             continue  # aluno já domina: o perfil permite pular
 

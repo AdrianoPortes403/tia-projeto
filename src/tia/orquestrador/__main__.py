@@ -1,25 +1,33 @@
 """
-Demonstração da Orquestração (EAP 1.3.5): um aluno fictício (DEMO-O01,
-perfil intermediário; código, nunca nome, R08) do início ao fim, num banco
-TEMPORÁRIO (não toca em data/tia.db):
+Demonstração e comandos da Orquestração (EAP 1.3.5).
+
+--demo: um aluno fictício (DEMO-O01, perfil intermediário; código, nunca
+nome, R08) do início ao fim, num banco TEMPORÁRIO (não toca em data/tia.db):
 
     1. matrícula: o Planejador gera a trilha (o perfil dispensa variáveis,
        condicionais e repetição, pelo diagnóstico alto);
-    2. acertos: conclui Funções -> replanejamento por conclusão (R1);
-    3. queda: erra 3 vezes em Listas e strings -> replanejamento por queda
-       (R2): o pré-requisito Repetição, que o perfil tinha dispensado, volta;
-    4. inatividade: o tempo "passa" INATIVIDADE_DIAS + 2 dias (os horários do
-       banco temporário são recuados) -> replanejamento por inatividade (R3);
-    5. retoma e estuda até concluir a trilha; relatórios do aluno e da turma.
+    2. acertos: conclui Funções -> R1: avança, replaneja só o que falta e avisa;
+    3. queda: erra 3 vezes em Listas e strings -> R2: pausa a sessão e abre
+       reforço do pré-requisito direto (Repetição) no nível 1;
+    4. reforço: conclui Repetição -> retoma Listas e strings no nível em que parou;
+    5. inatividade (datas simuladas: os horários do banco temporário são
+       recuados) e verificação como o agendador faria: com 5 dias, só
+       incentivo; com 15 dias (ORQ_INATIVIDADE_REFAZER_DIAS = 14), a trilha
+       é refeita;
+    6. termina a trilha; relatórios do aluno e da turma.
 
-Imprime cada resposta (com a origem do feedback: LLM, guarda ou fallback, e
-o motivo do fallback, ex.: timeout), cada decisão (com o motivo e a origem
-das justificativas do Planejador) e, no fim, o tempo de cada etapa
-separado em Tutor, Planejador, Relatório e o restante (orquestração, banco,
-regras). R09 a medir na VM.
+Imprime cada resposta (origem do feedback: LLM, guarda ou fallback, e o
+motivo do fallback, ex.: timeout), cada decisão (motivo, aviso ao aluno e
+origem das justificativas do Planejador) e, no fim, o tempo de cada etapa
+separado em Tutor, Planejador, Relatório e o restante. R09 a medir na VM.
+
+--verificar-inatividade: avalia a R3 em todos os alunos do banco
+configurado (DB_PATH) e registra cada decisão na auditoria. É o comando
+para o agendador externo (cron/timer na VM), que não faz parte deste pacote.
 
 Como rodar (a partir da raiz, com o venv ativo):
     python -m tia.orquestrador --demo [--sem-llm]
+    python -m tia.orquestrador --verificar-inatividade
 
 Pré-requisitos:
     - Ollama rodando com CHAT_MODEL e EMBED_MODEL (com --sem-llm, não precisa:
@@ -32,7 +40,6 @@ import itertools
 import logging
 import tempfile
 import time
-from datetime import timedelta
 from pathlib import Path
 
 import requests
@@ -42,20 +49,21 @@ import tia.core.llm_client as llm_client
 from tia import orquestrador
 from tia.agentes.relatorio import gerar_relatorio_aluno, gerar_relatorio_turma
 from tia.agentes.relatorio.narrativa import formatar_texto_aluno
-from tia.agentes.tutor import iniciar_sessao, pergunta_atual
-from tia.agentes.tutor.modelos import IniciarSessao
+from tia.agentes.tutor import pergunta_atual
 from tia.agentes.tutor.repositorio import carregar_itens
-from tia.core.config import CHAT_MODEL, INATIVIDADE_DIAS
+from tia.core.config import CHAT_MODEL, INATIVIDADE_DIAS, ORQ_INATIVIDADE_REFAZER_DIAS
 from tia.orquestrador.modelos import EventoTutor, Matricula
 
 ALUNO = "DEMO-O01"
 MATRICULA = Matricula(perfil_id="intermediario", horas_semanais=6, diagnostico={
     "variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
     "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0})
-# (colunas, tabela) recuadas para simular dias sem atividade
+# (coluna, tabela) recuadas para simular dias sem atividade
 HORARIOS = [("timestamp", "historico_respostas"), ("criado_em", "tutor_sessoes"), ("atualizado_em", "tutor_sessoes"),
             ("ts", "tutor_dialogo"), ("criado_em", "trilha_estudo"), ("ts", "orquestrador_decisoes"),
             ("ts", "auditoria")]
+# trava de segurança da demonstração: nenhuma etapa deveria precisar de tantas respostas
+MAXIMO_RESPOSTAS_POR_SESSAO = 20
 
 contador = itertools.count(1)
 gabarito = {i["id"]: i["indice_correto"] for i in carregar_itens()}
@@ -78,6 +86,8 @@ def imprimir_decisoes(decisoes, etapa: str):
     for d in decisoes:
         marca = "REPLANEJOU" if d.replanejou else "sem replanejar"
         print(f"   >>> DECISÃO [{d.regra}] {d.acao} ({marca}): {d.motivo}")
+        if d.aviso:
+            print(f"       aviso ao aluno: {d.aviso}")
         if d.replanejou:
             segundos = (d.tempo_planejador_ms or 0) / 1000
             somar(etapa, "Planejador", segundos)
@@ -85,21 +95,20 @@ def imprimir_decisoes(decisoes, etapa: str):
             print(f"       Planejador: justificativas {d.origem_justificativas}{falha(d.falha_llm)} | {segundos:.1f} s")
 
 
-def estudar(acertos: str, etapa: str) -> float:
-    """Segue a próxima ação do orquestrador: abre/continua a sessão e responde
-    ("1" acerta, "0" erra; depois do fim da sequência, acerta). Para quando a
-    competência conclui ou um replanejamento muda a competência atual."""
+def estudar(acertos: str, etapa: str):
+    """Segue a próxima ação do orquestrador: abre a sessão por ele (ou
+    continua a aberta) e responde ("1" acerta, "0" erra; depois do fim da
+    sequência, acerta). Para quando a sessão conclui ou uma decisão muda o fluxo."""
     inicio = time.perf_counter()
     proxima = orquestrador.proxima(ALUNO)
-    competencia = proxima.competencia_id
     if proxima.acao == "iniciar_sessao":
-        sessao = iniciar_sessao(IniciarSessao(aluno_id=ALUNO, competencia_id=competencia))
-        sessao_id, pergunta = sessao.sessao_id, sessao.pergunta
+        aberta = orquestrador.abrir_sessao(ALUNO, proxima.competencia_id)
+        sessao_id, pergunta = aberta.sessao.sessao_id, aberta.sessao.pergunta
     else:  # continuar_sessao
-        sessao_id = proxima.sessao_id
-        pergunta = pergunta_atual(sessao_id, ALUNO)
-    print(f"\n-- {proxima.acao} em '{competencia}' ({proxima.motivo})")
-    for n in itertools.count():
+        sessao_id, pergunta = proxima.sessao_id, pergunta_atual(proxima.sessao_id, ALUNO)
+    tipo = "REFORÇO " if proxima.reforco else ""
+    print(f"\n-- {proxima.acao} {tipo}em '{proxima.competencia_id}' ({proxima.motivo})")
+    for n in range(MAXIMO_RESPOSTAS_POR_SESSAO):
         acerta = n >= len(acertos) or acertos[n] == "1"
         correto = gabarito[pergunta.item_id]
         resultado = orquestrador.processar_evento(ALUNO, EventoTutor(
@@ -111,12 +120,21 @@ def estudar(acertos: str, etapa: str) -> float:
         print(f"   {pergunta.item_id}: {'ACERTOU' if fb.acertou else 'errou'} -> nível {fb.nivel_atual} "
               f"| feedback {fb.origem}{falha(fb.falha_llm)} | {fb.tempo_ms / 1000:.1f} s")
         imprimir_decisoes(resultado.decisoes, etapa)
-        if fb.concluida or resultado.proxima.competencia_id != competencia:
+        if fb.concluida or resultado.decisoes:
             break
         pergunta = fb.proxima_pergunta
-    segundos = time.perf_counter() - inicio
-    somar(etapa, "total", segundos)
-    return segundos
+    else:
+        raise RuntimeError(f"A sessão não terminou em {MAXIMO_RESPOSTAS_POR_SESSAO} respostas.")
+    somar(etapa, "total", time.perf_counter() - inicio)
+
+
+def verificar(etapa: str):
+    """Uma rodada da verificação de inatividade, como o agendador faria."""
+    inicio = time.perf_counter()
+    resultado = orquestrador.verificar_inatividade()
+    for item in resultado.decisoes:
+        imprimir_decisoes([item.decisao], etapa)
+    somar(etapa, "total", time.perf_counter() - inicio)
 
 
 def imprimir_tempos(total: float):
@@ -145,28 +163,17 @@ def recuar_horarios(dias: int):
 
 def sem_llm():
     """Toda chamada ao Ollama (chat e embedding) falha na hora: os agentes usam os textos fixos."""
-    def falha(*args, **kwargs):
+    def falha_imediata(*args, **kwargs):
         raise requests.ConnectionError("demonstração com --sem-llm")
-    llm_client.requests.post = falha
+    llm_client.requests.post = falha_imediata
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Demonstração da orquestração.")
-    parser.add_argument("--demo", action="store_true", help="executa o aluno fictício do início ao fim")
-    parser.add_argument("--sem-llm", action="store_true", help="não chama o Ollama (textos fixos)")
-    args = parser.parse_args()
-    if not args.demo:
-        parser.print_help()
-        raise SystemExit(0)
-
-    logging.basicConfig(level=logging.ERROR, format="%(levelname)s %(name)s: %(message)s")
-    logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)
-    if args.sem_llm:
-        sem_llm()
+def demonstrar(com_llm: bool):
     pasta = tempfile.mkdtemp(prefix="tia_orquestrador_demo_")
     database.DB_PATH = str(Path(pasta) / "demo.db")
     database.criar_tabelas()
-    print(f"\nBanco temporário: {database.DB_PATH} | modelo {CHAT_MODEL}{' (sem LLM)' if args.sem_llm else ''}")
+    print(f"\nBanco temporário: {database.DB_PATH} | modelo {CHAT_MODEL}{'' if com_llm else ' (sem LLM)'}")
+
     inicio_total = inicio = time.perf_counter()
     matricula = orquestrador.iniciar(ALUNO, MATRICULA)
     somar("matrícula", "total", time.perf_counter() - inicio)
@@ -179,29 +186,31 @@ if __name__ == "__main__":
     estudar("1111", "acertos")
     print("\n3. QUEDA")
     estudar("000", "queda")
+    print("\n4. REFORÇO E RETOMADA")
+    estudar("1111", "reforço")
+    estudar("", "reforço")  # termina a competência retomada
 
-    print(f"\n4. INATIVIDADE: {INATIVIDADE_DIAS + 2} dias sem atividade")
+    dias_refazer = ORQ_INATIVIDADE_REFAZER_DIAS + 1
+    print(f"\n5. INATIVIDADE: {INATIVIDADE_DIAS + 2} dias sem atividade (verificação agendada)")
     recuar_horarios(INATIVIDADE_DIAS + 2)
-    print(f"   próximo: {orquestrador.proxima(ALUNO).acao}")
-    inicio = time.perf_counter()
-    resultado = orquestrador.processar_evento(ALUNO, EventoTutor(evento_id=f"evt-{next(contador):04d}",
-                                                                 tipo="inatividade"))
-    imprimir_decisoes(resultado.decisoes, "inatividade")
-    repetido = orquestrador.processar_evento(ALUNO, EventoTutor(evento_id=resultado.evento_id, tipo="inatividade"))
-    print(f"   mesmo evento reenviado: repetido={repetido.repetido}, sem nova decisão")
-    somar("inatividade", "total", time.perf_counter() - inicio)
+    verificar("inatividade")
+    print("   mesma verificação de novo (não repete):")
+    verificar("inatividade")
+    print(f"   ... {dias_refazer} dias sem atividade:")
+    recuar_horarios(dias_refazer - (INATIVIDADE_DIAS + 2))
+    verificar("inatividade")
 
-    print("\n5. RETOMADA ATÉ O FIM")
+    print("\n6. ATÉ O FIM")
     while orquestrador.proxima(ALUNO).acao != "concluido":
-        estudar("", "retomada")
+        estudar("", "fim")
 
     estado = orquestrador.estado(ALUNO)
     print(f"\nEstado final: concluído={estado.concluido}, etapas "
           f"{', '.join(e.competencia_id for e in estado.etapas)}, replanejamentos={estado.replanejamentos}")
 
     inicio = time.perf_counter()
-    relatorio = gerar_relatorio_aluno(ALUNO, com_narrativa=not args.sem_llm)
-    turma = gerar_relatorio_turma(com_narrativa=not args.sem_llm)
+    relatorio = gerar_relatorio_aluno(ALUNO, com_narrativa=com_llm)
+    turma = gerar_relatorio_turma(com_narrativa=com_llm)
     segundos = time.perf_counter() - inicio
     somar("relatórios", "total", segundos)
     somar("relatórios", "Relatório", segundos)
@@ -209,5 +218,35 @@ if __name__ == "__main__":
     print("\n" + formatar_texto_aluno(relatorio))
     print(f"   (interpretação: {relatorio.narrativa.origem}{falha(relatorio.narrativa.falha_llm)})")
     print(f"\nRelatório da turma: alunos {turma.alunos.texto}, suprimido={turma.suprimido} (grupo mínimo LGPD)")
-
     imprimir_tempos(time.perf_counter() - inicio_total)
+
+
+def verificar_inatividade_no_banco():
+    """Comando para o agendador externo: R3 em todos os alunos do DB_PATH."""
+    database.criar_tabelas()
+    inicio = time.perf_counter()
+    resultado = orquestrador.verificar_inatividade()
+    for item in resultado.decisoes:
+        d = item.decisao
+        print(f"{item.aluno_id}: {d.acao} - {d.motivo}")
+    print(f"{resultado.verificados} alunos verificados em {time.perf_counter() - inicio:.1f} s.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Orquestração: demonstração e verificação de inatividade.")
+    parser.add_argument("--demo", action="store_true", help="executa o aluno fictício do início ao fim")
+    parser.add_argument("--sem-llm", action="store_true", help="na demonstração, não chama o Ollama")
+    parser.add_argument("--verificar-inatividade", action="store_true",
+                        help="avalia a inatividade (R3) de todos os alunos do banco configurado")
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.ERROR, format="%(levelname)s %(name)s: %(message)s")
+    logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)
+
+    if args.verificar_inatividade:
+        verificar_inatividade_no_banco()
+    elif args.demo:
+        if args.sem_llm:
+            sem_llm()
+        demonstrar(com_llm=not args.sem_llm)
+    else:
+        parser.print_help()

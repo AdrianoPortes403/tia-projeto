@@ -20,6 +20,7 @@ from fastapi import FastAPI
 
 from tia.api.rotas_auditoria import router as rotas_auditoria
 from tia.api.rotas_orquestrador import router as rotas_orquestrador
+from tia.api.rotas_orquestrador import router_sistema as rotas_orquestrador_sistema
 from tia.api.rotas_planejador import router as rotas_planejador
 from tia.api.rotas_relatorio import router as rotas_relatorio
 from tia.api.rotas_tutor import router as rotas_tutor
@@ -40,6 +41,7 @@ app.include_router(rotas_tutor)
 app.include_router(rotas_auditoria)
 app.include_router(rotas_relatorio)
 app.include_router(rotas_orquestrador)
+app.include_router(rotas_orquestrador_sistema)
 
 
 @app.get("/health")

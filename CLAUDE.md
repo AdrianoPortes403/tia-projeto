@@ -26,7 +26,8 @@ Ollama (`qwen3:*` para chat, `nomic-embed-text` para embeddings).
 
 - `src/tia/core/`: llm_client (única porta para o LLM), database, config, schemas
 - `src/tia/rag/`: ingest, retrieve, demo
-- `src/tia/agentes/`: planejador (Agente 1), tutor (Agente 2), relatorio (Agente 3), orquestracao
+- `src/tia/agentes/`: planejador (Agente 1), tutor (Agente 2), relatorio (Agente 3)
+- `src/tia/orquestrador/`: orquestração dos agentes (EAP 1.3.5): fluxo, eventos, regras
 - `src/tia/api/`: FastAPI e rotas
 - `conteudo/`: dados pedagógicos em JSON (ementa, perfis, trilha, banco_itens, materiais)
 - `web/`: aplicação standalone. `dashboard/`: painel institucional. `plugin-ebaula/`: por último.

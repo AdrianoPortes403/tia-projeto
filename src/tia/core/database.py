@@ -36,6 +36,7 @@ COLUNAS_NOVAS_TRILHA = {
     "justificativa": "TEXT",
     "criado_em": "DATETIME",
     "origem_justificativa": "TEXT",  # "LLM" ou "fallback"; NULL nas trilhas antigas
+    "concluida": "INTEGER",  # etapa já concluída no replanejamento incremental; NULL = não
 }
 
 
@@ -128,6 +129,9 @@ def criar_tabelas():
             FOREIGN KEY (aluno_id) REFERENCES alunos(id)
         )
     """)
+    # pausada: sessão suspensa pelo orquestrador durante um reforço (R2); guarda
+    # nível e itens e é retomada de onde parou. NULL/0 = não pausada.
+    _acrescentar_colunas(cursor, "tutor_sessoes", {"pausada": "INTEGER"})
 
     # Diálogo livre com o Tutor (parte 2b). A pergunta do aluno é texto livre:
     # fica só aqui no banco, nunca em log (R08). vetada/correcao_docente: veto
@@ -217,7 +221,26 @@ def criar_tabelas():
         "origem_justificativas": "TEXT",
         "falha_llm": "TEXT",
         "tempo_planejador_ms": "INTEGER",
+        "aviso": "TEXT",  # mensagem ao aluno (conclusão, reforço, retomada, incentivo)
     })
+    # Reforço por queda (R2): a sessão original fica pausada enquanto o aluno faz
+    # uma sessão do pré-requisito direto; ao concluí-la, a original é retomada.
+    # estado: pendente (sessão de reforço ainda não aberta), em_andamento, concluido.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS orquestrador_reforcos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            aluno_id TEXT,
+            competencia_original TEXT,
+            sessao_original_id TEXT,
+            competencia_reforco TEXT,
+            sessao_reforco_id TEXT,
+            estado TEXT,
+            decisao_id INTEGER,
+            criado_em DATETIME,
+            concluido_em DATETIME,
+            FOREIGN KEY (aluno_id) REFERENCES alunos(id)
+        )
+    """)
 
     conexao.commit()
     conexao.close()

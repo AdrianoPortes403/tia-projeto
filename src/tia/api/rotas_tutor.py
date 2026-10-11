@@ -1,7 +1,10 @@
 """
 Rotas da API do Agente 2 (Tutor), parte 2a: questionário adaptativo.
 
-    POST /tutor/sessao    inicia (aluno_id, competencia_id) e devolve a primeira pergunta
+    POST /tutor/sessao    inicia (aluno_id, competencia_id) e devolve a primeira pergunta.
+                          Uso STANDALONE: não passa pelo orquestrador (não confere a
+                          competência atual nem as regras). No fluxo gerenciado, use
+                          POST /aluno/{id}/sessao
     POST /tutor/resposta  corrige, devolve o Feedback e a próxima pergunta (ou o fim)
     POST /tutor/perguntar diálogo livre: resposta ancorada no material, com fonte (R03)
     GET  /alunos/{aluno_id}/dialogo   histórico do diálogo (resposta vetada sai trocada

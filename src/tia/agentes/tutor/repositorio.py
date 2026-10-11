@@ -115,7 +115,8 @@ def registrar_resposta(sessao_id: str, aluno_id: str, item_respondido: dict, nov
                 """UPDATE tutor_sessoes
                    SET nivel = ?, item_atual_id = ?, itens_usados = ?,
                        acertos_seguidos_nivel_max = ?, concluida = ?, atualizado_em = ?
-                   WHERE id = ? AND aluno_id = ? AND item_atual_id = ? AND NOT concluida""",
+                   WHERE id = ? AND aluno_id = ? AND item_atual_id = ? AND NOT concluida
+                     AND NOT COALESCE(pausada, 0)""",
                 (novo_estado.nivel, novo_estado.item_atual_id, json.dumps(list(novo_estado.itens_usados)),
                  novo_estado.acertos_seguidos_nivel_max, novo_estado.concluida, agora,
                  sessao_id, aluno_id, item_respondido["id"]),
@@ -269,15 +270,50 @@ def criacao_da_trilha(aluno_id: str) -> datetime | None:
 
 
 def sessao_aberta(aluno_id: str, competencia_id: str) -> str | None:
-    """Id da sessão não concluída mais recente do aluno na competência (usado
-    pela orquestração para "continuar sessão"); None se não houver."""
+    """Id da sessão não concluída nem pausada mais recente do aluno na
+    competência (usado pela orquestração para "continuar sessão"); None se não houver."""
     conexao = obter_conexao()
     try:
         linha = conexao.execute(
             """SELECT id FROM tutor_sessoes WHERE aluno_id = ? AND competencia_id = ? AND NOT concluida
+                 AND NOT COALESCE(pausada, 0)
                ORDER BY atualizado_em DESC, criado_em DESC LIMIT 1""",
             (aluno_id, competencia_id),
         ).fetchone()
     finally:
         conexao.close()
     return linha["id"] if linha else None
+
+
+def _marcar_pausa(sessao_id: str, aluno_id: str, pausada: bool) -> bool:
+    conexao = obter_conexao()
+    try:
+        with conexao:
+            cursor = conexao.execute(
+                """UPDATE tutor_sessoes SET pausada = ?, atualizado_em = ?
+                   WHERE id = ? AND aluno_id = ? AND NOT concluida AND COALESCE(pausada, 0) = ?""",
+                (int(pausada), _agora(), sessao_id, aluno_id, int(not pausada)))
+    finally:
+        conexao.close()
+    return cursor.rowcount == 1
+
+
+def pausar_sessao(sessao_id: str, aluno_id: str) -> bool:
+    """Suspende a sessão (reforço por queda, na orquestração), guardando nível e
+    itens. False se não existe, é de outro aluno, já terminou ou já está pausada."""
+    return _marcar_pausa(sessao_id, aluno_id, True)
+
+
+def retomar_sessao(sessao_id: str, aluno_id: str) -> bool:
+    """Volta a sessão pausada ao ponto em que parou (mesmo nível e item)."""
+    return _marcar_pausa(sessao_id, aluno_id, False)
+
+
+def sessao_pausada(sessao_id: str, aluno_id: str) -> bool:
+    conexao = obter_conexao()
+    try:
+        linha = conexao.execute("SELECT pausada FROM tutor_sessoes WHERE id = ? AND aluno_id = ?",
+                                (sessao_id, aluno_id)).fetchone()
+    finally:
+        conexao.close()
+    return bool(linha and linha["pausada"])

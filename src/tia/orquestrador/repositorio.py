@@ -1,7 +1,7 @@
 """
 Persistência da Orquestração: matrícula no fluxo (orquestrador_matriculas),
-eventos recebidos para idempotência (orquestrador_eventos) e decisões
-(orquestrador_decisoes). Cada decisão grava, na MESMA transação, uma linha
+eventos recebidos para idempotência (orquestrador_eventos), decisões
+(orquestrador_decisoes) e reforços por queda (orquestrador_reforcos). Cada decisão grava, na MESMA transação, uma linha
 de auditoria (tipo "decisao_orquestrador", com o motivo; R11).
 
 Os dados dos agentes (trilha, sessões, respostas) não são lidos aqui: o
@@ -54,14 +54,14 @@ def ler_matricula(aluno_id: str) -> dict | None:
             "diagnostico": json.loads(linha["diagnostico"] or "{}")}
 
 
-def atualizar_diagnostico(aluno_id: str, diagnostico: dict[str, float], agora: datetime):
+def listar_matriculas() -> list[str]:
+    """Códigos dos alunos matriculados no fluxo (para a verificação de inatividade)."""
     conexao = obter_conexao()
     try:
-        with conexao:
-            conexao.execute("UPDATE orquestrador_matriculas SET diagnostico = ?, atualizado_em = ? WHERE aluno_id = ?",
-                            (json.dumps(diagnostico), _texto(agora), aluno_id))
+        linhas = conexao.execute("SELECT aluno_id FROM orquestrador_matriculas ORDER BY aluno_id").fetchall()
     finally:
         conexao.close()
+    return [linha["aluno_id"] for linha in linhas]
 
 
 # --- eventos (idempotência) ---
@@ -111,14 +111,15 @@ def _decisao(linha) -> dict:
             "competencia_id": linha["competencia_id"], "motivo": linha["motivo"],
             "replanejou": bool(linha["replanejou"]), "sessao_id": linha["sessao_id"],
             "origem_justificativas": linha["origem_justificativas"], "falha_llm": linha["falha_llm"],
-            "tempo_planejador_ms": linha["tempo_planejador_ms"]}
+            "tempo_planejador_ms": linha["tempo_planejador_ms"], "aviso": linha["aviso"]}
 
 
 def registrar_decisao(aluno_id: str, regra: str, acao: str, competencia_id: str | None, motivo: str,
                       replanejou: bool, evento_id: str | None, agora: datetime, sessao_id: str | None = None,
-                      planejador: dict | None = None) -> dict:
+                      planejador: dict | None = None, aviso: str | None = None) -> dict:
     """Grava a decisão e a auditoria (R11, com o motivo) numa transação.
-    planejador: origem_justificativas, falha_llm e tempo_planejador_ms, se acionado."""
+    planejador: origem_justificativas, falha_llm e tempo_planejador_ms, se acionado.
+    aviso: mensagem mostrada ao aluno."""
     planejador = planejador or {}
     ts = _texto(agora)
     conexao = obter_conexao()
@@ -127,11 +128,11 @@ def registrar_decisao(aluno_id: str, regra: str, acao: str, competencia_id: str 
             cursor = conexao.execute(
                 """INSERT INTO orquestrador_decisoes
                    (aluno_id, ts, regra, acao, competencia_id, motivo, replanejou, evento_id, sessao_id,
-                    origem_justificativas, falha_llm, tempo_planejador_ms)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    origem_justificativas, falha_llm, tempo_planejador_ms, aviso)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (aluno_id, ts, regra, acao, competencia_id, motivo, replanejou, evento_id, sessao_id,
                  planejador.get("origem_justificativas"), planejador.get("falha_llm"),
-                 planejador.get("tempo_planejador_ms")))
+                 planejador.get("tempo_planejador_ms"), aviso))
             auditoria.registrar(conexao, aluno_id, "decisao_orquestrador", cursor.lastrowid, acao, [], ts=ts,
                                 motivo=f"[{regra}] {motivo}")
             linha = conexao.execute("SELECT * FROM orquestrador_decisoes WHERE id = ?", (cursor.lastrowid,)).fetchone()
@@ -153,3 +154,57 @@ def listar_decisoes(aluno_id: str, acao: str | None = None) -> list[dict]:
     finally:
         conexao.close()
     return [_decisao(linha) for linha in linhas]
+
+
+# --- reforços por queda (R2) ---
+
+def _reforco(linha) -> dict:
+    return {campo: linha[campo] for campo in ("id", "aluno_id", "competencia_original", "sessao_original_id",
+                                              "competencia_reforco", "sessao_reforco_id", "estado", "decisao_id")}
+
+
+def criar_reforco(aluno_id: str, competencia_original: str, sessao_original_id: str, competencia_reforco: str,
+                  decisao_id: int, agora: datetime) -> int:
+    conexao = obter_conexao()
+    try:
+        with conexao:
+            cursor = conexao.execute(
+                """INSERT INTO orquestrador_reforcos (aluno_id, competencia_original, sessao_original_id,
+                       competencia_reforco, estado, decisao_id, criado_em)
+                   VALUES (?, ?, ?, ?, 'pendente', ?, ?)""",
+                (aluno_id, competencia_original, sessao_original_id, competencia_reforco, decisao_id, _texto(agora)))
+    finally:
+        conexao.close()
+    return cursor.lastrowid
+
+
+def reforco_ativo(aluno_id: str) -> dict | None:
+    """Reforço pendente ou em andamento do aluno (no máximo um)."""
+    conexao = obter_conexao()
+    try:
+        linha = conexao.execute(
+            """SELECT * FROM orquestrador_reforcos WHERE aluno_id = ? AND estado != 'concluido'
+               ORDER BY id DESC LIMIT 1""", (aluno_id,)).fetchone()
+    finally:
+        conexao.close()
+    return _reforco(linha) if linha else None
+
+
+def vincular_sessao_reforco(reforco_id: int, sessao_id: str):
+    conexao = obter_conexao()
+    try:
+        with conexao:
+            conexao.execute("""UPDATE orquestrador_reforcos SET sessao_reforco_id = ?, estado = 'em_andamento'
+                               WHERE id = ? AND estado = 'pendente'""", (sessao_id, reforco_id))
+    finally:
+        conexao.close()
+
+
+def concluir_reforco(reforco_id: int, agora: datetime):
+    conexao = obter_conexao()
+    try:
+        with conexao:
+            conexao.execute("""UPDATE orquestrador_reforcos SET estado = 'concluido', concluido_em = ?
+                               WHERE id = ?""", (_texto(agora), reforco_id))
+    finally:
+        conexao.close()

@@ -67,6 +67,9 @@ def progresso(dados: DadosAluno, nomes: dict[str, str]) -> Progresso:
         competencias = [e.competencia_id for e in sorted(dados.trilha.etapas, key=lambda e: e.ordem)]
     else:
         competencias = list(dict.fromkeys(s["competencia_id"] for s in dados.sessoes))
+    # etapa marcada como concluída pelo Planejador (replanejamento incremental) também conta
+    if dados.trilha is not None:
+        concluidas |= {e.competencia_id for e in dados.trilha.etapas if e.concluida}
     por_competencia = [ProgressoCompetencia(competencia_id=c, nome=nomes.get(c, c), concluida=c in concluidas,
                                             nivel_atual=nivel_atual.get(c)) for c in competencias]
     if dados.trilha is None:

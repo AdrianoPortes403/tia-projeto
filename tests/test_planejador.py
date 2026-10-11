@@ -128,6 +128,71 @@ def test_conteudo_provisorio_e_consistente():
         assert gerar_trilha(entrada(perfil_id=perfil["id"])).etapas
 
 
+# --- replanejamento incremental (competências concluídas) ---
+
+def pendentes(trilha) -> list[str]:
+    return [e.competencia_id for e in trilha.etapas if not e.concluida]
+
+
+def test_replanejamento_reduz_a_trilha_ao_que_falta():
+    completa = gerar_trilha(entrada(), EMENTA, PERFIS)
+    reduzida = gerar_trilha(entrada(concluidas=["a"]), EMENTA, PERFIS)
+    assert pendentes(completa) == ["a", "b", "c", "d"]
+    assert pendentes(reduzida) == ["b", "c", "d"]  # só o que falta é planejado
+    concluida = reduzida.etapas[0]
+    assert (concluida.competencia_id, concluida.concluida, concluida.horas, concluida.semana_inicio) == ("a", True, 0, 0)
+    # o que falta é agendado a partir da semana 1 (b e c: 4 h cada, 6 h/semana)
+    assert [(e.competencia_id, e.semana_inicio) for e in reduzida.etapas if not e.concluida] == [
+        ("b", 1), ("c", 1), ("d", 2)]
+
+
+@pytest.mark.parametrize("concluidas", [["a"], ["a", "b"], ["b"], ["a", "b", "c", "d"]])
+def test_replanejamento_nunca_traz_de_volta_uma_concluida(concluidas):
+    # nem com nota zero no diagnóstico, nem sendo pré-requisito do que falta
+    trilha = gerar_trilha(entrada(concluidas=concluidas, diagnostico={"a": 0.0}), EMENTA, PERFIS)
+    assert not set(concluidas) & set(pendentes(trilha))
+    assert {e.competencia_id for e in trilha.etapas if e.concluida} == set(concluidas)
+
+
+def test_concluida_conta_como_prerequisito_cumprido_e_a_ordem_se_mantem():
+    trilha = gerar_trilha(entrada(concluidas=["b"]), EMENTA, PERFIS)
+    assert ids(trilha) == ["a", "b", "c", "d"]  # mesma ordem topológica
+    assert pendentes(trilha) == ["a", "c", "d"]
+
+
+def test_concluida_dispensavel_aparece_como_concluida():
+    # "a" seria pulada pelo perfil (nota 0.9 >= 0.8), mas foi concluída: fica no histórico
+    trilha = gerar_trilha(entrada(diagnostico={"a": 0.9}, concluidas=["a"]), EMENTA, PERFIS)
+    assert trilha.etapas[0].competencia_id == "a" and trilha.etapas[0].concluida
+
+
+def test_concluida_fora_da_ementa_e_recusada():
+    with pytest.raises(CompetenciaInexistente):
+        gerar_trilha(entrada(concluidas=["z"]), EMENTA, PERFIS)
+
+
+def test_justificativas_so_para_o_que_falta(monkeypatch):
+    prompts = []
+
+    def llm_falso(prompt, **kwargs):
+        prompts.append(prompt)
+        return "1. Frase B.\n2. Frase C.\n3. Frase D."
+
+    monkeypatch.setattr(justificar, "chamar_llm", llm_falso)
+    justificada = justificar_trilha(gerar_trilha(entrada(concluidas=["a"]), EMENTA, PERFIS), {})
+    assert "1. B" in prompts[0] and "A (nota" not in prompts[0]  # a concluída não vai ao LLM
+    assert [(e.competencia_id, e.justificativa, e.origem_justificativa) for e in justificada.etapas] == [
+        ("a", "Competência já concluída.", None), ("b", "Frase B.", "LLM"), ("c", "Frase C.", "LLM"),
+        ("d", "Frase D.", "LLM")]
+    assert justificada.falha_llm is None
+
+
+def test_trilha_toda_concluida_nao_chama_o_llm(monkeypatch):
+    monkeypatch.setattr(justificar, "chamar_llm", lambda *a, **k: pytest.fail("não devia chamar o LLM"))
+    trilha = gerar_trilha(entrada(concluidas=["a", "b", "c", "d"]), EMENTA, PERFIS)
+    assert justificar_trilha(trilha, {}) == trilha
+
+
 # --- justificativas (llm_client mockado) ---
 
 def test_justificativas_usam_um_unico_prompt(monkeypatch):

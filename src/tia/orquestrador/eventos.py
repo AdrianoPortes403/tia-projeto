@@ -6,11 +6,14 @@ id devolve o resultado gravado (repetido=True), sem chamar o Tutor nem o
 Planejador de novo. Se o processamento falha, a reserva é desfeita e o
 evento pode ser reenviado.
 
-    resposta:    repassa a resposta ao Tutor (tutor.responder). Se a sessão
-                 concluiu, avalia R1 (conclusão); senão, R2 (queda). Só grava
-                 decisão quando uma regra dispara (não registra "nenhuma" a cada resposta);
+    resposta:    repassa a resposta ao Tutor (tutor.responder; sessão pausada é
+                 recusada). Se a sessão concluiu: sendo de reforço, retoma a
+                 sessão original (sem zerar); senão, avalia R1 (conclusão). Se
+                 não concluiu, avalia R2 (queda). Só grava decisão quando algo
+                 acontece (não registra "nenhuma" a cada resposta);
     conclusao:   confere no banco e avalia R1; grava a decisão, mesmo "nenhuma";
-    inatividade: confere pelo Relatório e avalia R3; grava a decisão, mesmo "nenhuma".
+    inatividade: avalia R3 só para este aluno (o mesmo que a verificação
+                 agendada faz para todos); grava a decisão, mesmo "nenhuma".
 
 Não é executável sozinho; demonstração:
     python -m tia.orquestrador --demo
@@ -22,6 +25,7 @@ Pré-requisitos:
 from datetime import datetime
 
 from tia.agentes import tutor
+from tia.agentes.planejador.planejar import carregar_ementa
 from tia.agentes.relatorio import indicadores
 from tia.agentes.relatorio.repositorio import ler_dados_aluno
 from tia.agentes.tutor.modelos import RespostaAluno
@@ -40,11 +44,13 @@ def _ja_avancou(aluno_id: str, competencia_id: str) -> bool:
 def _avaliar_queda(aluno_id: str, competencia_id: str | None, sessao_id: str) -> regras.Avaliacao:
     dados = ler_dados_aluno(aluno_id)
     reforcos = repositorio.listar_decisoes(aluno_id, "reforcar")
-    desde = None
-    if reforcos:
-        desde = sum(r["ts"] > reforcos[-1]["ts"] for r in dados.respostas)
-    return regras.regra_queda(indicadores.tendencia(dados.respostas), competencia_id, desde, sessao_id,
-                              any(r["sessao_id"] == sessao_id for r in reforcos))
+    desde = sum(r["ts"] > reforcos[-1]["ts"] for r in dados.respostas) if reforcos else None
+    ativo = repositorio.reforco_ativo(aluno_id)
+    return regras.regra_queda(
+        indicadores.tendencia(dados.respostas), competencia_id, desde, sessao_id,
+        sessao_ja_reforcada=any(r["sessao_id"] == sessao_id for r in reforcos),
+        em_reforco=ativo is not None and ativo["sessao_reforco_id"] == sessao_id,
+        prerequisito=regras.prerequisito_direto(competencia_id, carregar_ementa()) if competencia_id else None)
 
 
 def _competencia_da_sessao(aluno_id: str, sessao_id: str) -> str | None:
@@ -60,24 +66,30 @@ def _despachar(aluno_id: str, evento: EventoTutor, agora: datetime) -> Resultado
         feedback = tutor.responder(RespostaAluno(sessao_id=evento.sessao_id, aluno_id=aluno_id,
                                                  item_id=evento.item_id, indice_escolhido=evento.indice_escolhido))
         if feedback.concluida:
-            avaliacao = regras.regra_conclusao(competencia, tutor.repositorio.competencias_concluidas(aluno_id),
-                                               _ja_avancou(aluno_id, competencia))
+            retomada = fluxo.concluir_reforco(aluno_id, evento.sessao_id, evento.evento_id, agora)
+            if retomada is not None:
+                decisoes.append(retomada)
+            else:
+                avaliacao = regras.regra_conclusao(competencia, tutor.repositorio.competencias_concluidas(aluno_id),
+                                                   _ja_avancou(aluno_id, competencia))
+                if avaliacao.dispara:
+                    decisoes.append(fluxo.aplicar(aluno_id, avaliacao, evento.evento_id, agora))
         else:
             avaliacao = _avaliar_queda(aluno_id, competencia, evento.sessao_id)
-        if avaliacao.dispara:
-            decisoes.append(fluxo.replanejar(aluno_id, avaliacao, evento.evento_id, agora))
+            if avaliacao.dispara:
+                decisoes.append(fluxo.aplicar(aluno_id, avaliacao, evento.evento_id, agora))
     elif evento.tipo == "conclusao":
         competencia = evento.competencia_id or _competencia_da_sessao(aluno_id, evento.sessao_id)
         if competencia is None:
             raise tutor.SessaoInexistente("Sessão não encontrada para este aluno.")
         avaliacao = regras.regra_conclusao(competencia, tutor.repositorio.competencias_concluidas(aluno_id),
                                            _ja_avancou(aluno_id, competencia))
-        decisoes.append(fluxo.replanejar(aluno_id, avaliacao, evento.evento_id, agora))
+        decisoes.append(fluxo.aplicar(aluno_id, avaliacao, evento.evento_id, agora))
     else:  # inatividade
         avaliacao = fluxo.avaliar_inatividade(aluno_id, ler_dados_aluno(aluno_id), agora)
-        decisoes.append(fluxo.replanejar(aluno_id, avaliacao, evento.evento_id, agora))
+        decisoes.append(fluxo.aplicar(aluno_id, avaliacao, evento.evento_id, agora))
     return ResultadoEvento(evento_id=evento.evento_id, tipo=evento.tipo, feedback=feedback, decisoes=decisoes,
-                           proxima=fluxo.proxima(aluno_id, agora))
+                           avisos=[d.aviso for d in decisoes if d.aviso], proxima=fluxo.proxima(aluno_id, agora))
 
 
 def processar_evento(aluno_id: str, evento: EventoTutor, agora: datetime | None = None) -> ResultadoEvento:
