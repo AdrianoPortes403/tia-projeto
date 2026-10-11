@@ -4,7 +4,9 @@ Pedidos sem login na auditoria, agregados (EAP 1.4.6, etapa 2).
 Sem limite, cada pedido sem sessão (401) gravaria uma linha de auditoria, e
 qualquer um poderia encher a auditoria. Aqui os pedidos são contados em
 auth_anonimos por origem (IP), janela fixa de AUTH_ANONIMOS_JANELA_MINUTOS e
-tipo (acesso_negado 401, login_bloqueado 429):
+tipo (acesso_negado 401, login_bloqueado 429 e login_falha 401 de senha
+errada, este desde a parte D4: senão muitos IPs diferentes gravariam uma
+linha por tentativa):
 
 - o PRIMEIRO pedido de cada origem na janela vai para a auditoria como antes
   (com a rota ou o login), desde que a janela ainda tenha menos de
@@ -93,10 +95,12 @@ def resumir(agora: datetime | None = None, conexao=None) -> int:
         resumos = 0
         for g in grupos:
             if g["pedidos"] > g["registrados"]:
-                auditoria.registrar(
-                    conexao, None, "resumo_anonimos", f"janela:{g['janela']}", g["tipo"], [], ts=g["ultimo"],
-                    motivo=(f"{g['pedidos']} pedidos de {g['origens']} origem(ns) entre {g['primeiro'][11:16]} e "
-                            f"{g['ultimo'][11:16]}; {g['registrados']} registrado(s) um a um, os demais só contados"))
+                motivo = (f"{g['pedidos']} pedidos de {g['origens']} origem(ns) entre {g['primeiro'][11:16]} e "
+                          f"{g['ultimo'][11:16]}; {g['registrados']} registrado(s) um a um, os demais só contados")
+                if g["tipo"] == "login_falha":
+                    motivo += f"; {_logins_na_janela(conexao, g['janela'])} login(s) diferente(s) tentado(s)"
+                auditoria.registrar(conexao, None, "resumo_anonimos", f"janela:{g['janela']}", g["tipo"], [],
+                                    ts=g["ultimo"], motivo=motivo)
                 resumos += 1
             conexao.execute("UPDATE auth_anonimos SET resumido = 1 WHERE janela = ? AND tipo = ?",
                             (g["janela"], g["tipo"]))
@@ -106,6 +110,14 @@ def resumir(agora: datetime | None = None, conexao=None) -> int:
         if propria:
             conexao.close()
     return resumos
+
+
+def _logins_na_janela(conexao, janela: str) -> int:
+    """Quantos logins diferentes falharam na janela (de auth_tentativas; só o número vai para a auditoria)."""
+    inicio = datetime.fromisoformat(janela)
+    fim = inicio + timedelta(minutes=max(config.AUTH_ANONIMOS_JANELA_MINUTOS, 1))
+    return conexao.execute("SELECT COUNT(DISTINCT login) FROM auth_tentativas WHERE NOT sucesso AND ts >= ? AND ts < ?",
+                           (janela, _texto(fim))).fetchone()[0]
 
 
 def limpar(agora: datetime | None = None, conexao=None) -> int:

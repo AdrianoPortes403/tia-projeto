@@ -88,11 +88,12 @@ def test_arquivos_estaticos(arquivo, tipo):
     assert resposta.text == ler(arquivo)
 
 
-def test_cabecalhos_de_seguranca_so_em_app():
+def test_cabecalhos_de_seguranca_em_app():
     csp = client.get("/app/").headers["content-security-policy"]
     assert "default-src 'self'" in csp and "script-src 'self'" in csp and "unsafe-inline" not in csp
     assert client.get("/app/app.js").headers["x-content-type-options"] == "nosniff"
-    assert "content-security-policy" not in client.get("/health").headers
+    # as respostas da API têm a CSP própria, mais restrita (tests/test_seguranca_lgpd.py confere todas)
+    assert "default-src 'none'" in client.get("/health").headers["content-security-policy"]
 
 
 def test_arquivo_inexistente_404():
@@ -101,7 +102,6 @@ def test_arquivo_inexistente_404():
 
 def test_rotas_da_api_continuam_funcionando():
     assert client.get("/health").json() == {"status": "ok"}
-    assert client.get("/docs").status_code == 200
 
 
 # --- segurança e acessibilidade do front (análise do código) ---

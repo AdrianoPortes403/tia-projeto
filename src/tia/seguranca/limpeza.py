@@ -11,6 +11,7 @@ AUTH_RETENCAO_IP_DIAS (padrão 30, PROVISÓRIO). Cada limpeza que apaga algo
 grava uma linha "limpeza_retencao" na auditoria, com as quantidades.
 
 A API roda a limpeza ao subir e a cada AUTH_LIMPEZA_MINUTOS (tia.api.main).
+A retenção dos dados de estudo (LGPD, seguranca.retencao) reaproveita aplicar().
 Para rodar à mão ou por um agendador (cron, systemd timer), a partir da raiz,
 com o venv ativo:
     python -m tia.seguranca.limpeza
@@ -26,14 +27,22 @@ from tia.core.database import criar_tabelas, obter_conexao
 from tia.seguranca import anonimos, sessoes
 
 
+def aplicar(conexao, agora: datetime) -> dict[str, int]:
+    """Apaga o que passou do prazo na conexão dada, SEM confirmar a transação
+    (quem chama confirma ou desfaz; seguranca.retencao usa isso para simular).
+    Devolve quantas linhas saíram de cada tabela."""
+    removidas = sessoes.limpar(agora, conexao)
+    removidas["pedidos_sem_login"] = anonimos.limpar(agora, conexao)
+    return removidas
+
+
 def limpar(agora: datetime | None = None) -> dict[str, int]:
     """Aplica a retenção numa transação; devolve quantas linhas saíram de cada tabela."""
     agora = agora or datetime.now()
     conexao = obter_conexao()
     try:
         with conexao:
-            removidas = sessoes.limpar(agora, conexao)
-            removidas["pedidos_sem_login"] = anonimos.limpar(agora, conexao)
+            removidas = aplicar(conexao, agora)
             if any(removidas.values()):
                 auditoria.registrar(conexao, None, "limpeza_retencao", None, "sistema", [],
                                     ts=agora.isoformat(timespec="seconds"),

@@ -89,7 +89,7 @@ flowchart LR
 | Agendador da verificação de inatividade (cron/timer na VM) | **Não existe**. O comando e a rota que ele chamará existem (`python -m tia.orquestrador --verificar-inatividade`, `POST /orquestrador/verificar-inatividade`) |
 | Auditoria (R11) | **Real** (tabela `auditoria`, `GET /auditoria/{id}`) |
 | API FastAPI | **Real**, com autenticação e papéis (ver "Segurança") |
-| Autenticação e papéis (1.4.6, etapas 1 e 2) | **Real**: login local, sessão no servidor (inatividade e limite absoluto), anti-CSRF, papéis aluno/docente/admin, auditoria com o usuário, política e troca obrigatória de senha, pedidos sem login agregados, retenção e limpeza. Login único do EBAULA pendente |
+| Segurança e LGPD (1.4.6) | **Real**: login local, sessão no servidor (inatividade e limite absoluto), anti-CSRF, papéis aluno/docente/admin, auditoria com o usuário, política e troca obrigatória de senha, recusas agregadas, retenção (PROVISÓRIA), direitos do titular, cabeçalhos em todas as respostas, importação em lote. Login único do EBAULA pendente |
 | Web standalone (1.4.4, `src/tia/web/`, em `/app`) | **Real**, com login e com visual PROVISÓRIO (ver "Web standalone" abaixo) |
 | Painel do docente/instituição (1.4.5, `src/tia/web/static/painel/`, em `/app/painel`) | **Real**, com login (só docente) e com visual PROVISÓRIO (ver "Painel do docente" abaixo). A pasta `dashboard/` da raiz ficou vazia |
 | Plug-in EBAULA (`plugin-ebaula/`) | **Não existe** |
@@ -209,7 +209,7 @@ não passa por HTTP e grava a auditoria com o papel `sistema`.
 - `auditoria.motivo`: motivo de cada decisão.
 - Segurança (1.4.6): `usuarios`, `auth_sessoes`, `auth_tentativas`, `auditoria.usuario_id` e
   `auditoria.usuario_papel` (etapa 1); `usuarios.trocar_senha`, `auth_sessoes.ultimo_uso` e `auth_anonimos`
-  (etapa 2).
+  (etapa 1b); `auditoria.anonimizada` (LGPD).
 
 ## Limitações conhecidas
 
@@ -390,7 +390,7 @@ Pacote `src/tia/seguranca/`, rotas em `tia.api.rotas_auth`. Só biblioteca padr�
 | Pedidos sem login | `seguranca.anonimos`: os 401 de quem não tem sessão e os 429 de login bloqueado são contados em `auth_anonimos` por origem (IP), janela fixa de `AUTH_ANONIMOS_JANELA_MINUTOS` (10) e tipo. Só o primeiro de cada origem na janela vai para a auditoria, e no máximo `AUTH_ANONIMOS_MAX_ORIGENS` (50) origens por janela. Fechada a janela, uma linha `resumo_anonimos` grava o total de pedidos e de origens e quantos foram registrados um a um. Recusas de quem está logado (403) continuam uma a uma |
 | Retenção e limpeza | `seguranca.limpeza`: apaga as sessões vencidas e, depois de `AUTH_RETENCAO_IP_DIAS` (30, PROVISÓRIO), as tentativas e as contagens de pedidos sem login, as únicas tabelas com IP. O IP nunca vai para a auditoria. A API limpa ao subir e a cada `AUTH_LIMPEZA_MINUTOS` (60; 0 desliga); também por `python -m tia.seguranca.limpeza` (cron). Cada limpeza que apaga algo grava `limpeza_retencao` com as quantidades |
 | Autorização | dependências de `seguranca.acesso`: `usuario_atual` (401 sem sessão; 403 sem anti-CSRF), `exigir_papel`, `acesso_ao_aluno` (`{aluno_id}` do caminho) e `conferir_aluno` (`aluno_id` do corpo). Toda recusa responde com mensagem clara e grava `acesso_negado` com a rota |
-| Auditoria | colunas `usuario_id` e `usuario_papel` em toda linha: o usuário da sessão (`core.auditoria.USUARIO_ATUAL`, por requisição); `sistema` fora de requisição (comandos, agendador); `anonimo` em login recusado e 401; `sem_login` no modo de desenvolvimento. Tipos novos: `login`, `login_falha`, `login_bloqueado`, `logout`, `acesso_negado`, `gestao_usuario`, `resumo_anonimos`, `limpeza_retencao`. Nunca a senha; o login digitado só entra se tiver o formato de código (um nome digitado por engano vira "fora do formato") |
+| Auditoria | colunas `usuario_id` e `usuario_papel` em toda linha: o usuário da sessão (`core.auditoria.USUARIO_ATUAL`, por requisição); `sistema` fora de requisição (comandos, agendador); `anonimo` em login recusado e 401; `sem_login` no modo de desenvolvimento. Tipos novos: `login`, `login_falha`, `login_bloqueado`, `logout`, `acesso_negado`, `gestao_usuario`, `resumo_anonimos`, `limpeza_retencao`, `retencao`, `direito_titular`. Coluna `anonimizada`: linha cujos códigos a retenção já trocou por `[anonimizado]`. Nunca a senha; o login digitado só entra se tiver o formato de código (um nome digitado por engano vira "fora do formato") |
 
 ### Quem pode chamar o quê
 
@@ -403,7 +403,8 @@ Pacote `src/tia/seguranca/`, rotas em `tia.api.rotas_auth`. Só biblioteca padr�
 | `GET /conteudo/ementa \| perfis` | sim | sim | sim | 401 |
 | `/admin/usuarios` | 403 | 403 | sim | 401 |
 | `POST /auth/senha`, `POST /auth/logout` | sim | sim | sim | 401 |
-| `/auth/login`, `/auth/eu`, `/health`, `/app/*` (arquivos estáticos), `/docs` | públicas | | | |
+| `/auth/login`, `/auth/eu`, `/health`, `/app/*` (arquivos estáticos) | públicas | | | |
+| `/docs`, `/openapi.json` | só com `API_DOCS=1` (padrão em `TIA_AMBIENTE=desenvolvimento`); em produção, 404 | | | |
 
 O admin só gerencia usuários: não vê dados de aluno nem o painel (minimização, R08).
 
@@ -428,12 +429,29 @@ escrever a classe, registrá-la em `PROVEDORES` e usar `AUTH_PROVEDOR=<nome>`. O
 
 ### Modo de desenvolvimento
 
-`TIA_AUTH=desligada`: nenhuma rota pede login, a auditoria grava `sem_login` e as duas telas mostram
+`TIA_AUTH=desligada` (exige `TIA_AMBIENTE=desenvolvimento`; em produção a API não sobe): nenhuma rota pede
+login, a auditoria grava `sem_login` e as duas telas mostram
 "Modo de desenvolvimento: autenticação desligada". **Padrão: ligada.** Os testes que verificam os agentes
 pelas rotas usam esse modo (fixture `auth_desligada` no `conftest`); os de segurança (`test_seguranca.py`
 e `test_seguranca_etapa2.py`) ligam a autenticação. `python -m tia.web.dados_demo` e `python -m tia.web.dados_painel` criam o aluno
 DEMO-W01 e o docente DEMO-DOCENTE com uma senha de demonstração **fictícia e pública**, impressa pelo
 próprio comando. Só serve para a máquina de desenvolvimento.
+
+### LGPD e segurança geral (etapa 2 de 2)
+
+Detalhes, inventário dos dados pessoais, bases legais propostas e pontos de rede em `docs/seguranca/lgpd.md`;
+lista de conferência da VM em `docs/seguranca/implantacao.md`.
+
+| Peça | Implementação |
+|---|---|
+| Retenção (C1) | `python -m tia.seguranca.retencao --simular\|--aplicar`. Prazos PROVISÓRIOS em `core/config.py`: `RETENCAO_FEEDBACK_TEXTO_DIAS` (180: textos do feedback e eventos guardados), `RETENCAO_DIALOGO_DIAS` (180: diálogo sem texto e sem aluno), `RETENCAO_RESPOSTAS_DIAS` (365: respostas, feedbacks, sessões, decisões e reforços desvinculados do aluno), `RETENCAO_AUDITORIA_DIAS` (730: auditoria **nunca apagada**, só os códigos anonimizados) e `RETENCAO_COPIAS_DIAS` (30). Reaproveita `seguranca.limpeza.aplicar` (sessões e IPs). A simulação roda tudo numa transação e a desfaz; aplicar copia o banco antes (`COPIAS_DIR`, 700/600) e grava `retencao` na auditoria |
+| Anonimizar | `seguranca.anonimizacao`: `aluno_id`, `sessao_id` e `evento_id` viram NULL e os textos livres também; na auditoria, os códigos de aluno e de usuário (colunas, `login=...`, rotas, motivos) viram `[anonimizado]`. As linhas sem dono saem da lista de revisão e dos indicadores por aluno do Agente 3, mas continuam nas contagens por item, origem e veto |
+| Direitos do titular (C2) | `python -m tia.seguranca.titular exportar --aluno ID` (JSON, 600, sem dados de outras pessoas) e `eliminar --aluno ID` (confirmação explícita, cópia do banco, apaga cadastro/matrícula/trilha/sessões/eventos, desvincula e apaga textos, anonimiza a auditoria, desativa o usuário; registro `direito_titular` sem o código, com protocolo) |
+| Minimização (C3) | erro 422 sem o valor enviado (handler em `tia.api.main`); log do feedback barrado só com o tipo do motivo; telemetria do Chroma desligada (`rag.retrieve.abrir_cliente`); revisão sem linhas anonimizadas; testes de rotas agregadas sem códigos e do prompt da narrativa da turma |
+| Cabeçalhos (D1) | middleware em `tia.api.main`: CSP, `X-Content-Type-Options: nosniff` e `Referrer-Policy: no-referrer` em toda resposta (CSP de `tia.web` em `/app`; `default-src 'none'` e `Cache-Control: no-store` na API) |
+| Produção (D1) | `TIA_AMBIENTE=producao` (padrão): `/docs` desligado e a API não sobe com `TIA_AUTH=desligada`, cookie sem `Secure` ou `OLLAMA_URL` fora da máquina ou da rede interna (`config.problemas_de_configuracao`) |
+| Login recusado (D4) | `login_falha` também agregado por origem e janela (`seguranca.anonimos`); o resumo conta os logins diferentes; o bloqueio continua contando cada falha |
+| Importação em lote (E6) | `python -m tia.seguranca.usuarios importar --arquivo usuarios.csv`: confere tudo antes (aborta sem criar nada), senhas temporárias aleatórias (`secrets`) só no arquivo de saída (600, nunca sobrescreve), troca obrigatória no primeiro acesso |
 
 ### Pendências
 
@@ -443,9 +461,8 @@ próprio comando. Só serve para a máquina de desenvolvimento.
 - Docente restrito às próprias turmas (não existe turma no banco).
 - Tela de administração de usuários e tela de troca voluntária de senha (hoje: comando, `/admin/usuarios` e
   `POST /auth/senha`).
-- `/docs` e `/openapi.json` públicos: desligar ou proteger na VM.
-- HTTPS na VM (o cookie `Secure` depende disso), cabeçalhos de segurança também na API (hoje só em `/app`).
-- Política de senha e prazo de retenção da instituição (valores atuais PROVISÓRIOS).
-- `login_falha` continua uma linha por falha: o bloqueio por IP limita cada origem, mas muitas origens
-  diferentes (botnet) ainda geram muitas linhas. Agregar também, se aparecer na VM.
+- HTTPS na VM (o cookie `Secure` depende disso) e a lista de conferência de `docs/seguranca/implantacao.md`.
+- Política de senha, prazos de retenção e bases legais da instituição (valores atuais PROVISÓRIOS; jurídico/DEP).
+- Evento de fim do vínculo (fim do curso) que dispara a eliminação do cadastro e da trilha.
+- `pip-audit` não disponível na máquina de desenvolvimento: varredura de dependências na VM.
 

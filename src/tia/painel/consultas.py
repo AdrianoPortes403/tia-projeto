@@ -212,7 +212,9 @@ def listar_revisao(situacao: str = "a_revisar", origem: str | None = None, pagin
     com o texto ORIGINAL do Tutor, a correção do docente e a situação. Mostra
     códigos e textos: a consulta é auditada. Só para as telas do docente; as
     visões agregadas nunca leem estes textos (R08)."""
-    condicoes, parametros = [_FILTRO_SITUACAO[situacao]], []
+    # textos já anonimizados pela retenção ou pela eliminação a pedido do titular
+    # (sem aluno ou sem texto) não têm o que revisar; continuam só nas contagens do resumo
+    condicoes, parametros = [_FILTRO_SITUACAO[situacao], "x.aluno_id IS NOT NULL AND x.resposta IS NOT NULL"], []
     for campo, valor in (("tipo", tipo), ("origem", origem), ("competencia_id", competencia_id)):
         if valor is not None:
             condicoes.append(f"x.{campo} = ?")

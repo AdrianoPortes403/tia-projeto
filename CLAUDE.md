@@ -33,7 +33,7 @@ Ollama (`qwen3:*` para chat, `nomic-embed-text` para embeddings).
 - `src/tia/web/`: aplicação web standalone do aluno (`/app`) e painel do docente/instituição
   (`/app/painel`), em HTML/CSS/JS puros servidos pelo FastAPI. As pastas `web/` e `dashboard/` da raiz
   ficaram vazias. `src/tia/painel/`: consultas somente de leitura do painel. `plugin-ebaula/`: por último.
-- `docs/`: referência, arquitetura, seguranca-lgpd, evidencias. `infra/`: scripts de ambiente.
+- `docs/`: referência, arquitetura, seguranca (LGPD e implantação), evidencias. `infra/`: scripts de ambiente.
 
 ## Quem faz o quê no projeto real
 
@@ -69,10 +69,12 @@ Sempre ativar o venv da raiz: `source venv/bin/activate`.
 
 ## Pendências conhecidas
 
-- Pacote 1.4.6 (segurança/LGPD): etapas 1 e 2 feitas (login, sessão com inatividade e limite, papéis,
-  anti-CSRF, auditoria com usuário, política e troca obrigatória de senha, pedidos sem login agregados,
-  retenção e limpeza; `src/tia/seguranca/`). Login único do EBAULA pendente; implantação e impacto do
-  `SameSite=Strict` no iframe do EBAULA em `docs/seguranca/implantacao.md`.
+- Pacote 1.4.6 (segurança/LGPD): feito (login, sessão, papéis, anti-CSRF, auditoria com usuário, política
+  e troca de senha, agregação de 401/429/falhas, retenção, direitos do titular, cabeçalhos, importação em
+  lote; `src/tia/seguranca/`). Login único do EBAULA pendente. LGPD em `docs/seguranca/lgpd.md` (prazos e
+  bases legais PROVISÓRIOS, a validar com o jurídico); VM e EBAULA em `docs/seguranca/implantacao.md`.
+  `TIA_AMBIENTE=producao` é o padrão: para `/docs` ou `TIA_AUTH=desligada` na máquina de desenvolvimento,
+  use `TIA_AMBIENTE=desenvolvimento` no `.env`.
   Testes de rota rodam com `TIA_AUTH=desligada` (conftest); os de segurança ligam a autenticação.
 - Material real do curso depende da Pessoa 4.
 - VM institucional ainda não disponível; testes feitos em notebook e em máquina com RTX 3050.

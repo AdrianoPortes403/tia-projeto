@@ -165,9 +165,13 @@ def test_login_recusado_com_mensagem_unica(pessoas, monkeypatch):
     assert errada.json() == inexistente.json() == {"detail": "Usuário ou senha incorretos."}  # não revela quem existe
     assert pausas == [0.5, 0.5]  # atraso em cada falha
     assert "tia_sessao" not in errada.headers.get("set-cookie", "")
+    # desde a D4, a falha é agregada por origem e janela: a primeira vai para a auditoria, a segunda é contada
     falhas = registros("login_falha")
-    assert [r["motivo"] for r in falhas] == ["login=DOC-S01", "login=NAO-EXISTE"]
+    assert len(falhas) == 1 and falhas[0]["motivo"].startswith("login=DOC-S01;")
     assert all(r["usuario_id"] is None and r["usuario_papel"] == "anonimo" for r in falhas)
+    conexao = obter_conexao()
+    assert conexao.execute("SELECT pedidos FROM auth_anonimos WHERE tipo = 'login_falha'").fetchone()[0] == 2
+    conexao.close()
 
 
 def test_login_exige_cabecalho_anti_csrf(pessoas):
@@ -176,7 +180,7 @@ def test_login_exige_cabecalho_anti_csrf(pessoas):
 
 def test_nome_digitado_no_login_nao_vai_para_a_auditoria(pessoas):
     cliente().post("/auth/login", json={"login": "Maria da Silva", "senha": SENHA}, headers=CSRF_LOGIN)
-    assert registros("login_falha")[-1]["motivo"] == "login=(fora do formato de código)"
+    assert registros("login_falha")[-1]["motivo"].startswith("login=(fora do formato de código);")
 
 
 def test_sessao_expira(pessoas, monkeypatch):

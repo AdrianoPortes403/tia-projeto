@@ -167,7 +167,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
-    logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)  # ruído da telemetria do Chroma
 
     perguntas = recuperar(carregar_perguntas(args.perguntas))
     genericos = termos_genericos()

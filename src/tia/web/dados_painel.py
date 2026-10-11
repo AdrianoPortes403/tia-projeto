@@ -225,7 +225,6 @@ def criar_turma(agora: datetime | None = None, semente: int = 7) -> list[str]:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.ERROR, format="%(levelname)s %(name)s: %(message)s")
-    logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)
     sem_llm()
     inicio = time.perf_counter()
     print(f"Banco: {database.DB_PATH}")

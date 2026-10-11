@@ -240,7 +240,6 @@ if __name__ == "__main__":
                         help="avalia a inatividade (R3) de todos os alunos do banco configurado")
     args = parser.parse_args()
     logging.basicConfig(level=logging.ERROR, format="%(levelname)s %(name)s: %(message)s")
-    logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)
 
     if args.verificar_inatividade:
         verificar_inatividade_no_banco()

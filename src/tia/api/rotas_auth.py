@@ -5,7 +5,8 @@ Rotas de autenticação (EAP 1.4.6) e de gestão de usuários (papel admin).
                          Secure configurável) e devolve o usuário e o token anti-CSRF.
                          Exige o cabeçalho X-CSRF-Token (qualquer valor: um site de
                          terceiros não consegue enviá-lo). Limite de falhas por usuário
-                         e por IP (429), atraso em cada falha; tudo vai para a auditoria
+                         e por IP (429), atraso em cada falha; falha e bloqueio vão para
+                         a auditoria agregados por origem e janela (seguranca.anonimos)
     POST /auth/logout    encerra a sessão (exige o token anti-CSRF da sessão)
     POST /auth/senha     {senha_atual, nova_senha}: o próprio usuário troca a senha
                          (obrigatório no primeiro acesso com senha temporária); abre
@@ -142,7 +143,9 @@ def entrar(dados: Login, request: Request, response: Response) -> Situacao:
     sessoes.registrar_tentativa(dados.login, ip, usuario is not None)
     if usuario is None:
         time.sleep(config.AUTH_ATRASO_SEGUNDOS)
-        _auditar("login_falha", "401", f"login={login}")
+        # agregado como os pedidos sem login (D4): muitas origens não enchem a auditoria;
+        # o bloqueio continua contando cada falha em auth_tentativas
+        anonimos.registrar("login_falha", ip, None, "401", f"login={login}")
         raise HTTPException(status_code=401, detail="Usuário ou senha incorretos.")
     csrf = _abrir_sessao(response, usuario.id)
     auditoria.definir_usuario(usuario.id, usuario.papel)

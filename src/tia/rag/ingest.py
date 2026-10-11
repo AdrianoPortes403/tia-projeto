@@ -19,9 +19,9 @@ Pré-requisitos:
 
 import os
 import glob
-import chromadb
 
 from tia.core.llm_client import gerar_embedding
+from tia.rag.retrieve import abrir_cliente
 from tia.core.config import (
     MATERIAIS_DIR, CHROMA_DIR, COLLECTION_NAME, CHUNK_SIZE, CHUNK_OVERLAP,
 )
@@ -58,7 +58,7 @@ def indexar_materiais():
               f"Coloque o material do curso lá antes de rodar de novo.")
         return
 
-    cliente = chromadb.PersistentClient(path=CHROMA_DIR)
+    cliente = abrir_cliente()  # telemetria do Chroma desligada (R07)
     colecao = cliente.get_or_create_collection(COLLECTION_NAME)
 
     total_chunks = 0

@@ -79,6 +79,8 @@
     gestao_usuario: "gestão de usuário",
     resumo_anonimos: "resumo de pedidos sem login",
     limpeza_retencao: "limpeza por prazo de retenção",
+    retencao: "retenção de dados (LGPD)",
+    direito_titular: "direito do titular (LGPD)",
   };
 
   const estado = {

@@ -288,7 +288,9 @@ def gerar_feedback(item: dict, indice_escolhido: int, materiais: list[str],
         return padrao
     motivo = verificar_explicacao(explicacao, item, indice_escolhido, trechos)
     if motivo:
-        log.info("Guarda descartou o feedback do item %s (%s); usando explicação do item.", item["id"], motivo)
+        # só o tipo do motivo: o resto traz trecho do texto gerado (fica no banco, para a revisão docente)
+        log.info("Guarda descartou o feedback do item %s (%s); usando explicação do item.", item["id"],
+                 motivo.split(":")[0])
         return ResultadoFeedback(veredito, item["explicacao"], [], "guarda",
                                  motivo_descarte=motivo, explicacao_descartada=explicacao)
     fontes = list(dict.fromkeys(t["fonte"] for t in trechos))  # sem repetir

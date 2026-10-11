@@ -14,9 +14,17 @@ Pré-requisitos:
 """
 
 import chromadb
+from chromadb.config import Settings
 
 from tia.core.llm_client import gerar_embedding
 from tia.core.config import CHROMA_DIR, COLLECTION_NAME
+
+
+def abrir_cliente() -> chromadb.ClientAPI:
+    """Cliente do Chroma no disco local, com a telemetria DESLIGADA: por
+    padrão o chromadb envia eventos de uso para um servidor externo
+    (us.i.posthog.com), o que o R07 e a LGPD não permitem."""
+    return chromadb.PersistentClient(path=CHROMA_DIR, settings=Settings(anonymized_telemetry=False))
 
 
 def buscar_contexto(pergunta: str, k: int = 3, fontes: list[str] | None = None) -> list[dict]:
@@ -31,7 +39,7 @@ def buscar_contexto(pergunta: str, k: int = 3, fontes: list[str] | None = None) 
     """
     if fontes is not None and not fontes:
         return []
-    cliente = chromadb.PersistentClient(path=CHROMA_DIR)
+    cliente = abrir_cliente()
     colecao = cliente.get_or_create_collection(COLLECTION_NAME)
 
     embedding_pergunta = gerar_embedding(pergunta)
@@ -56,7 +64,7 @@ def buscar_contexto(pergunta: str, k: int = 3, fontes: list[str] | None = None) 
 def listar_trechos() -> list[dict]:
     """Todos os trechos indexados (texto e fonte), sem busca. Usado para
     estatísticas sobre o índice, como os termos genéricos do diálogo do Tutor."""
-    cliente = chromadb.PersistentClient(path=CHROMA_DIR)
+    cliente = abrir_cliente()
     colecao = cliente.get_or_create_collection(COLLECTION_NAME)
     resultado = colecao.get(include=["documents", "metadatas"])
     return [{"texto": texto, "fonte": meta.get("fonte", "desconhecida")}

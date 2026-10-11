@@ -172,7 +172,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
-    logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)  # ruído da telemetria do Chroma
 
     hoje = date.today()
     saida = Path(args.saida) if args.saida else PASTA_EVIDENCIAS / f"tutor_feedback_{hoje.isoformat()}.md"

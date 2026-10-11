@@ -69,21 +69,96 @@ Nada disso foi implementado ainda: a escolha depende das respostas abaixo.
 
 ## 5. Lista de conferência para subir na VM
 
-- HTTPS com certificado válido: `AUTH_COOKIE_SEGURO=1` (padrão) depende disso fora de `localhost`.
-- `TIA_AUTH` ligada (padrão). **Nunca** `desligada` com dados reais.
-- Primeiro admin pelo comando, no servidor:
-  `python -m tia.seguranca.usuarios criar --id <código> --papel admin`. A senha é pedida sem eco e é
-  temporária: precisa ser trocada no primeiro acesso.
+Caminhos de exemplo: código em `/srv/tia/app`, dados em `/srv/tia/data`, usuário de serviço `tia`. A
+confirmar com o Tiago.
+
+### 5.1 Variáveis obrigatórias (`/srv/tia/app/.env`, permissão 600, dono `tia`)
+
+| Variável | Valor na VM | Por quê |
+|---|---|---|
+| `TIA_AMBIENTE` | `producao` (padrão) | a API recusa subir com configuração insegura; `/docs` desligado |
+| `TIA_AUTH` | `ligada` (padrão) | **nunca** `desligada` com dados reais (em produção, a API nem sobe) |
+| `AUTH_COOKIE_SEGURO` | `1` (padrão) | cookie só por HTTPS (em produção, `0` impede a API de subir) |
+| `API_DOCS` | `0` (padrão em produção) | `/docs` e `/openapi.json` respondem 404 |
+| `OLLAMA_URL` | `http://127.0.0.1:11434` | R07; um endereço fora da máquina ou da rede interna impede a API de subir |
+| `DB_PATH`, `CHROMA_DIR`, `COPIAS_DIR` | caminhos absolutos em `/srv/tia/data/...` | fora da pasta do código |
+| `RETENCAO_*`, `AUTH_RETENCAO_IP_DIAS` | os valores aprovados pelo jurídico/DEP | hoje PROVISÓRIOS (`docs/seguranca/lgpd.md`) |
+| `AUTH_SENHA_MINIMA`, `AUTH_SENHAS_COMUNS_EXTRA` | política da instituição, se houver | |
+| `AUTH_SESSAO_INATIVIDADE_MINUTOS`, `AUTH_SESSAO_MAXIMA_MINUTOS` | 30 e 480 (padrão), ou o que a Pessoa 4 decidir | |
+
+Conferir com `python -m tia.core.config`: nenhuma linha "ATENÇÃO" pode aparecer.
+
+### 5.2 HTTPS e proxy reverso
+
+- Proxy (nginx ou Caddy) na porta 443, com certificado válido; HTTP (80) só redireciona para HTTPS. O
+  cabeçalho `Strict-Transport-Security` é posto no proxy.
+- O uvicorn escuta só em `127.0.0.1:8000`, sem `--reload`, com `--proxy-headers --forwarded-allow-ips=127.0.0.1`.
+  Sem isso, o IP visto pela API é o do proxy: todos os alunos parecem uma única origem, o bloqueio por IP
+  pega todo mundo junto e a agregação dos pedidos sem login junta todos numa linha.
+- `--no-access-log` no uvicorn: o log de acesso dele grava IP e rotas com o código do aluno. O log do proxy
+  também grava IP: retenção curta (por exemplo 30 dias), ou formato sem IP.
+
+### 5.3 Usuário do serviço, permissões e systemd
+
+- Usuário `tia` sem login (`useradd --system --shell /usr/sbin/nologin tia`). O código é do root, só para
+  leitura; `/srv/tia/data` é do `tia`, com permissão 700.
+- O banco e o `.env` ficam com permissão 600. As cópias (`COPIAS_DIR`) e os arquivos de exportação e de
+  senhas temporárias já são criados com 700 e 600 pelo próprio TIA.
+- Exemplo de unidade (`/etc/systemd/system/tia.service`):
+
+```ini
+[Service]
+User=tia
+Group=tia
+WorkingDirectory=/srv/tia/app
+EnvironmentFile=/srv/tia/app/.env
+ExecStart=/srv/tia/app/venv/bin/uvicorn tia.api.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1 --no-access-log
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/srv/tia/data
+Restart=on-failure
+```
+
+### 5.4 Ollama e firewall
+
+- O Ollama escuta só em `127.0.0.1:11434` (`OLLAMA_HOST=127.0.0.1:11434`, que é o padrão). **Nunca**
+  `0.0.0.0`: a API do Ollama não tem autenticação.
+- Firewall: entrada só na 443 (e na 22 para administração, só da rede interna). A 11434 e a 8000 ficam
+  fechadas para fora.
+- Se o Ollama ficar em outra máquina da rede interna (máquina com GPU), libere a 11434 só para o IP da VM do
+  TIA.
+
+### 5.5 Backup, retenção e logs
+
+- Backup diário do banco a quente (`sqlite3 /srv/tia/data/tia.db ".backup /caminho/tia-AAAAMMDD.db"`) para
+  outro disco, com permissão 600, criptografado se sair da VM. Testar a restauração antes do piloto.
+- Os backups guardam dados pessoais, inclusive os que a retenção ou a eliminação já apagaram do banco. O
+  prazo dos backups precisa estar na política da instituição (pergunta ao jurídico em `lgpd.md`). As cópias
+  automáticas de `COPIAS_DIR` saem após `RETENCAO_COPIAS_DIAS`.
+- Cron diário: `python -m tia.seguranca.retencao --aplicar`, como usuário `tia` e com o venv. A limpeza de
+  sessões e IPs já roda dentro da API, a cada `AUTH_LIMPEZA_MINUTOS`.
+- Logs da aplicação (journald): sem dado pessoal (testado). Defina uma retenção, por exemplo
+  `MaxRetentionSec=30day` em `journald.conf`.
+
+### 5.6 Usuários
+
+- Primeiro admin pelo comando, no servidor: `python -m tia.seguranca.usuarios criar --id <código> --papel
+  admin`. A senha é pedida sem eco, é temporária e precisa ser trocada no primeiro acesso.
+- Turma e docentes: `python -m tia.seguranca.usuarios importar --arquivo usuarios.csv`. O arquivo de senhas
+  temporárias sai com permissão 600: entregue cada senha ao dono e **apague o arquivo**.
 - Não criar os usuários de demonstração (`dados_demo` e `dados_painel`) no banco real: a senha deles é
   fictícia e pública.
-- Retenção: `AUTH_RETENCAO_IP_DIAS` (30, PROVISÓRIO) conforme a decisão de LGPD da instituição. A API limpa
-  sozinha a cada `AUTH_LIMPEZA_MINUTOS` (60). Se a API ficar parada por muito tempo, agendar também
-  `python -m tia.seguranca.limpeza` (cron ou systemd timer).
-- Política de senha: `AUTH_SENHA_MINIMA` e `AUTH_SENHAS_COMUNS_EXTRA` (lista da instituição), se houver.
-- Sessão: `AUTH_SESSAO_INATIVIDADE_MINUTOS` (30) e `AUTH_SESSAO_MAXIMA_MINUTOS` (480).
-- Fechar ou proteger `/docs` e `/openapi.json`, e pôr os cabeçalhos de segurança também nas rotas da API
-  (pendência).
-- Atrás de um proxy reverso, o IP visto pela API é o do proxy. Para os limites por IP valerem, o uvicorn
-  precisa de `--proxy-headers` e `--forwarded-allow-ips` com o endereço do proxy. Sem isso, todos os alunos
-  parecem uma única origem: o bloqueio por IP pega todo mundo junto, e a agregação dos pedidos sem login
-  junta todos numa linha.
+
+### 5.7 Conferência final
+
+- `python -m tia.core.config` não mostra nenhuma "ATENÇÃO".
+- `curl -sI https://<host>/health` traz `Content-Security-Policy`, `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: no-referrer` e `Strict-Transport-Security` (este vem do proxy).
+- `https://<host>/docs` e `/openapi.json` respondem 404.
+- `ss -ltnp` mostra 11434 e 8000 só em `127.0.0.1`.
+- `python -m tia.seguranca.retencao --simular` roda sem erro.
+- `pip-audit` (instalar na VM com o Tiago) sem vulnerabilidade aberta nas dependências
+  (`docs/relatorios/seguranca_lgpd.md`).

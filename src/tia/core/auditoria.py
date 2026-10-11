@@ -31,10 +31,12 @@ from tia.core.database import obter_conexao
 # segurança (1.4.6): login, login_falha, login_bloqueado, logout, acesso_negado
 # (401/403) e gestao_usuario (criar, desativar, redefinir ou trocar senha; nunca
 # a senha); etapa 2: resumo_anonimos (pedidos sem login só contados numa janela,
-# seguranca.anonimos) e limpeza_retencao (linhas apagadas pela retenção)
+# seguranca.anonimos) e limpeza_retencao (linhas apagadas pela retenção);
+# LGPD: retencao (prazos aplicados, seguranca.retencao) e direito_titular
+# (exportação ou eliminação dos dados de um aluno, seguranca.titular)
 TIPOS = ("resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma", "decisao_orquestrador",
          "veto_docente", "consulta_painel", "login", "login_falha", "login_bloqueado", "logout", "acesso_negado",
-         "gestao_usuario", "resumo_anonimos", "limpeza_retencao")
+         "gestao_usuario", "resumo_anonimos", "limpeza_retencao", "retencao", "direito_titular")
 
 # Quem está agindo (1.4.6): (usuario_id, papel), definido por requisição pela
 # segurança (seguranca.acesso). Sem valor (comandos, agendador, testes de
@@ -88,7 +90,7 @@ AGENTE_POR_TIPO = {
     "decisao_orquestrador": "orquestrador", "consulta_painel": "painel",
     "login": "seguranca", "login_falha": "seguranca", "login_bloqueado": "seguranca", "logout": "seguranca",
     "acesso_negado": "seguranca", "gestao_usuario": "seguranca", "resumo_anonimos": "seguranca",
-    "limpeza_retencao": "seguranca",
+    "limpeza_retencao": "seguranca", "retencao": "seguranca", "direito_titular": "seguranca",
 }
 AGENTES = ("orquestrador", "planejador", "tutor", "relatorio", "painel", "seguranca")
 

@@ -113,7 +113,6 @@ if __name__ == "__main__":
     parser.add_argument("--com-llm", action="store_true", help="chama o Ollama (lento em CPU)")
     args = parser.parse_args()
     logging.basicConfig(level=logging.ERROR, format="%(levelname)s %(name)s: %(message)s")
-    logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)
     if not args.com_llm:
         sem_llm()
     inicio = time.perf_counter()

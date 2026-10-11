@@ -59,6 +59,8 @@ COLUNAS_NOVAS_AUDITORIA = {
     "motivo": "TEXT",
     "usuario_id": "TEXT",
     "usuario_papel": "TEXT",
+    # LGPD (1.4.6): linha cujos dados pessoais já foram anonimizados pela retenção
+    "anonimizada": "INTEGER NOT NULL DEFAULT 0",
 }
 
 # Segurança, etapa 2 (1.4.6): senha temporária (troca obrigatória no primeiro

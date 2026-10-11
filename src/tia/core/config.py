@@ -126,7 +126,8 @@ ORQ_INATIVIDADE_REFAZER_DIAS = int(os.getenv("ORQ_INATIVIDADE_REFAZER_DIAS", "14
 
 # --- Segurança: autenticação e papéis (EAP 1.4.6) ---
 # "desligada" = MODO DE DESENVOLVIMENTO: nenhuma rota pede login (testes e demos
-# antigos), com aviso visível nas telas. Padrão: ligada. Nunca desligar com dados reais.
+# antigos), com aviso visível nas telas. Padrão: ligada. Nunca desligar com dados reais
+# (com TIA_AMBIENTE=producao, o padrão, a API nem sobe desligada).
 TIA_AUTH = os.getenv("TIA_AUTH", "ligada").strip().lower()
 AUTH_DESLIGADA = TIA_AUTH in ("desligada", "desligado", "0", "off", "nao", "não")
 # Provedor de autenticação (seguranca.autenticador): "local" (senha com scrypt).
@@ -165,11 +166,57 @@ AUTH_LIMPEZA_MINUTOS = int(os.getenv("AUTH_LIMPEZA_MINUTOS", "60"))
 AUTH_ANONIMOS_JANELA_MINUTOS = int(os.getenv("AUTH_ANONIMOS_JANELA_MINUTOS", "10"))
 AUTH_ANONIMOS_MAX_ORIGENS = int(os.getenv("AUTH_ANONIMOS_MAX_ORIGENS", "50"))
 
+# --- LGPD: retenção (EAP 1.4.6, C1). PROVISÓRIO: validar com o jurídico/DEP ---
+# Prazos em dias, contados da data de cada registro; aplicados por
+# python -m tia.seguranca.retencao --aplicar (docs/seguranca/lgpd.md).
+# Respostas do questionário, sessões, decisões e reforços: desvinculados do aluno
+RETENCAO_RESPOSTAS_DIAS = int(os.getenv("RETENCAO_RESPOSTAS_DIAS", "365"))
+# Diálogo livre: pergunta, resposta e correção apagadas e linha desvinculada do aluno
+RETENCAO_DIALOGO_DIAS = int(os.getenv("RETENCAO_DIALOGO_DIAS", "180"))
+# Textos do feedback das questões (e o resultado guardado dos eventos, que os repete)
+RETENCAO_FEEDBACK_TEXTO_DIAS = int(os.getenv("RETENCAO_FEEDBACK_TEXTO_DIAS", "180"))
+# Auditoria: nunca é apagada; passado o prazo, só os dados pessoais dela são anonimizados
+RETENCAO_AUDITORIA_DIAS = int(os.getenv("RETENCAO_AUDITORIA_DIAS", "730"))
+# Cópias do banco feitas antes da retenção e da eliminação a pedido do titular
+# (guardam os dados apagados: também têm prazo). COPIAS_DIR vazio = pasta
+# "copias" ao lado do banco.
+RETENCAO_COPIAS_DIAS = int(os.getenv("RETENCAO_COPIAS_DIAS", "30"))
+COPIAS_DIR = os.getenv("COPIAS_DIR", "")
+
+# --- Ambiente e API (EAP 1.4.6, D1) ---
+# "producao" (padrão) ou "desenvolvimento". Em produção a API não sobe com
+# configuração insegura (ver problemas_de_configuracao) e /docs fica desligado.
+TIA_AMBIENTE = os.getenv("TIA_AMBIENTE", "producao").strip().lower()
+EM_PRODUCAO = TIA_AMBIENTE != "desenvolvimento"
+# Documentação interativa /docs, /redoc e /openapi.json (padrão: só em desenvolvimento)
+API_DOCS = os.getenv("API_DOCS", "0" if EM_PRODUCAO else "1").lower() in ("1", "true", "sim")
+
 # --- Painel do docente (EAP 1.4.5) ---
 # Alerta de desempenho baixo: taxa de acerto geral abaixo deste valor, desde que o
 # aluno tenha pelo menos PAINEL_MIN_RESPOSTAS respostas. PROVISÓRIO (Pessoa 4).
 PAINEL_DESEMPENHO_BAIXO = float(os.getenv("PAINEL_DESEMPENHO_BAIXO", "0.5"))
 PAINEL_MIN_RESPOSTAS = int(os.getenv("PAINEL_MIN_RESPOSTAS", "5"))
+
+
+def problemas_de_configuracao() -> list[str]:
+    """Configurações inseguras para produção (a API recusa subir com elas
+    quando TIA_AMBIENTE=producao; tia.api.main)."""
+    from ipaddress import ip_address
+    from urllib.parse import urlparse
+
+    problemas = []
+    if AUTH_DESLIGADA:
+        problemas.append("TIA_AUTH=desligada (modo de desenvolvimento) com TIA_AMBIENTE=producao")
+    if not AUTH_COOKIE_SEGURO:
+        problemas.append("AUTH_COOKIE_SEGURO=0: o cookie de sessão iria sem Secure")
+    host = urlparse(OLLAMA_URL).hostname or ""
+    try:
+        local = host == "localhost" or ip_address(host).is_loopback or ip_address(host).is_private
+    except ValueError:
+        local = False
+    if not local:
+        problemas.append(f"OLLAMA_URL aponta para fora da máquina ou da rede interna ({host!r}); R07 exige LLM local")
+    return problemas
 
 
 if __name__ == "__main__":
@@ -188,5 +235,9 @@ if __name__ == "__main__":
                  "AUTH_MAX_FALHAS_USUARIO", "AUTH_MAX_FALHAS_IP", "AUTH_JANELA_MINUTOS", "AUTH_ATRASO_SEGUNDOS",
                  "AUTH_SENHA_MINIMA", "AUTH_SENHA_BLOQUEAR_COMUNS", "AUTH_SENHAS_COMUNS_EXTRA",
                  "AUTH_RETENCAO_IP_DIAS", "AUTH_LIMPEZA_MINUTOS", "AUTH_ANONIMOS_JANELA_MINUTOS",
-                 "AUTH_ANONIMOS_MAX_ORIGENS"):
+                 "AUTH_ANONIMOS_MAX_ORIGENS", "RETENCAO_RESPOSTAS_DIAS", "RETENCAO_DIALOGO_DIAS",
+                 "RETENCAO_FEEDBACK_TEXTO_DIAS", "RETENCAO_AUDITORIA_DIAS", "RETENCAO_COPIAS_DIAS", "COPIAS_DIR",
+                 "TIA_AMBIENTE", "API_DOCS"):
         print(f"{nome} = {globals()[nome]}")
+    for problema in problemas_de_configuracao():
+        print(f"ATENÇÃO: {problema}")

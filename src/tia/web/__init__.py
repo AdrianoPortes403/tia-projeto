@@ -28,7 +28,7 @@ Pré-requisitos:
 
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -47,7 +47,7 @@ CABECALHOS_SEGURANCA = {
 
 
 def montar(app: FastAPI) -> None:
-    """Serve a aplicação em /app e acrescenta os cabeçalhos de segurança às respostas dela."""
+    """Serve a aplicação em /app (os cabeçalhos de segurança são postos por tia.api.main)."""
 
     @app.get(PREFIXO, include_in_schema=False)
     def raiz_app() -> RedirectResponse:
@@ -59,10 +59,4 @@ def montar(app: FastAPI) -> None:
         return RedirectResponse(url=PAINEL + "/")
 
     app.mount(PREFIXO, StaticFiles(directory=PASTA_ESTATICA, html=True), name="web")
-
-    @app.middleware("http")
-    async def cabecalhos_seguranca(request: Request, chamar_proximo):
-        resposta = await chamar_proximo(request)
-        if request.url.path == PREFIXO or request.url.path.startswith(PREFIXO + "/"):
-            resposta.headers.update(CABECALHOS_SEGURANCA)
-        return resposta
+    # os CABECALHOS_SEGURANCA vão nas respostas de /app pelo middleware de tia.api.main

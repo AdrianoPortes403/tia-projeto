@@ -73,7 +73,6 @@ if __name__ == "__main__":
     competencia_id = args.competencia_id
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)  # ruído da telemetria do Chroma
     criar_tabelas()
     if args.dialogo:
         demonstrar_dialogo()

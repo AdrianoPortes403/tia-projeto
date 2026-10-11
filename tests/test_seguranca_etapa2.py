@@ -121,6 +121,7 @@ def test_limpeza_apaga_contagens_de_pedidos_sem_login_fora_da_retencao():
 
 def test_api_limpa_ao_subir(monkeypatch):
     monkeypatch.setattr(config, "AUTH_LIMPEZA_MINUTOS", 60)
+    monkeypatch.setattr(config, "EM_PRODUCAO", False)  # o cookie sem Secure dos testes barraria a subida
     inserir_tentativa(datetime.now() - timedelta(days=config.AUTH_RETENCAO_IP_DIAS + 5))
     with TestClient(app):  # o ciclo de vida da API roda a primeira limpeza ao subir
         for _ in range(50):
@@ -210,8 +211,10 @@ def test_login_bloqueado_agregado(pessoas):
     bloqueios = registros("login_bloqueado")
     assert len(bloqueios) == 1 and "login=DOC-S01" in bloqueios[0]["motivo"]
     assert consultar("SELECT pedidos FROM auth_anonimos WHERE tipo = 'login_bloqueado'") == [{"pedidos": 10}]
-    # cada falha antes do bloqueio continua registrada uma a uma (limitadas pelo bloqueio)
-    assert len(registros("login_falha")) == config.AUTH_MAX_FALHAS_USUARIO
+    # as falhas antes do bloqueio: a primeira registrada, as outras contadas (D4, tests/test_seguranca_lgpd.py)
+    assert len(registros("login_falha")) == 1
+    assert consultar("SELECT pedidos FROM auth_anonimos WHERE tipo = 'login_falha'") == [
+        {"pedidos": config.AUTH_MAX_FALHAS_USUARIO}]
 
 
 def test_recusas_de_quem_esta_logado_continuam_uma_a_uma(pessoas):
