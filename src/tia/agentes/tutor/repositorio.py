@@ -194,7 +194,7 @@ def _vetar(tabela: str, chave: str, registro_id: int, referencia: str, vetada: b
                                 (correcao_docente, registro_id))
             else:
                 conexao.execute(f"UPDATE {tabela} SET vetada = 0 WHERE {chave} = ?", (registro_id,))
-            # sem o texto da correção (fica só na tabela de origem); quem vetou depende do login (TODO 1.4.6).
+            # sem o texto da correção (fica só na tabela de origem); quem vetou vem da sessão (auditoria.USUARIO_ATUAL).
             # vetada=False numa resposta sem veto é a APROVAÇÃO do docente: fica só aqui, na auditoria
             motivo = ("resposta vetada e corrigida" if vetada else
                       "veto retirado" if linha["vetada"] else "resposta aprovada")

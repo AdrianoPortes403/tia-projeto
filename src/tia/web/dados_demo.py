@@ -13,6 +13,9 @@ intermediário com o mesmo diagnóstico (trilha: Funções -> Listas e strings
               Repetição pendente (a tela Estudo abre a revisão)
 
 Aluno que já existe no banco é mantido como está (rodar de novo não duplica).
+Cria também os usuários FICTÍCIOS do login (1.4.6): o aluno DEMO-W01 e o
+docente DEMO-DOCENTE, com a senha de demonstração (fictícia, pública,
+impressa no fim; só para máquina de desenvolvimento).
 Por padrão NÃO chama o Ollama (rápido: os agentes gravam os textos fixos,
 origem "fallback"); com --com-llm, chama (pode levar vários minutos em CPU).
 Imprime o tempo gasto.
@@ -39,6 +42,7 @@ from tia.agentes.tutor.repositorio import carregar_itens
 from tia.core.config import DB_PATH
 from tia.core.database import criar_tabelas
 from tia.orquestrador.modelos import EventoTutor, Matricula
+from tia.seguranca import usuarios
 
 # PROVISÓRIO: diagnóstico fictício; o perfil intermediário dispensa variáveis, condicionais e repetição
 MATRICULA = Matricula(perfil_id="intermediario", horas_semanais=6, diagnostico={
@@ -79,6 +83,15 @@ def estudar(aluno_id: str, sequencia: str, gabarito: dict[str, int]):
             break
 
 
+def mostrar_usuarios_demonstracao():
+    """Cria (se faltarem) os usuários FICTÍCIOS do login (1.4.6) e diz como entrar.
+    A senha é a de demonstração, pública: só para máquina de desenvolvimento."""
+    criados = usuarios.criar_usuarios_demonstracao()
+    print(f"Usuários fictícios{' criados' if criados else ' (já existiam)'}: "
+          + ", ".join(f"{i} ({papel})" for i, papel, _ in usuarios.USUARIOS_DEMONSTRACAO)
+          + f". Senha FICTÍCIA de demonstração: {usuarios.SENHA_DEMONSTRACAO}")
+
+
 def criar_alunos():
     criar_tabelas()
     gabarito = {i["id"]: i["indice_correto"] for i in carregar_itens()}
@@ -106,5 +119,6 @@ if __name__ == "__main__":
     inicio = time.perf_counter()
     print(f"Banco: {DB_PATH}")
     criar_alunos()
+    mostrar_usuarios_demonstracao()
     print(f"Tempo gasto: {time.perf_counter() - inicio:.1f} s")
     print("Suba a API (uvicorn tia.api.main:app --reload) e abra http://localhost:8000/app/")

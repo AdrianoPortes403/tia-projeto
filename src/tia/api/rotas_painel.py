@@ -28,17 +28,20 @@ Pré-requisitos:
 
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
 
 from tia.agentes.planejador.modelos import PADRAO_CODIGO_ALUNO
 from tia.core import auditoria
 from tia.painel import consultas
+from tia.seguranca.acesso import exigir_papel, usuario_atual
 from tia.painel.modelos import (CompetenciaEmenta, ConsultaRisco, DesempenhoCompetencias, ListaRevisao,
                                 PaginaAuditoria, PerfilResumo, SituacaoRevisao, TipoRevisao)
 
-router = APIRouter(prefix="/painel", tags=["painel"])
-router_conteudo = APIRouter(prefix="/conteudo", tags=["painel"])
+# Autenticação (1.4.6): /painel/* só docente (a auditoria grava quem consultou);
+# /conteudo/* qualquer usuário logado (ementa e perfis não têm dado pessoal)
+router = APIRouter(prefix="/painel", tags=["painel"], dependencies=[Depends(exigir_papel("docente"))])
+router_conteudo = APIRouter(prefix="/conteudo", tags=["painel"], dependencies=[Depends(usuario_atual)])
 
 Perfil = Annotated[str | None, Query(pattern=r"^[A-Za-z0-9_-]{1,64}$")]  # vai para o nome do arquivo CSV
 Data = Annotated[str | None, Query(pattern=r"^\d{4}-\d{2}-\d{2}$", examples=["2026-10-11"])]
@@ -56,21 +59,18 @@ def listar_perfis() -> list[PerfilResumo]:
     return consultas.perfis()
 
 
-# TODO 1.4.6: exigir autenticação de docente e gravar QUEM consultou
 @router.get("/alunos-em-risco", response_model=ConsultaRisco)
 def alunos_em_risco(perfil_id: Perfil = None) -> ConsultaRisco:
     """Alunos em risco, com código; a consulta é registrada na auditoria."""
     return consultas.alunos_em_risco(perfil_id)
 
 
-# TODO 1.4.6: exigir autenticação de docente
 @router.get("/competencias", response_model=DesempenhoCompetencias)
 def competencias(perfil_id: Perfil = None) -> DesempenhoCompetencias:
     """Acerto agregado e tendência por competência; itens com erro repetido."""
     return consultas.desempenho_competencias(perfil_id)
 
 
-# TODO 1.4.6: exigir autenticação de docente e gravar QUEM consultou
 @router.get("/revisao", response_model=ListaRevisao)
 def revisao(situacao: SituacaoRevisao = "a_revisar",
             origem: Literal["LLM", "guarda", "fallback"] | None = None,
@@ -82,7 +82,6 @@ def revisao(situacao: SituacaoRevisao = "a_revisar",
     return consultas.listar_revisao(situacao, origem, pagina, por_pagina, tipo, competencia_id)
 
 
-# TODO 1.4.6: exigir autenticação de docente
 @router.get("/auditoria", response_model=PaginaAuditoria)
 def consultar_auditoria(agente: Literal[auditoria.AGENTES] | None = None,
                         aluno_id: Annotated[str | None, Query(pattern=PADRAO_CODIGO_ALUNO)] = None,
@@ -94,7 +93,6 @@ def consultar_auditoria(agente: Literal[auditoria.AGENTES] | None = None,
     return PaginaAuditoria(total=total, pagina=pagina, por_pagina=por_pagina, registros=registros)
 
 
-# TODO 1.4.6: exigir autenticação de docente
 @router.get("/exportar/indicadores.csv", response_class=Response)
 def exportar_indicadores(perfil_id: Perfil = None) -> Response:
     """Indicadores agregados (sem códigos de aluno) em CSV para planilha."""

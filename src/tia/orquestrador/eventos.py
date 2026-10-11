@@ -3,8 +3,9 @@ Processamento dos eventos do Tutor pela Orquestração (POST /aluno/{id}/evento)
 
 Idempotência: o evento_id é reservado antes de processar. Repetir o mesmo
 id devolve o resultado gravado (repetido=True), sem chamar o Tutor nem o
-Planejador de novo. Se o processamento falha, a reserva é desfeita e o
-evento pode ser reenviado.
+Planejador de novo; se o docente vetou o feedback nesse meio-tempo, o
+reenvio traz a correção do docente, nunca o texto vetado (R12). Se o
+processamento falha, a reserva é desfeita e o evento pode ser reenviado.
 
     resposta:    repassa a resposta ao Tutor (tutor.responder; sessão pausada é
                  recusada). Se a sessão concluiu: sendo de reforço, retoma a
@@ -92,6 +93,18 @@ def _despachar(aluno_id: str, evento: EventoTutor, agora: datetime) -> Resultado
                            avisos=[d.aviso for d in decisoes if d.aviso], proxima=fluxo.proxima(aluno_id, agora))
 
 
+def _aplicar_veto(resultado: ResultadoEvento) -> ResultadoEvento:
+    """No resultado gravado, troca a explicação vetada pela correção do docente."""
+    feedback = resultado.feedback
+    if feedback is None or feedback.resposta_id is None:
+        return resultado
+    atual = tutor.repositorio.ler_feedback(feedback.resposta_id)
+    if atual is not None and atual["vetada"]:
+        resultado.feedback = feedback.model_copy(update={
+            "explicacao": atual["explicacao"], "fontes": [], "origem": "docente", "falha_llm": None})
+    return resultado
+
+
 def processar_evento(aluno_id: str, evento: EventoTutor, agora: datetime | None = None) -> ResultadoEvento:
     """Processa o evento uma única vez por evento_id. Levanta AlunoNaoMatriculado,
     EventoConflitante e os erros do Tutor (SessaoInexistente, RespostaForaDeOrdem)."""
@@ -103,7 +116,7 @@ def processar_evento(aluno_id: str, evento: EventoTutor, agora: datetime | None 
             raise EventoConflitante(f"evento_id '{evento.evento_id}' já foi usado em outro evento.")
         if existente["resultado"] is None:
             raise EventoConflitante(f"Evento '{evento.evento_id}' ainda em processamento.")
-        return ResultadoEvento(**{**existente["resultado"], "repetido": True})
+        return _aplicar_veto(ResultadoEvento(**{**existente["resultado"], "repetido": True}))
     try:
         resultado = _despachar(aluno_id, evento, agora)
     except Exception:

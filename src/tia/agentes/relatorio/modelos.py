@@ -79,7 +79,10 @@ class Engajamento(BaseModel):
     dias_ativos: int
     ultima_interacao: str | None
     dias_inativo: int | None  # None se nunca interagiu e não tem trilha
-    inativo: bool             # dias_inativo >= INATIVIDADE_DIAS
+    # dias_inativo >= INATIVIDADE_DIAS e a trilha NÃO concluída: quem concluiu não
+    # é inativo (mesmo critério do orquestrador, R3, e do painel)
+    inativo: bool
+    trilha_concluida: bool = False
 
 
 # --- 4. pontos fracos ---

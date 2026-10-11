@@ -11,7 +11,8 @@
  * Segurança: todo texto vindo da API entra por textContent (el/svg de
  * comum.js), nunca por innerHTML; nada vai para o console (R08). Grupos abaixo
  * do mínimo já chegam suprimidos da API ("menos de N"); a tela só os mostra
- * como ocultos. Sem login: TODO 1.4.6.
+ * como ocultos. Login (1.4.6): só o papel docente usa o painel; a auditoria
+ * grava o usuário em cada consulta, aprovação e veto.
  */
 "use strict";
 
@@ -55,7 +56,11 @@
   const SITUACAO = { a_revisar: "A revisar", aprovada: "Aprovada", vetada: "Vetada" };
   const AGENTE = {
     orquestrador: "Orquestrador", planejador: "Planejador", tutor: "Tutor", relatorio: "Relatório",
-    painel: "Painel",
+    painel: "Painel", seguranca: "Segurança",
+  };
+  const PAPEL = {
+    aluno: "aluno", docente: "docente", admin: "admin", sistema: "sistema", sem_login: "sem login (desenvolvimento)",
+    anonimo: "não logado",
   };
   const TIPO = {
     resposta_item: "resposta a questão",
@@ -66,6 +71,12 @@
     decisao_orquestrador: "decisão do orquestrador",
     veto_docente: "revisão docente",
     consulta_painel: "consulta do painel",
+    login: "login",
+    login_falha: "login recusado",
+    login_bloqueado: "login bloqueado (muitas tentativas)",
+    logout: "saída",
+    acesso_negado: "acesso negado",
+    gestao_usuario: "gestão de usuário",
   };
 
   const estado = {
@@ -288,8 +299,8 @@
           "aria-label": "Ver auditoria do aluno " + a.aluno_id,
           onclick: () => auditoriaDoAluno(a.aluno_id) }),
       ])) : el("p", { classe: "aviso", texto: filtro ? "Nenhum aluno com este motivo." : "Nenhum aluno em risco." }));
-    $("risco-auditoria").textContent = "Esta consulta foi registrada na auditoria (registro nº " + r.auditoria_id +
-      ", " + dataHora(r.gerado_em) + "). Quem consultou só será registrado com o login (TODO 1.4.6).";
+    $("risco-auditoria").textContent = "Esta consulta foi registrada na auditoria em seu nome (registro nº " +
+      r.auditoria_id + ", " + dataHora(r.gerado_em) + ").";
   }
 
   function auditoriaDoAluno(codigo) {
@@ -483,9 +494,11 @@
     const r = await chamar("GET", "/painel/auditoria?" + parametros, null, "Consultando a auditoria…");
     $("auditoria-total").textContent = r.total + " registro(s) encontrado(s), do mais recente para o mais antigo.";
     $("auditoria-tabela").replaceChildren(r.registros.length ? tabela("Registros de auditoria",
-      ["Data e hora", "Agente", "Tipo", "Aluno", "Origem / ação", "Referência", "Motivo", "Fontes"],
+      ["Data e hora", "Agente", "Tipo", "Usuário", "Aluno", "Origem / ação", "Referência", "Motivo", "Fontes"],
       r.registros.map((x) => [dataHora(x.ts), x.agentes.map((a) => AGENTE[a] || a).join(" + "),
-        TIPO[x.tipo] || x.tipo, x.aluno_id ? el("code", { texto: x.aluno_id }) : "—",
+        TIPO[x.tipo] || x.tipo,
+        (x.usuario_id ? x.usuario_id + " " : "") + "(" + (PAPEL[x.usuario_papel] || x.usuario_papel || "sem registro") + ")",
+        x.aluno_id ? el("code", { texto: x.aluno_id }) : "—",
         (x.origem || "—") + (x.origem_justificativas ? " (justificativas: " + x.origem_justificativas + ")" : ""),
         x.referencia_id || "—", x.motivo || "—", x.fontes.length ? x.fontes.join(", ") : "—"]))
       : el("p", { texto: "Nenhum registro com estes filtros." }));
@@ -505,6 +518,64 @@
       el("span", { classe: "paginacao__texto", texto: "Página " + pagina + " de " + paginas }),
       el("button", { type: "button", classe: "botao botao--secundario acao", texto: "Próxima →",
         disabled: pagina >= paginas, onclick: () => ir(pagina + 1) }));
+  }
+
+  // --- login (1.4.6) ---
+
+  function mostrarLogin(mensagem, semFormulario) {
+    estado.tela = null;
+    for (const nomeTela of TELAS) $("tela-" + nomeTela).hidden = true;
+    $("abas").hidden = true;
+    $("filtro-grupo").hidden = true;
+    $("tela-login").hidden = false;
+    $("form-login").hidden = !!semFormulario;
+    $("login-mensagem").textContent = mensagem || "";
+    $("login-mensagem").hidden = !mensagem;
+    if (!semFormulario) $("campo-login").focus();
+  }
+
+  async function iniciar() {
+    const situacao = await TIA.obterSessao();
+    TIA.mostrarSessao(situacao);
+    if (situacao.autenticacao === "ligada" && !situacao.usuario) { mostrarLogin(); return; }
+    if (situacao.autenticacao === "ligada" && situacao.usuario.papel !== "docente") {
+      mostrarLogin("O painel é só para docentes. Você entrou como " + situacao.usuario.papel + ".", true);
+      return;
+    }
+    $("tela-login").hidden = true;
+    $("abas").hidden = false;
+    $("filtro-grupo").hidden = false;
+    // a tela inicial pode vir no endereço (ex.: /app/painel/#risco)
+    const inicial = TELAS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "geral";
+    if (!Object.keys(estado.nomes).length) {
+      try { await carregarConteudo(); } catch (erro) { mostrarErro(erro); }
+    }
+    irPara(inicial);
+  }
+
+  async function entrarComSenha(evento) {
+    evento.preventDefault();
+    const login = $("campo-login").value.trim();
+    const senha = $("campo-senha").value;
+    if (!login || !senha) {
+      mostrarErro(new ErroApi("Informe o usuário e a senha.", 0));
+      return;
+    }
+    try {
+      await TIA.entrar(login, senha);
+    } catch (erro) {
+      mostrarErro(erro);
+      return;
+    } finally {
+      $("campo-senha").value = ""; // a senha não fica na página
+    }
+    await iniciar();
+  }
+
+  async function encerrarSessao() {
+    try { await TIA.sair(); } catch (erro) { mostrarErro(erro); }
+    TIA.mostrarSessao({ autenticacao: "ligada", usuario: null });
+    mostrarLogin("Você saiu.");
   }
 
   // --- início ---
@@ -547,9 +618,9 @@
     });
     window.addEventListener("unhandledrejection", (e) => { e.preventDefault(); mostrarErro(e.reason); });
     $("revisao-resumo").setAttribute("tabindex", "-1");
-
-    // a tela inicial pode vir no endereço (ex.: /app/painel/#risco)
-    const inicial = TELAS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "geral";
-    carregarConteudo().then(() => irPara(inicial)).catch((erro) => { irPara(inicial); mostrarErro(erro); });
+    TIA.configurar({ aoExigirLogin: () => mostrarLogin("Sua sessão terminou. Entre de novo.") });
+    $("form-login").addEventListener("submit", entrarComSenha);
+    $("sair").addEventListener("click", encerrarSessao);
+    iniciar().catch(mostrarErro);
   });
 })();

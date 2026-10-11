@@ -69,7 +69,9 @@ Sempre ativar o venv da raiz: `source venv/bin/activate`.
 
 ## Pendências conhecidas
 
-- Pacote 1.4.6 (segurança/LGPD) não iniciado: documentos vão em `docs/seguranca-lgpd/`.
+- Pacote 1.4.6 (segurança/LGPD): etapa 1 feita (login, sessão, papéis, anti-CSRF, auditoria com usuário;
+  `src/tia/seguranca/`). Etapa 2 e login único do EBAULA pendentes; documentos em `docs/seguranca-lgpd/`.
+  Testes de rota rodam com `TIA_AUTH=desligada` (conftest); os de segurança ligam a autenticação.
 - Material real do curso depende da Pessoa 4.
 - VM institucional ainda não disponível; testes feitos em notebook e em máquina com RTX 3050.
 

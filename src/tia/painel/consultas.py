@@ -52,8 +52,8 @@ def _porcento(fracao: float | None) -> str:
 
 
 def auditar_consulta(referencia: str, motivo: str) -> int:
-    """Uma linha de auditoria por consulta que mostra códigos de aluno. Quem
-    consultou só será conhecido com o login (TODO 1.4.6)."""
+    """Uma linha de auditoria por consulta que mostra códigos de aluno; o
+    usuário que consultou vem da sessão (core.auditoria.USUARIO_ATUAL)."""
     conexao = obter_conexao()
     try:
         with conexao:
@@ -88,9 +88,9 @@ def avaliar_risco(dados, agora: datetime, nomes: dict[str, str]) -> AlunoEmRisco
     engajamento = indicadores.engajamento(dados, agora)
     desempenho = indicadores.desempenho(dados.respostas)
     tendencia = desempenho.tendencia
-    concluiu = progresso.tem_trilha and progresso.etapas > 0 and progresso.concluidas == progresso.etapas
     motivos = []
-    if engajamento.inativo and engajamento.dias_inativo is not None and not concluiu:
+    # engajamento.inativo já exclui quem concluiu a trilha (Agente 3)
+    if engajamento.inativo and engajamento.dias_inativo is not None:
         motivos.append(MotivoRisco(tipo="inatividade", descricao=(
             f"Sem atividade há {engajamento.dias_inativo} dia(s) (alerta a partir de {INATIVIDADE_DIAS}).")))
     if tendencia.direcao == "caindo":

@@ -17,17 +17,22 @@
   <header class="topo">
     <div class="topo__linha">
       <p class="marca">TIA <span class="marca__sub">Painel do docente</span></p>
-      <div class="filtro-grupo nao-imprimir">
+      <p class="usuario" id="usuario-barra" hidden>
+        Conectado: <strong id="usuario-nome"></strong> <span id="usuario-papel"></span>
+        <button type="button" class="botao botao--link nao-imprimir" id="sair">Sair</button>
+      </p>
+      <div class="filtro-grupo nao-imprimir" id="filtro-grupo" hidden>
         <label for="campo-perfil">Grupo</label>
         <select id="campo-perfil">
           <option value="">Instituição inteira</option>
         </select>
       </div>
     </div>
-    <p class="aviso-prototipo" role="note">
-      Protótipo, sem login (TODO 1.4.6). Qualquer pessoa com o endereço vê estes dados; use só turmas fictícias.
+    <p class="aviso-prototipo" id="aviso-dev" role="note" hidden>
+      Modo de desenvolvimento: autenticação desligada (TIA_AUTH=desligada). Qualquer pessoa com o endereço vê
+      estes dados; use só turmas fictícias.
     </p>
-    <nav class="abas nao-imprimir" id="abas" aria-label="Telas do painel">
+    <nav class="abas nao-imprimir" id="abas" aria-label="Telas do painel" hidden>
       <button type="button" class="aba" data-tela="geral">Visão geral</button>
       <button type="button" class="aba" data-tela="risco">Alertas de risco</button>
       <button type="button" class="aba" data-tela="competencias">Competências</button>
@@ -48,6 +53,21 @@
   </div>
 
   <main id="conteudo" tabindex="-1">
+
+    <!-- Login (1.4.6): só o papel docente usa o painel -->
+    <section class="tela" id="tela-login" aria-labelledby="titulo-login" hidden>
+      <h1 id="titulo-login">Painel do docente: entrar</h1>
+      <p class="aviso aviso--alerta" id="login-mensagem" role="status" hidden></p>
+      <form id="form-login" class="cartao" novalidate>
+        <label for="campo-login">Usuário</label>
+        <input id="campo-login" name="login" type="text" required autocomplete="username" spellcheck="false"
+               maxlength="64">
+        <label for="campo-senha">Senha</label>
+        <input id="campo-senha" name="senha" type="password" required autocomplete="current-password"
+               maxlength="256">
+        <button type="submit" class="botao acao">Entrar</button>
+      </form>
+    </section>
 
     <!-- 1) Visão geral: os 5 indicadores agregados do Agente 3 -->
     <section class="tela" id="tela-geral" aria-labelledby="titulo-geral" hidden>
@@ -83,8 +103,8 @@
         </div>
       </div>
       <p class="aviso aviso--alerta" role="note">
-        Protótipo, sem login (TODO 1.4.6). Esta tela mostra códigos de aluno (nunca nomes) e cada consulta é
-        registrada na auditoria. O relatório agregado nunca mostra códigos.
+        Esta tela mostra códigos de aluno (nunca nomes) e cada consulta é registrada na auditoria em seu nome.
+        O relatório agregado nunca mostra códigos.
       </p>
       <div class="filtros nao-imprimir">
         <label for="filtro-motivo">Mostrar</label>
@@ -126,8 +146,8 @@
         <h1 id="titulo-revisao">Revisão docente</h1>
       </div>
       <p class="aviso aviso--alerta" role="note">
-        Protótipo, sem login (TODO 1.4.6): o veto não registra quem vetou. Cada consulta desta tela vai para a
-        auditoria.
+        Os textos abaixo podem conter o que o aluno escreveu. Cada consulta, aprovação e veto vai para a auditoria
+        em seu nome.
       </p>
       <div id="revisao-resumo"></div>
       <form class="filtros nao-imprimir" id="form-revisao" novalidate>
@@ -186,6 +206,7 @@
             <option value="tutor">Tutor</option>
             <option value="relatorio">Relatório</option>
             <option value="painel">Painel (consultas do docente)</option>
+            <option value="seguranca">Segurança (login, acessos negados, usuários)</option>
           </select>
         </div>
         <div>

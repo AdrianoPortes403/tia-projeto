@@ -14,17 +14,18 @@ Pré-requisitos:
 
 from typing import Annotated
 
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Depends, Path
 
 from tia.agentes.planejador.modelos import PADRAO_CODIGO_ALUNO
 from tia.agentes.tutor.modelos import RegistroAuditoria
 from tia.core import auditoria
+from tia.seguranca.acesso import exigir_papel
 
 router = APIRouter(tags=["auditoria"])
 
 
-# TODO 1.4.6: exigir autenticação de docente
-@router.get("/auditoria/{aluno_id}", response_model=list[RegistroAuditoria])
+@router.get("/auditoria/{aluno_id}", response_model=list[RegistroAuditoria],
+            dependencies=[Depends(exigir_papel("docente"))])
 def listar_auditoria(aluno_id: Annotated[str, Path(pattern=PADRAO_CODIGO_ALUNO)]) -> list[dict]:
     """Interações do Tutor com o aluno (lista vazia se não houver)."""
     return auditoria.listar(aluno_id)

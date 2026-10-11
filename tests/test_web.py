@@ -71,7 +71,10 @@ def test_pagina_inicial(caminho):
     assert resposta.headers["content-type"].startswith("text/html")
     html = resposta.text
     assert '<html lang="pt-BR">' in html
-    assert "Protótipo, sem login (TODO 1.4.6)" in html
+    # login (1.4.6) e o aviso do modo de desenvolvimento (escondido até a API dizer que está desligada)
+    assert 'id="form-login"' in html and 'type="password"' in html and 'autocomplete="current-password"' in html
+    assert re.search(r'id="aviso-dev"[^>]*hidden', html) and "TIA_AUTH=desligada" in html
+    assert "TODO 1.4.6" not in html
     for arquivo in ESTATICOS:
         if arquivo != "index.html":
             assert f'"{arquivo}"' in html  # caminho relativo: funciona em /app/
@@ -119,8 +122,12 @@ def test_js_nao_usa_innerhtml_console_nem_eval(arquivo):
 def test_js_sem_segredos_nem_endereco_fixo(arquivo):
     # o namespace do SVG é um identificador (createElementNS), não um endereço chamado
     js = ler(arquivo).lower().replace('"http://www.w3.org/2000/svg"', "")
-    for proibido in ("api_key", "apikey", "token", "secret", "senha", "password", "http://", "https://", "11434"):
+    for proibido in ("api_key", "apikey", "secret", "password", "http://", "https://", "11434"):
         assert proibido not in js, proibido
+    # nenhuma senha ou token escrito no código, nem guardado no navegador
+    assert not re.search(r"""\b(senha|token|csrf)\w*\s*[:=]\s*["'][^"']{6,}["']""", js), "segredo fixo no código"
+    assert not re.search(r"(localstorage|sessionstorage)\.setitem\([^)]*(senha|csrf|token)", js)
+    assert "document.cookie" not in js  # a sessão é cookie HttpOnly: o JavaScript nem o lê
 
 
 def test_ids_usados_pelo_js_existem_no_html():

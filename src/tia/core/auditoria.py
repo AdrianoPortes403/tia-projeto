@@ -21,28 +21,44 @@ Pré-requisitos:
 
 import json
 import sqlite3
+from contextvars import ContextVar
 from datetime import datetime
 
 from tia.core.database import obter_conexao
 
 # tipos de interação registrados. veto_docente: veto ou retirada do veto (R12);
-# consulta_painel: consulta do docente que mostra códigos de aluno (painel 1.4.5)
+# consulta_painel: consulta do docente que mostra códigos de aluno (painel 1.4.5);
+# segurança (1.4.6): login, login_falha, login_bloqueado, logout, acesso_negado
+# (401/403) e gestao_usuario (criar, desativar, redefinir senha; nunca a senha)
 TIPOS = ("resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma", "decisao_orquestrador",
-         "veto_docente", "consulta_painel")
+         "veto_docente", "consulta_painel", "login", "login_falha", "login_bloqueado", "logout", "acesso_negado",
+         "gestao_usuario")
+
+# Quem está agindo (1.4.6): (usuario_id, papel), definido por requisição pela
+# segurança (seguranca.acesso). Sem valor (comandos, agendador, testes de
+# repositório): ninguém logado, papel "sistema".
+USUARIO_ATUAL: ContextVar[tuple[str | None, str] | None] = ContextVar("usuario_atual", default=None)
+
+
+def definir_usuario(usuario_id: str | None, papel: str):
+    """Usuário da requisição atual, gravado em toda linha de auditoria dela."""
+    USUARIO_ATUAL.set((usuario_id, papel))
 
 
 def registrar(conexao: sqlite3.Connection, aluno_id: str | None, tipo: str, referencia_id: str | int | None,
               origem: str, fontes: list[str], ts: str | None = None, motivo: str | None = None) -> int:
     """Grava uma linha de auditoria (dentro da transação de quem chama) e
-    devolve o id. motivo: por que a decisão foi tomada (decisões do orquestrador)."""
+    devolve o id. motivo: por que a decisão foi tomada (decisões do orquestrador).
+    O usuário (id e papel) vem de USUARIO_ATUAL."""
     if tipo not in TIPOS:
         raise ValueError(f"Tipo de auditoria inválido: {tipo!r}.")
+    usuario_id, papel = USUARIO_ATUAL.get() or (None, "sistema")
     cursor = conexao.execute(
-        """INSERT INTO auditoria (ts, aluno_id, tipo, referencia_id, origem, fontes, motivo)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        """INSERT INTO auditoria (ts, aluno_id, tipo, referencia_id, origem, fontes, motivo, usuario_id, usuario_papel)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (ts or datetime.now().isoformat(timespec="seconds"), aluno_id, tipo,
          None if referencia_id is None else str(referencia_id), origem,
-         json.dumps(fontes, ensure_ascii=False), motivo),
+         json.dumps(fontes, ensure_ascii=False), motivo, usuario_id, papel),
     )
     return cursor.lastrowid
 
@@ -58,7 +74,8 @@ def listar(aluno_id: str) -> list[dict]:
         conexao.close()
     return [{"id": linha["id"], "ts": linha["ts"], "tipo": linha["tipo"],
              "referencia_id": linha["referencia_id"], "origem": linha["origem"],
-             "fontes": json.loads(linha["fontes"] or "[]"), "motivo": linha["motivo"]} for linha in linhas]
+             "fontes": json.loads(linha["fontes"] or "[]"), "motivo": linha["motivo"],
+             "usuario_id": linha["usuario_id"], "usuario_papel": linha["usuario_papel"]} for linha in linhas]
 
 
 # agente responsável por cada tipo; as decisões do orquestrador que acionaram
@@ -67,8 +84,10 @@ AGENTE_POR_TIPO = {
     "resposta_item": "tutor", "dialogo": "tutor", "incentivo": "tutor", "veto_docente": "tutor",
     "relatorio_aluno": "relatorio", "relatorio_turma": "relatorio",
     "decisao_orquestrador": "orquestrador", "consulta_painel": "painel",
+    "login": "seguranca", "login_falha": "seguranca", "login_bloqueado": "seguranca", "logout": "seguranca",
+    "acesso_negado": "seguranca", "gestao_usuario": "seguranca",
 }
-AGENTES = ("orquestrador", "planejador", "tutor", "relatorio", "painel")
+AGENTES = ("orquestrador", "planejador", "tutor", "relatorio", "painel", "seguranca")
 
 
 def consultar(agente: str | None = None, aluno_id: str | None = None, desde: str | None = None,
@@ -111,5 +130,6 @@ def consultar(agente: str | None = None, aluno_id: str | None = None, desde: str
         registros.append({"id": linha["id"], "ts": linha["ts"], "aluno_id": linha["aluno_id"], "agentes": agentes,
                           "tipo": linha["tipo"], "referencia_id": linha["referencia_id"], "origem": linha["origem"],
                           "fontes": json.loads(linha["fontes"] or "[]"), "motivo": linha["motivo"],
-                          "origem_justificativas": linha["origem_justificativas"]})
+                          "origem_justificativas": linha["origem_justificativas"],
+                          "usuario_id": linha["usuario_id"], "usuario_papel": linha["usuario_papel"]})
     return total, registros

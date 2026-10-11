@@ -20,9 +20,14 @@
         Aluno: <strong id="aluno-codigo"></strong>
         <button type="button" class="botao botao--link" id="trocar-aluno">Trocar</button>
       </p>
+      <p class="usuario" id="usuario-barra" hidden>
+        Conectado: <strong id="usuario-nome"></strong> <span id="usuario-papel"></span>
+        <button type="button" class="botao botao--link" id="sair">Sair</button>
+      </p>
     </div>
-    <p class="aviso-prototipo" role="note">
-      Protótipo, sem login (TODO 1.4.6). Use apenas códigos fictícios de aluno, nunca nomes.
+    <p class="aviso-prototipo" id="aviso-dev" role="note" hidden>
+      Modo de desenvolvimento: autenticação desligada (TIA_AUTH=desligada). Qualquer pessoa entra com qualquer
+      código; use só dados fictícios.
     </p>
     <nav class="abas" id="abas" aria-label="Telas" hidden>
       <button type="button" class="aba" data-tela="trilha">Trilha</button>
@@ -46,8 +51,24 @@
 
   <main id="conteudo" tabindex="-1">
 
-    <!-- a) Entrada -->
-    <section class="tela" id="tela-entrada" aria-labelledby="titulo-entrada">
+    <!-- Login (1.4.6): usuário e senha; a sessão fica num cookie HttpOnly -->
+    <section class="tela" id="tela-login" aria-labelledby="titulo-login" hidden>
+      <h1 id="titulo-login">Entrar no TIA</h1>
+      <p class="aviso aviso--alerta" id="login-mensagem" role="status" hidden></p>
+      <form id="form-login" class="cartao" novalidate>
+        <label for="campo-login">Usuário</label>
+        <input id="campo-login" name="login" type="text" required autocomplete="username" spellcheck="false"
+               maxlength="64">
+        <label for="campo-senha">Senha</label>
+        <input id="campo-senha" name="senha" type="password" required autocomplete="current-password"
+               maxlength="256">
+        <button type="submit" class="botao acao">Entrar</button>
+      </form>
+      <p class="dica" id="login-painel" hidden>Docentes: o painel fica em <a href="/app/painel/">/app/painel/</a>.</p>
+    </section>
+
+    <!-- a) Entrada (modo de desenvolvimento: código do aluno; com login, só a matrícula) -->
+    <section class="tela" id="tela-entrada" aria-labelledby="titulo-entrada" hidden>
       <h1 id="titulo-entrada">Entrar</h1>
       <form id="form-entrada" class="cartao" novalidate>
         <label for="campo-aluno">Código do aluno</label>

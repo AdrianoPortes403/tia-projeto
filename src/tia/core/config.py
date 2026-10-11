@@ -124,6 +124,27 @@ ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS = int(os.getenv("ORQ_QUEDA_RESPOSTAS_ENTRE_RE
 # sem refazer a trilha; a trilha só é refeita a partir de ORQ_INATIVIDADE_REFAZER_DIAS.
 ORQ_INATIVIDADE_REFAZER_DIAS = int(os.getenv("ORQ_INATIVIDADE_REFAZER_DIAS", "14"))
 
+# --- Segurança: autenticação e papéis (EAP 1.4.6) ---
+# "desligada" = MODO DE DESENVOLVIMENTO: nenhuma rota pede login (testes e demos
+# antigos), com aviso visível nas telas. Padrão: ligada. Nunca desligar com dados reais.
+TIA_AUTH = os.getenv("TIA_AUTH", "ligada").strip().lower()
+AUTH_DESLIGADA = TIA_AUTH in ("desligada", "desligado", "0", "off", "nao", "não")
+# Provedor de autenticação (seguranca.autenticador): "local" (senha com scrypt).
+# O login único do EBAULA (1.4.3) entra como outro provedor.
+AUTH_PROVEDOR = os.getenv("AUTH_PROVEDOR", "local")
+# Duração da sessão no servidor (minutos, a partir do login)
+AUTH_SESSAO_MINUTOS = int(os.getenv("AUTH_SESSAO_MINUTOS", "480"))
+# Cookie só por HTTPS (Secure). Os navegadores aceitam Secure em http://localhost;
+# desligar (0) só para testar por HTTP em outra máquina.
+AUTH_COOKIE_SEGURO = os.getenv("AUTH_COOKIE_SEGURO", "1").lower() in ("1", "true", "sim")
+# Limite de falhas de login dentro da janela, por usuário e por IP; com o limite
+# atingido, o login fica bloqueado até a janela passar (mesmo com a senha certa)
+AUTH_MAX_FALHAS_USUARIO = int(os.getenv("AUTH_MAX_FALHAS_USUARIO", "5"))
+AUTH_MAX_FALHAS_IP = int(os.getenv("AUTH_MAX_FALHAS_IP", "20"))
+AUTH_JANELA_MINUTOS = int(os.getenv("AUTH_JANELA_MINUTOS", "15"))
+# Atraso (s) na resposta de cada login que falha (atrapalha a tentativa em massa)
+AUTH_ATRASO_SEGUNDOS = float(os.getenv("AUTH_ATRASO_SEGUNDOS", "1.0"))
+
 # --- Painel do docente (EAP 1.4.5) ---
 # Alerta de desempenho baixo: taxa de acerto geral abaixo deste valor, desde que o
 # aluno tenha pelo menos PAINEL_MIN_RESPOSTAS respostas. PROVISÓRIO (Pessoa 4).
@@ -142,5 +163,7 @@ if __name__ == "__main__":
                  "RELATORIO_TEMPERATURA", "RELATORIO_SEED", "RELATORIO_TENDENCIA_JANELA",
                  "RELATORIO_TENDENCIA_MIN_RESPOSTAS", "RELATORIO_TENDENCIA_LIMIAR",
                  "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_INATIVIDADE_REFAZER_DIAS",
-                 "PAINEL_DESEMPENHO_BAIXO", "PAINEL_MIN_RESPOSTAS"):
+                 "PAINEL_DESEMPENHO_BAIXO", "PAINEL_MIN_RESPOSTAS", "TIA_AUTH", "AUTH_PROVEDOR",
+                 "AUTH_SESSAO_MINUTOS", "AUTH_COOKIE_SEGURO", "AUTH_MAX_FALHAS_USUARIO", "AUTH_MAX_FALHAS_IP",
+                 "AUTH_JANELA_MINUTOS", "AUTH_ATRASO_SEGUNDOS"):
         print(f"{nome} = {globals()[nome]}")

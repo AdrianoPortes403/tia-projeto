@@ -52,9 +52,13 @@ COLUNAS_NOVAS_HISTORICO = {
 }
 
 
-# Coluna acrescentada à auditoria pela orquestração: o motivo de cada decisão (R11).
+# Colunas acrescentadas à auditoria: o motivo de cada decisão (orquestração) e
+# quem agiu (1.4.6): id e papel do usuário logado; "sistema" fora de uma requisição
+# (comandos, agendador) e "sem_login" no modo de desenvolvimento (TIA_AUTH=desligada).
 COLUNAS_NOVAS_AUDITORIA = {
     "motivo": "TEXT",
+    "usuario_id": "TEXT",
+    "usuario_papel": "TEXT",
 }
 
 
@@ -271,6 +275,44 @@ def criar_tabelas():
             FOREIGN KEY (aluno_id) REFERENCES alunos(id)
         )
     """)
+
+    # Segurança (EAP 1.4.6). Usuários: id é um código de login (nunca nome, R08);
+    # aluno_id liga o papel "aluno" aos dados dele. A senha fica só como hash
+    # scrypt com sal (seguranca.senhas), nunca em texto.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id TEXT PRIMARY KEY,
+            papel TEXT NOT NULL,
+            aluno_id TEXT,
+            senha_hash TEXT NOT NULL,
+            ativo INTEGER NOT NULL DEFAULT 1,
+            criado_em DATETIME,
+            atualizado_em DATETIME
+        )
+    """)
+    # Sessões no servidor: o cookie leva um token aleatório; aqui fica só o
+    # SHA-256 dele, com o token anti-CSRF e a expiração.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS auth_sessoes (
+            token_hash TEXT PRIMARY KEY,
+            usuario_id TEXT NOT NULL,
+            csrf TEXT NOT NULL,
+            criada_em DATETIME,
+            expira_em DATETIME,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        )
+    """)
+    # Tentativas de login (limite por usuário e por IP). Sem senha.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS auth_tentativas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts DATETIME,
+            login TEXT,
+            ip TEXT,
+            sucesso INTEGER
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_tentativas ON auth_tentativas (ts)")
 
     conexao.commit()
     conexao.close()

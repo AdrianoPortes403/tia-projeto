@@ -7,7 +7,9 @@
  *
  * Segurança: todo texto vindo da API entra na página por textContent (função
  * el, em comum.js), nunca por innerHTML; nada é escrito no console (R08); não há chave nem
- * segredo aqui. Sem login: TODO 1.4.6.
+ * segredo aqui. Login (1.4.6): o aluno entra com usuário e senha e só vê os
+ * próprios dados (o código vem da sessão, não de um campo). Com TIA_AUTH=desligada
+ * (modo de desenvolvimento), volta a entrada pelo código, com aviso.
  */
 "use strict";
 
@@ -33,6 +35,7 @@
 
   const estado = {
     aluno: null,
+    autenticado: false,  // login ligado e aluno logado: o código vem da sessão
     etapas: [],          // EstadoAluno.etapas (nomes das competências)
     sessaoId: null,      // sessão do Tutor em andamento
     pergunta: null,      // pergunta em aberto
@@ -55,7 +58,7 @@
 
   // --- navegação ---
 
-  const TELAS = ["entrada", "trilha", "estudo", "dialogo", "relatorio"];
+  const TELAS = ["login", "entrada", "trilha", "estudo", "dialogo", "relatorio"];
   const AO_ABRIR = {
     trilha: carregarTrilha,
     estudo: carregarEstudo,
@@ -83,12 +86,74 @@
       else sessionStorage.removeItem(CHAVE_SESSAO);
     } catch (_) { /* armazenamento indisponível: segue sem lembrar */ }
     $("aluno-codigo").textContent = codigo || "";
-    $("aluno-atual").hidden = !codigo;
+    $("aluno-atual").hidden = !codigo || estado.autenticado; // com login, a barra do usuário já mostra quem é
     $("abas").hidden = !codigo;
     $("conversa").replaceChildren();
   }
 
   function rota(caminho) { return caminho.replace("{id}", encodeURIComponent(estado.aluno)); }
+
+  // --- login (1.4.6) ---
+
+  function mostrarLogin(mensagem, paraDocente) {
+    definirAluno(null);
+    $("login-mensagem").textContent = mensagem || "";
+    $("login-mensagem").hidden = !mensagem;
+    $("form-login").hidden = !!paraDocente;
+    $("login-painel").hidden = !paraDocente;
+    irPara("login");
+    if (!paraDocente) $("campo-login").focus();
+  }
+
+  async function iniciar() {
+    let situacao;
+    try { situacao = await TIA.obterSessao(); } catch (erro) { mostrarErro(erro); return; }
+    TIA.mostrarSessao(situacao);
+    $("trocar-aluno").hidden = situacao.autenticacao === "ligada";
+    $("cancelar-matricula").hidden = situacao.autenticacao === "ligada";
+    if (situacao.autenticacao === "desligada") {
+      // modo de desenvolvimento: entrada pelo código, como antes do login
+      estado.autenticado = false;
+      let lembrado = null;
+      try { lembrado = sessionStorage.getItem(CHAVE_SESSAO); } catch (_) { lembrado = null; }
+      if (lembrado && PADRAO_CODIGO.test(lembrado)) await abrirAluno(lembrado);
+      else irPara("entrada");
+      return;
+    }
+    if (!situacao.usuario) { mostrarLogin(); return; }
+    if (situacao.usuario.papel !== "aluno") {
+      mostrarLogin("Esta aplicação é para alunos. Você entrou como " + situacao.usuario.papel + ".", true);
+      return;
+    }
+    estado.autenticado = true;
+    await abrirAluno(situacao.usuario.aluno_id);
+  }
+
+  async function entrarComSenha(evento) {
+    evento.preventDefault();
+    const login = $("campo-login").value.trim();
+    const senha = $("campo-senha").value;
+    if (!login || !senha) {
+      mostrarErro(new ErroApi("Informe o usuário e a senha.", 0));
+      return;
+    }
+    try {
+      await TIA.entrar(login, senha);
+    } catch (erro) {
+      mostrarErro(erro);
+      return;
+    } finally {
+      $("campo-senha").value = ""; // a senha não fica na página
+    }
+    $("login-mensagem").hidden = true;
+    await iniciar();
+  }
+
+  async function encerrarSessao() {
+    try { await TIA.sair(); } catch (erro) { mostrarErro(erro); }
+    TIA.mostrarSessao({ autenticacao: "ligada", usuario: null });
+    mostrarLogin("Você saiu.");
+  }
 
   // --- a) entrada ---
 
@@ -101,16 +166,22 @@
       campo.focus();
       return;
     }
+    await abrirAluno(codigo);
+  }
+
+  async function abrirAluno(codigo) {
     definirAluno(codigo);
     try {
       await chamar("GET", rota("/aluno/{id}/estado"), null, "Buscando seus dados…");
       irPara("trilha");
     } catch (erro) {
       if (erro.status === 404) {
+        irPara("entrada");
         $("abas").hidden = true;
+        $("form-entrada").hidden = estado.autenticado;
         $("form-matricula").hidden = false;
         $("campo-perfil").focus();
-      } else {
+      } else if (erro.status !== 401) {
         definirAluno(null);
         mostrarErro(erro);
       }
@@ -505,6 +576,9 @@
   // --- início ---
 
   document.addEventListener("DOMContentLoaded", () => {
+    TIA.configurar({ aoExigirLogin: () => mostrarLogin("Sua sessão terminou. Entre de novo.") });
+    $("form-login").addEventListener("submit", entrarComSenha);
+    $("sair").addEventListener("click", encerrarSessao);
     $("form-entrada").addEventListener("submit", entrar);
     $("form-matricula").addEventListener("submit", matricular);
     $("cancelar-matricula").addEventListener("click", sair);
@@ -519,13 +593,6 @@
     // erros de telas abertas por botão (ex.: "Começar") também aparecem na faixa de erro
     window.addEventListener("unhandledrejection", (e) => { e.preventDefault(); mostrarErro(e.reason); });
 
-    let lembrado = null;
-    try { lembrado = sessionStorage.getItem(CHAVE_SESSAO); } catch (_) { lembrado = null; }
-    if (lembrado && PADRAO_CODIGO.test(lembrado)) {
-      $("campo-aluno").value = lembrado;
-      $("form-entrada").requestSubmit();
-    } else {
-      irPara("entrada");
-    }
+    iniciar().catch(mostrarErro);
   });
 })();

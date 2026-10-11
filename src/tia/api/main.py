@@ -21,6 +21,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from tia.api.rotas_auditoria import router as rotas_auditoria
+from tia.api.rotas_auth import router as rotas_auth
+from tia.api.rotas_auth import router_admin as rotas_admin
 from tia.api.rotas_orquestrador import router as rotas_orquestrador
 from tia.api.rotas_orquestrador import router_sistema as rotas_orquestrador_sistema
 from tia.api.rotas_painel import router as rotas_painel
@@ -41,6 +43,8 @@ async def ciclo_de_vida(app: FastAPI):
 
 
 app = FastAPI(title="Sistema TIA — API", version="0.1.0", lifespan=ciclo_de_vida)
+app.include_router(rotas_auth)
+app.include_router(rotas_admin)
 app.include_router(rotas_planejador)
 app.include_router(rotas_tutor)
 app.include_router(rotas_auditoria)

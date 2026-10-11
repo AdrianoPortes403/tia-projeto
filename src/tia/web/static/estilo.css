@@ -56,7 +56,7 @@ p { margin: 0 0 var(--espaco-2); }
 }
 .marca { font-weight: 700; font-size: 1.25rem; margin: 0; }
 .marca__sub { font-weight: 400; font-size: var(--tamanho-pequeno); color: var(--cor-texto-suave); }
-.aluno { margin: 0; }
+.aluno, .usuario { margin: 0; }
 
 .aviso-prototipo {
   margin-top: var(--espaco-2);

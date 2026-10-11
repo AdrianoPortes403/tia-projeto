@@ -17,7 +17,9 @@ diálogos são SINTÉTICOS, gravados direto no banco com datas no passado
 explicação do item e, na origem "LLM", vem marcado "[demonstração]", como os
 textos do diálogo. No fim, roda a verificação de inatividade do
 orquestrador (R3), que registra as decisões de incentivo e de refazer a
-trilha. Aluno que já existe é mantido (rodar de novo não duplica).
+trilha. Aluno que já existe é mantido (rodar de novo não duplica). Cria
+também os usuários FICTÍCIOS do login (1.4.6): o docente DEMO-DOCENTE e o
+aluno DEMO-W01, com a senha de demonstração impressa no fim.
 Imprime o tempo gasto.
 
 Como rodar (a partir da raiz, com o venv ativo):
@@ -42,7 +44,7 @@ from tia.agentes.tutor.feedback import montar_veredito
 from tia.agentes.tutor.repositorio import DIFICULDADE_POR_NIVEL, carregar_itens, materiais_da_competencia, vetar_dialogo
 from tia.core import auditoria
 from tia.orquestrador.modelos import Matricula
-from tia.web.dados_demo import sem_llm
+from tia.web.dados_demo import mostrar_usuarios_demonstracao, sem_llm
 
 # PROVISÓRIO: diagnóstico fictício; no intermediário a trilha fica Funções -> Listas e strings -> Recursão
 DIAGNOSTICO_INTERMEDIARIO = {"variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
@@ -228,5 +230,6 @@ if __name__ == "__main__":
     inicio = time.perf_counter()
     print(f"Banco: {database.DB_PATH}")
     criar_turma()
+    mostrar_usuarios_demonstracao()
     print(f"Tempo gasto: {time.perf_counter() - inicio:.1f} s")
     print("Suba a API (uvicorn tia.api.main:app --reload) e abra http://localhost:8000/app/painel/")

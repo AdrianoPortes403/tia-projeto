@@ -80,7 +80,8 @@ def montar_incentivo(aluno_id: str, agora: datetime | None = None) -> Incentivo:
         return Incentivo(inativo=situacao.inativo, dias=situacao.dias, mensagem=MENSAGEM_SEM_TRILHA)
     pendentes = etapas_pendentes(aluno_id, trilha)
     if not pendentes:
-        return Incentivo(inativo=situacao.inativo, dias=situacao.dias, mensagem=MENSAGEM_TRILHA_CONCLUIDA,
+        # trilha concluída: não é inatividade (mesmo critério do orquestrador e do Relatório)
+        return Incentivo(inativo=False, dias=situacao.dias, mensagem=MENSAGEM_TRILHA_CONCLUIDA,
                          etapas_restantes=0)
     proxima = pendentes[0]
     template = MENSAGEM_INATIVO if situacao.inativo else MENSAGEM_ATIVO

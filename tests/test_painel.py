@@ -92,7 +92,8 @@ def test_arquivos_do_painel(arquivo, tipo):
 def test_pagina_do_painel_reaproveita_tema_e_utilidades():
     html = client.get("/app/painel/").text
     assert '<html lang="pt-BR">' in html
-    assert "Protótipo, sem login (TODO 1.4.6)" in html
+    assert 'id="form-login"' in html and 'type="password"' in html
+    assert re.search(r'id="aviso-dev"[^>]*hidden', html) and "TODO 1.4.6" not in html
     for caminho in ('href="../tema.css"', 'href="../estilo.css"', 'href="painel.css"'):
         assert caminho in html, caminho
     assert html.index('src="../comum.js"') < html.index('src="painel.js"')
@@ -101,10 +102,10 @@ def test_pagina_do_painel_reaproveita_tema_e_utilidades():
         assert client.get(f"/app/{arquivo}").status_code == 200
 
 
-def test_tela_de_risco_tem_aviso_de_prototipo():
+def test_tela_de_risco_avisa_que_a_consulta_e_auditada():
     html = ler("index.html")
     tela = html[html.index('id="tela-risco"'):html.index('id="tela-competencias"')]
-    assert "Protótipo, sem login (TODO 1.4.6)" in tela and "auditoria" in tela
+    assert "códigos de aluno (nunca nomes)" in tela and "auditoria em seu nome" in tela
 
 
 # --- segurança e acessibilidade do front (análise do código) ---
@@ -114,8 +115,9 @@ def test_js_do_painel_nao_usa_innerhtml_console_nem_eval():
     for proibido in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "console.", "eval(",
                      "new Function", "localStorage"):
         assert proibido not in js, proibido
-    for proibido in ("http://", "https://", "token", "senha", "password", "11434"):
+    for proibido in ("http://", "https://", "password", "11434", "document.cookie"):
         assert proibido not in js.lower(), proibido
+    assert not re.search(r"""\b(senha|token|csrf)\w*\s*[:=]\s*["'][^"']{6,}["']""", js.lower())
 
 
 def test_ids_usados_pelo_painel_existem_no_html():

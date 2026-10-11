@@ -11,7 +11,9 @@ HTML, CSS e JavaScript puros em src/tia/web/static/, servidos pelo FastAPI em
     static/painel/     painel do docente: index.html, painel.css, painel.js
 
 As respostas de /app levam cabeçalhos de segurança (CSP só com a própria
-origem, sem script inline). Sem login: TODO 1.4.6.
+origem, sem script inline). Login (1.4.6): as duas telas pedem usuário e
+senha (rotas /auth); com TIA_AUTH=desligada, mostram o aviso do modo de
+desenvolvimento.
 
 Como rodar (a partir da raiz, com o venv ativo):
     python -m tia.web.dados_demo        # alunos fictícios DEMO-W01..W03 (opcional)

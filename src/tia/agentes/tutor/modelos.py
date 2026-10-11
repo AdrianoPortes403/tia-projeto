@@ -59,8 +59,10 @@ class Feedback(BaseModel):
     veredito: str
     explicacao: str
     # "LLM": explicação do LLM aprovada pela guarda; "guarda": a guarda barrou a
-    # do LLM; "fallback": sem trecho ou LLM falhou (nos dois, texto do item)
-    origem: Literal["LLM", "guarda", "fallback"]
+    # do LLM; "fallback": sem trecho ou LLM falhou (nos dois, texto do item);
+    # "docente": só no reenvio de um evento cujo feedback o docente já vetou
+    # (a explicação é a correção do docente)
+    origem: Literal["LLM", "guarda", "fallback", "docente"]
     # com origem "fallback" por falha: "timeout", outro erro, ou "rag: <erro>"
     falha_llm: str | None = None
     # arquivos do material usados na explicação (R03); vazio quando a
@@ -108,13 +110,16 @@ class RegistroAuditoria(BaseModel):
     id: int
     ts: str
     tipo: Literal["resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma",
-                  "decisao_orquestrador", "veto_docente", "consulta_painel"]
+                  "decisao_orquestrador", "veto_docente", "consulta_painel", "login", "login_falha",
+                  "login_bloqueado", "logout", "acesso_negado", "gestao_usuario"]
     # id da linha na tabela de origem (historico_respostas, tutor_dialogo) ou,
     # no incentivo, a competência da próxima etapa citada
     referencia_id: str | None
     origem: str
     fontes: list[str] = []
     motivo: str | None = None  # decisões do orquestrador
+    usuario_id: str | None = None   # quem agiu (1.4.6); None: sistema ou modo sem login
+    usuario_papel: str | None = None  # aluno, docente, admin, sistema ou sem_login
 
 
 class Veto(BaseModel):

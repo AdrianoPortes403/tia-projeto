@@ -9,7 +9,7 @@ leitura sobre os dados dos três agentes e da orquestração.
 As telas ficam em src/tia/web/static/painel/ (servidas em /app/painel/) e as
 rotas em tia.api.rotas_painel. A única rota de escrita usada pelo painel é a
 do veto docente, que já existia (PATCH /tutor/dialogo/{id}/veto).
-Sem login: TODO 1.4.6.
+Só o papel docente (1.4.6); a auditoria grava quem consultou.
 
 Não é executável; dados de demonstração:
     python -m tia.web.dados_painel

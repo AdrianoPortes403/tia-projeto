@@ -18,7 +18,8 @@ POST /tutor/sessao continua para uso standalone e NÃO passa pelo orquestrador.
 O veto docente (R12), o histórico do diálogo e os relatórios continuam nas
 rotas de cada agente, listadas em EstadoAluno.rotas.
 
-Autenticação (1.4.6) ainda não existe: todas estas rotas têm TODO.
+Autenticação (1.4.6): escrita só pelo próprio aluno; leitura (proximo, estado)
+pelo próprio aluno ou por um docente; verificar-inatividade por docente ou admin.
 
 Incluídas em tia.api.main; para subir a API:
     uvicorn tia.api.main:app --reload
@@ -29,22 +30,24 @@ Pré-requisitos:
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path
 
 from tia.agentes.planejador.modelos import PADRAO_CODIGO_ALUNO
 from tia.agentes.planejador.planejar import CicloPrerequisitos, ErroPlanejador
 from tia.agentes.tutor import RespostaForaDeOrdem, SessaoInexistente
+from tia.seguranca.acesso import acesso_ao_aluno, exigir_papel
 from tia import orquestrador
 from tia.orquestrador.modelos import (EstadoAluno, EventoTutor, Matricula, PedidoSessao, ProximaAcao, ResultadoEvento,
                                       ResultadoMatricula, ResultadoVerificacao, SessaoOrquestrada)
 
 router = APIRouter(prefix="/aluno", tags=["orquestracao"])
 router_sistema = APIRouter(prefix="/orquestrador", tags=["orquestracao"])
+SoOAluno = [Depends(acesso_ao_aluno())]                 # escrita: só o próprio aluno
+AlunoOuDocente = [Depends(acesso_ao_aluno("docente"))]  # leitura: o próprio aluno ou um docente
 CodigoNaRota = Annotated[str, Path(pattern=PADRAO_CODIGO_ALUNO)]
 
 
-# TODO 1.4.6: exigir autenticação (o próprio aluno ou um docente)
-@router.post("/{aluno_id}/iniciar", response_model=ResultadoMatricula)
+@router.post("/{aluno_id}/iniciar", response_model=ResultadoMatricula, dependencies=SoOAluno)
 def iniciar(aluno_id: CodigoNaRota, matricula: Matricula) -> ResultadoMatricula:
     """Matricula o aluno no fluxo e gera a trilha inicial."""
     try:
@@ -57,8 +60,7 @@ def iniciar(aluno_id: CodigoNaRota, matricula: Matricula) -> ResultadoMatricula:
         raise HTTPException(status_code=422, detail=str(erro))
 
 
-# TODO 1.4.6: exigir autenticação (o próprio aluno ou um docente)
-@router.get("/{aluno_id}/proximo", response_model=ProximaAcao)
+@router.get("/{aluno_id}/proximo", response_model=ProximaAcao, dependencies=AlunoOuDocente)
 def proximo(aluno_id: CodigoNaRota) -> ProximaAcao:
     """O que o aluno deve fazer agora."""
     try:
@@ -67,8 +69,7 @@ def proximo(aluno_id: CodigoNaRota) -> ProximaAcao:
         raise HTTPException(status_code=404, detail=str(erro))
 
 
-# TODO 1.4.6: exigir autenticação (o próprio aluno ou um docente)
-@router.post("/{aluno_id}/sessao", response_model=SessaoOrquestrada)
+@router.post("/{aluno_id}/sessao", response_model=SessaoOrquestrada, dependencies=SoOAluno)
 def sessao(aluno_id: CodigoNaRota, pedido: PedidoSessao) -> SessaoOrquestrada:
     """Abre a sessão da competência atual ou do reforço; recusa qualquer outra."""
     try:
@@ -79,8 +80,7 @@ def sessao(aluno_id: CodigoNaRota, pedido: PedidoSessao) -> SessaoOrquestrada:
         raise HTTPException(status_code=409, detail=str(erro))
 
 
-# TODO 1.4.6: exigir autenticação (o próprio aluno ou um docente)
-@router.post("/{aluno_id}/evento", response_model=ResultadoEvento)
+@router.post("/{aluno_id}/evento", response_model=ResultadoEvento, dependencies=SoOAluno)
 def evento(aluno_id: CodigoNaRota, evento_tutor: EventoTutor) -> ResultadoEvento:
     """Processa um evento do Tutor e as regras de replanejamento (uma vez por evento_id)."""
     try:
@@ -91,8 +91,7 @@ def evento(aluno_id: CodigoNaRota, evento_tutor: EventoTutor) -> ResultadoEvento
         raise HTTPException(status_code=409, detail=str(erro))
 
 
-# TODO 1.4.6: exigir autenticação (o próprio aluno ou um docente)
-@router.get("/{aluno_id}/estado", response_model=EstadoAluno)
+@router.get("/{aluno_id}/estado", response_model=EstadoAluno, dependencies=AlunoOuDocente)
 def estado(aluno_id: CodigoNaRota) -> EstadoAluno:
     """Estado do aluno: trilha, competência atual, tendência, inatividade, decisões e vetos."""
     try:
@@ -101,8 +100,9 @@ def estado(aluno_id: CodigoNaRota) -> EstadoAluno:
         raise HTTPException(status_code=404, detail=str(erro))
 
 
-# TODO 1.4.6: exigir autenticação de sistema (só o agendador/docente)
-@router_sistema.post("/verificar-inatividade", response_model=ResultadoVerificacao)
+# o agendador na VM usa o comando (python -m tia.orquestrador --verificar-inatividade), sem HTTP
+@router_sistema.post("/verificar-inatividade", response_model=ResultadoVerificacao,
+                     dependencies=[Depends(exigir_papel("docente", "admin"))])
 def verificar_inatividade() -> ResultadoVerificacao:
     """Avalia a inatividade (R3) de todos os alunos e registra cada decisão na auditoria."""
     return orquestrador.verificar_inatividade()

@@ -17,7 +17,7 @@ flowchart LR
         CLI["Demonstrações<br/>python -m tia..."]
     end
 
-    AUTH["Autenticação 1.4.6<br/>(não existe: TODO nas rotas)"]:::futuro
+    AUTH["Autenticação 1.4.6 (etapa 1)<br/>/auth · sessão · papéis · anti-CSRF<br/>(src/tia/seguranca)"]
     CRON["Agendador na VM (cron/timer)<br/>(não existe: depois de 15/10)"]:::futuro
 
     subgraph API["API FastAPI (src/tia/api)"]
@@ -46,8 +46,8 @@ flowchart LR
         CONT["conteudo/*.json<br/>ementa · perfis · itens (PROVISÓRIO)"]
     end
 
-    WEB & DASH -->|"sem login (TODO 1.4.6)"| API
-    EBA -.-> AUTH -.-> API
+    WEB & DASH -->|"login: cookie HttpOnly + X-CSRF-Token"| AUTH --> API
+    EBA -.->|"login único (provedor a plugar)"| AUTH
     CRON -.->|"verificar-inatividade"| RORQ
     CLI --> ORQ & A1 & A2 & A3
     RORQ --> ORQ
@@ -88,10 +88,10 @@ flowchart LR
 | Orquestrador (este documento) | **Real**. As regras são PROVISÓRIAS |
 | Agendador da verificação de inatividade (cron/timer na VM) | **Não existe**. O comando e a rota que ele chamará existem (`python -m tia.orquestrador --verificar-inatividade`, `POST /orquestrador/verificar-inatividade`) |
 | Auditoria (R11) | **Real** (tabela `auditoria`, `GET /auditoria/{id}`) |
-| API FastAPI | **Real**, **sem autenticação** (TODO 1.4.6 nas rotas) |
-| Autenticação de aluno/docente (1.4.6) | **Não existe** |
-| Web standalone (1.4.4, `src/tia/web/`, em `/app`) | **Real**, sem login e com visual PROVISÓRIO (ver "Web standalone" abaixo) |
-| Painel do docente/instituição (1.4.5, `src/tia/web/static/painel/`, em `/app/painel`) | **Real**, sem login e com visual PROVISÓRIO (ver "Painel do docente" abaixo). A pasta `dashboard/` da raiz ficou vazia |
+| API FastAPI | **Real**, com autenticação e papéis (ver "Segurança") |
+| Autenticação e papéis (1.4.6, etapa 1) | **Real**: login local, sessão no servidor, anti-CSRF, papéis aluno/docente/admin, auditoria com o usuário. Login único do EBAULA e etapa 2 pendentes |
+| Web standalone (1.4.4, `src/tia/web/`, em `/app`) | **Real**, com login e com visual PROVISÓRIO (ver "Web standalone" abaixo) |
+| Painel do docente/instituição (1.4.5, `src/tia/web/static/painel/`, em `/app/painel`) | **Real**, com login (só docente) e com visual PROVISÓRIO (ver "Painel do docente" abaixo). A pasta `dashboard/` da raiz ficou vazia |
 | Plug-in EBAULA (`plugin-ebaula/`) | **Não existe** |
 | VM institucional (medição do R09) | **Não disponível**. Os tempos foram medidos em notebook (CPU) |
 
@@ -165,21 +165,14 @@ pedagógica da Pessoa 4 e têm limiar em `core/config.py`.
 | D5 | **Concluir uma competência avança automaticamente e avisa o aluno.** PROVISÓRIO (Pessoa 4) | R1: `avancar` + aviso por template ("Parabéns! Você concluiu …. Próxima etapa: …") em `DecisaoReplanejamento.aviso` e `ResultadoEvento.avisos` |
 | D6 | **Queda reforça só o pré-requisito direto.** PROVISÓRIO (Pessoa 4) | R2: primeiro pré-requisito da competência na ementa. Sem pré-requisito, não reforça (decisão "nenhuma"). Não há reforço do reforço |
 | D7 | **Inatividade de 3 dias só retoma com incentivo, sem refazer a trilha; a trilha só é refeita após `ORQ_INATIVIDADE_REFAZER_DIAS`** (padrão 14). PROVISÓRIO (Pessoa 4) | R3: `incentivar` (mensagem do incentivo do Tutor, registrada na auditoria) a partir de `INATIVIDADE_DIAS`; `refazer_trilha` a partir de `ORQ_INATIVIDADE_REFAZER_DIAS`. Cada ação vale uma vez por período sem atividade. **Desde 11/10/2026:** quem concluiu a trilha (sem reforço em curso) não recebe incentivo, não tem a trilha refeita e sai com `inativo: false` no `estado` (mesmo critério do painel) |
-| D8 | **Autenticação continua adiada** para o pacote 1.4.6 | TODO em todas as rotas abaixo |
+| D8 | **Autenticação** (pacote 1.4.6, etapa 1, 11/10/2026) | Sessão e papéis em todas as rotas; ver "Segurança" |
 
-### Rotas da orquestração que dependem da autenticação (1.4.6)
+### Quem pode chamar as rotas da orquestração
 
-| Rota | Quem deve poder chamar |
-|---|---|
-| `POST /aluno/{id}/iniciar` | o próprio aluno ou um docente |
-| `GET /aluno/{id}/proximo` | o próprio aluno ou um docente |
-| `POST /aluno/{id}/sessao` | o próprio aluno |
-| `POST /aluno/{id}/evento` | o próprio aluno (respostas); sistema (conclusão, inatividade) |
-| `GET /aluno/{id}/estado` | o próprio aluno ou um docente |
-| `POST /orquestrador/verificar-inatividade` | só o agendador/sistema ou um docente |
-
-Também dependem dela, fora da orquestração: `/tutor/*` (incluindo o veto docente), `/relatorio/*`,
-`/auditoria/{id}` e `/painel/*` (só docente; ver "Painel do docente").
+Matriz completa na seção "Segurança". Escrita (`iniciar`, `sessao`, `evento`) só pelo próprio aluno; leitura
+(`proximo`, `estado`) pelo próprio aluno ou por um docente; `POST /orquestrador/verificar-inatividade` por
+docente ou admin. O agendador da VM usa o comando (`python -m tia.orquestrador --verificar-inatividade`), que
+não passa por HTTP e grava a auditoria com o papel `sistema`.
 
 ## Regras (todas em `src/tia/orquestrador/regras.py`)
 
@@ -226,7 +219,7 @@ Também dependem dela, fora da orquestração: `/tutor/*` (incluindo o veto doce
   `proximo` continua pedindo para abrir o reforço por `/aluno/{id}/sessao`.
 - **Sem agendador:** até a VM, a verificação de inatividade só acontece quando alguém roda o comando ou
   chama a rota.
-- **Sem autenticação** (D8).
+- ~~Sem autenticação (D8)~~ **Resolvido na etapa 1 do 1.4.6** (ver "Segurança").
 
 ## Web standalone (EAP 1.4.4)
 
@@ -247,7 +240,7 @@ para ir junto no `pip install`); a pasta `web/` da raiz ficou vazia.
 
 | Tela | O que mostra | Rotas |
 |---|---|---|
-| Entrada | código do aluno (validado com o padrão do R08) e aviso "Protótipo, sem login (TODO 1.4.6)". Código sem matrícula abre o formulário de matrícula (perfil e horas; diagnóstico vazio) | `GET /aluno/{id}/estado` (404 = sem matrícula), `POST /aluno/{id}/iniciar` |
+| Login / entrada | login com usuário e senha (1.4.6); o código do aluno vem da sessão. Só no modo de desenvolvimento (`TIA_AUTH=desligada`, com aviso): código do aluno validado com o padrão do R08. Código sem matrícula abre o formulário de matrícula (perfil e horas; diagnóstico vazio) | `GET /aluno/{id}/estado` (404 = sem matrícula), `POST /aluno/{id}/iniciar` |
 | Trilha | etapas em ordem, etapa atual destacada, concluídas marcadas, horas e semana, justificativa do Planejador com a origem (LLM ou texto padrão), origem e falha do último planejamento, aviso da última decisão e reforço em curso | `GET /aluno/{id}/estado`, `GET /alunos/{id}/trilha` |
 | Estudo | uma pergunta por vez com alternativas (rádio), envio, veredito fixo, explicação com a origem (LLM, guarda ou fallback) e o motivo da falha, fontes citadas (R03), nível, avisos do orquestrador (conclusão, reforço, retomada, incentivo). Abre a sessão só pelo orquestrador | `GET /aluno/{id}/proximo`, `POST /aluno/{id}/sessao`, `POST /aluno/{id}/evento` |
 | Perguntar ao tutor | pergunta livre (até 500 caracteres, filtro por competência da trilha), resposta com origem: `LLM` (ancorada no material, com fontes), `guarda` (trecho do material transcrito, com a fonte) ou `fallback` (mensagem fixa quando o material não cobre). Histórico com as correções do docente (R12) | `POST /tutor/perguntar`, `GET /alunos/{id}/dialogo` |
@@ -271,8 +264,8 @@ o código do aluno fica só no `sessionStorage` da aba (para sobreviver a recarr
 
 ### O que falta
 
-- **Login (1.4.6):** hoje qualquer pessoa digita qualquer código. A entrada deve virar a autenticação e o
-  código deve vir da sessão, não de um campo.
+- ~~Login (1.4.6)~~ **Feito (etapa 1):** o aluno entra com usuário e senha e o código vem da sessão. A entrada
+  pelo código só existe no modo de desenvolvimento (`TIA_AUTH=desligada`).
 - **Visual do EBAULA:** cores, fontes, logotipo e componentes. Basta trocar `tema.css` (e, se preciso,
   ajustar `estilo.css`); a estrutura HTML usa classes neutras.
 - **Plug-in EBAULA (1.4.3):** a mesma aplicação deve poder rodar dentro do EBAULA; a CSP atual proíbe ser
@@ -342,7 +335,7 @@ revisão sabe o que já foi revisado. (2) Tipos novos na auditoria: `veto_docent
 |---|---|
 | Telas, rotas, auditoria das consultas, veto/aprovação, CSV, impressão | **Real**, com testes (`tests/test_painel.py`) |
 | Critérios de risco e indicadores | **PROVISÓRIOS** (Pessoa 4): limiares em `core/config.py` |
-| Login (1.4.6) | **Não existe.** Qualquer pessoa com o endereço vê os códigos. A auditoria registra a consulta, mas não **quem** consultou nem quem vetou. Com o login: exigir papel docente em `/painel/*`, `/relatorio/turma` e no veto; gravar o usuário na auditoria; restringir o docente às turmas dele |
+| Login (1.4.6) | **Feito (etapa 1):** papel docente em `/painel/*`, `/relatorio/turma` e no veto; a auditoria grava o usuário. **Falta:** restringir o docente às turmas dele (não existe turma no banco) |
 | Turma | **Não existe no banco**: o grupo é a instituição inteira ou um perfil (como no Agente 3) |
 | Visual do EBAULA | PROVISÓRIO: basta trocar `tema.css`; as classes são neutras. Embutir no EBAULA exige liberar o domínio em `frame-ancestors` |
 | Texto do feedback das questões | **Gravado desde 11/10/2026** (`tutor_feedbacks`) e revisável como o diálogo (ver "Feedback revisável" abaixo). Respostas anteriores ficam sem texto |
@@ -373,4 +366,72 @@ está em `docs/avaliacao/protocolo_amostra.md`.
 **Limitação:** um evento reenviado com o mesmo `evento_id` devolve o resultado gravado na hora, com o texto
 original mesmo que o docente já tenha vetado o feedback. O reenvio só acontece segundos depois da resposta
 original, por falha de rede; a correção continua visível no histórico.
+
+## Segurança (EAP 1.4.6, etapa 1)
+
+Pacote `src/tia/seguranca/`, rotas em `tia.api.rotas_auth`. Só biblioteca padrão e FastAPI: `hashlib.scrypt`,
+`secrets`, `hmac`, `sqlite3`.
+
+### Como funciona
+
+| Peça | Implementação |
+|---|---|
+| Usuários | tabela `usuarios`: `id` (código de login, nunca nome; mesmo padrão do código de aluno), `papel` (`aluno`, `docente`, `admin`), `aluno_id` (só no papel aluno), `senha_hash` (scrypt n=2^14, r=8, p=1, sal de 16 bytes por senha), `ativo`. Gestão por `python -m tia.seguranca.usuarios criar\|desativar\|redefinir-senha\|listar` (senha pelo terminal sem eco ou por `--senha-stdin`, nunca na linha de comando) ou por `/admin/usuarios` (papel admin). Senha mínima de 10 caracteres (PROVISÓRIO) |
+| Login | `POST /auth/login {login, senha}` pelo provedor configurado (`AUTH_PROVEDOR`). Mesma mensagem para usuário inexistente, senha errada ou usuário desativado, e o mesmo tempo de resposta (hash fictício) |
+| Sessão | no servidor (`auth_sessoes`): o cookie `tia_sessao` leva um token aleatório de 256 bits e a tabela guarda só o SHA-256 dele. `HttpOnly`, `SameSite=Strict`, `Secure` configurável (`AUTH_COOKIE_SEGURO`, padrão ligado; os navegadores aceitam em `http://localhost`), `Path=/`. Expira em `AUTH_SESSAO_MINUTOS` (padrão 480), contados do login. `POST /auth/logout` apaga a sessão; desativar o usuário ou trocar a senha encerra todas as sessões dele |
+| Anti-CSRF | toda escrita (POST, PATCH...) exige o cabeçalho `X-CSRF-Token` igual ao token da sessão (comparação em tempo constante). O front recebe o token no login ou em `GET /auth/eu` e o guarda só em memória. No login, que ainda não tem sessão, o cabeçalho só precisa existir: um site de terceiros não consegue mandá-lo sem CORS, e a API não libera CORS. Junto com `SameSite=Strict` |
+| Tentativas | `auth_tentativas` (login, IP, sucesso; nunca a senha). Bloqueio (429) com `AUTH_MAX_FALHAS_USUARIO` (5) falhas do mesmo login desde o último sucesso dele, ou `AUTH_MAX_FALHAS_IP` (20) falhas do mesmo IP, dentro de `AUTH_JANELA_MINUTOS` (15). Atraso de `AUTH_ATRASO_SEGUNDOS` (1 s) em cada falha e em cada bloqueio. Falha e bloqueio vão para a auditoria |
+| Autorização | dependências de `seguranca.acesso`: `usuario_atual` (401 sem sessão; 403 sem anti-CSRF), `exigir_papel`, `acesso_ao_aluno` (`{aluno_id}` do caminho) e `conferir_aluno` (`aluno_id` do corpo). Toda recusa responde com mensagem clara e grava `acesso_negado` com a rota |
+| Auditoria | colunas `usuario_id` e `usuario_papel` em toda linha: o usuário da sessão (`core.auditoria.USUARIO_ATUAL`, por requisição); `sistema` fora de requisição (comandos, agendador); `anonimo` em login recusado e 401; `sem_login` no modo de desenvolvimento. Tipos novos: `login`, `login_falha`, `login_bloqueado`, `logout`, `acesso_negado`, `gestao_usuario`. Nunca a senha; o login digitado só entra se tiver o formato de código (um nome digitado por engano vira "fora do formato") |
+
+### Quem pode chamar o quê
+
+| Rotas | aluno | docente | admin | sem login |
+|---|---|---|---|---|
+| `POST /aluno/{id}/iniciar \| sessao \| evento`, `POST /tutor/sessao \| resposta \| perguntar`, `POST /planejador/trilha`, `GET /tutor/incentivo/{id}` | só o próprio (`aluno_id` do caminho ou do corpo) | 403 | 403 | 401 |
+| `GET /aluno/{id}/estado \| proximo`, `GET /alunos/{id}/trilha \| dialogo \| feedbacks`, `GET /relatorio/aluno/{id}` | só o próprio | sim (leitura) | 403 | 401 |
+| `/painel/*`, `GET /relatorio/turma`, `GET /auditoria/{id}`, `PATCH /tutor/dialogo/{id}/veto`, `PATCH /tutor/feedback/{id}/veto` | 403 | sim | 403 | 401 |
+| `POST /orquestrador/verificar-inatividade` | 403 | sim | sim | 401 |
+| `GET /conteudo/ementa \| perfis` | sim | sim | sim | 401 |
+| `/admin/usuarios` | 403 | 403 | sim | 401 |
+| `/auth/login`, `/auth/eu`, `/health`, `/app/*` (arquivos estáticos), `/docs` | públicas | | | |
+
+O admin só gerencia usuários: não vê dados de aluno nem o painel (minimização, R08).
+
+### Interface
+
+`/app/` e `/app/painel/` abrem na tela de login quando não há sessão. Logado, o topo mostra "Conectado:
+<usuário> (papel)" e o botão Sair; o aviso de protótipo saiu. O aluno só vê os próprios dados (o código vem
+da sessão) e um docente que entra em `/app/` recebe o endereço do painel. O painel recusa quem não é
+docente. Uma sessão que vence no meio do uso volta para o login ("Sua sessão terminou"). O JavaScript nunca
+lê o cookie, a senha é apagada do campo depois de cada tentativa e todo texto da API entra por `textContent`.
+
+### Provedor trocável (contrato `Autenticador`, para o login único do EBAULA)
+
+`seguranca.autenticador`: um provedor tem `nome` e `autenticar(credenciais: dict) -> Usuario | None`. Ele
+recebe as credenciais do provedor e devolve o usuário do TIA (id, papel, aluno_id) se forem válidas e o
+usuário estiver ativo; senão devolve `None`, sem dizer o porquê. Não grava credencial e não abre sessão.
+Sessão, anti-CSRF, limite de tentativas, papéis e auditoria não dependem do provedor. Para o EBAULA:
+escrever a classe, registrá-la em `PROVEDORES` e usar `AUTH_PROVEDOR=<nome>`. O teste
+`test_provedor_trocavel` faz isso com um provedor falso.
+
+### Modo de desenvolvimento
+
+`TIA_AUTH=desligada`: nenhuma rota pede login, a auditoria grava `sem_login` e as duas telas mostram
+"Modo de desenvolvimento: autenticação desligada". **Padrão: ligada.** Os testes que verificam os agentes
+pelas rotas usam esse modo (fixture `auth_desligada` no `conftest`); os de segurança (`test_seguranca.py`)
+ligam a autenticação. `python -m tia.web.dados_demo` e `python -m tia.web.dados_painel` criam o aluno
+DEMO-W01 e o docente DEMO-DOCENTE com uma senha de demonstração **fictícia e pública**, impressa pelo
+próprio comando. Só serve para a máquina de desenvolvimento.
+
+### Pendências (etapa 2 e outras entregas)
+
+- Login único do EBAULA (1.4.3): o provedor e o mapeamento usuário do EBAULA → papel/aluno_id.
+- Docente restrito às próprias turmas (não existe turma no banco).
+- Tela de administração de usuários (hoje: comando e `/admin/usuarios`); troca de senha pelo próprio usuário.
+- `/docs` e `/openapi.json` públicos: desligar ou proteger na VM.
+- HTTPS na VM (o cookie `Secure` depende disso), cabeçalhos de segurança também na API (hoje só em `/app`).
+- Retenção de `auth_tentativas` e `auth_sessoes` (limpeza periódica) e política de senha da instituição.
+- Requisições sem sessão gravam `acesso_negado`: um volume alto de pedidos anônimos enche a auditoria
+  (limite por IP também nas rotas, na etapa 2).
 

@@ -123,15 +123,26 @@ def desempenho(respostas: list[dict]) -> Desempenho:
 
 # --- 3. engajamento ---
 
+def trilha_concluida(dados: DadosAluno) -> bool:
+    """Tem trilha e todas as etapas estão concluídas (mesmo critério de progresso)."""
+    if dados.trilha is None or not dados.trilha.etapas:
+        return False
+    concluidas = ({s["competencia_id"] for s in dados.sessoes if s["concluida"]}
+                  | {e.competencia_id for e in dados.trilha.etapas if e.concluida})
+    return all(e.competencia_id in concluidas for e in dados.trilha.etapas)
+
+
 def engajamento(dados: DadosAluno, agora: datetime) -> Engajamento:
     """Mesma regra de inatividade do incentivo (tutor/incentivo.py): conta da
-    última ação do aluno no Tutor; sem nenhuma, da criação da trilha."""
+    última ação do aluno no Tutor; sem nenhuma, da criação da trilha. Quem
+    concluiu a trilha nunca é inativo (os dias sem atividade continuam informados)."""
     momentos = ([r["ts"] for r in dados.respostas] + [d["ts"] for d in dados.dialogos]
                 + [s["atualizado_em"] for s in dados.sessoes] + [s["criado_em"] for s in dados.sessoes])
     momentos = [m for m in momentos if m]
     ultima = max(momentos) if momentos else None
     referencia = _data(ultima) or _data(dados.trilha_criada_em)
     dias_inativo = max(0, (agora - referencia).days) if referencia else None
+    concluiu = trilha_concluida(dados)
     return Engajamento(
         sessoes=len(dados.sessoes),
         sessoes_concluidas=sum(s["concluida"] for s in dados.sessoes),
@@ -140,7 +151,8 @@ def engajamento(dados: DadosAluno, agora: datetime) -> Engajamento:
         dias_ativos=len({m[:10] for m in momentos}),
         ultima_interacao=ultima,
         dias_inativo=dias_inativo,
-        inativo=dias_inativo is None or dias_inativo >= INATIVIDADE_DIAS,
+        inativo=not concluiu and (dias_inativo is None or dias_inativo >= INATIVIDADE_DIAS),
+        trilha_concluida=concluiu,
     )
 
 

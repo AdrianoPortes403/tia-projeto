@@ -16,7 +16,10 @@ Rotas da API do Agente 2 (Tutor), parte 2a: questionário adaptativo.
     GET  /tutor/incentivo/{aluno_id}  inatividade e mensagem de incentivo (template, sem LLM)
 
 aluno_id é validado como código (mesmo padrão do Planejador, R08). Os logs
-do agente não registram aluno_id nem respostas.
+do agente não registram aluno_id nem respostas. Autenticação (1.4.6): sessão,
+pergunta, resposta e incentivo só pelo próprio aluno (aluno_id do corpo ou do
+caminho igual ao da sessão); histórico de diálogo e de feedbacks também por um
+docente; veto só por docente.
 
 Incluídas em tia.api.main; para subir a API:
     uvicorn tia.api.main:app --reload
@@ -28,7 +31,7 @@ Pré-requisitos:
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path
 
 from tia.agentes.planejador.modelos import PADRAO_CODIGO_ALUNO
 from tia.agentes.tutor import (
@@ -40,13 +43,17 @@ from tia.agentes.tutor.modelos import (
     Feedback, Incentivo, IniciarSessao, ItemDialogo, ItemFeedback, PerguntaAluno, RespostaAluno, RespostaDialogo,
     SessaoIniciada, Veto,
 )
+from tia.seguranca.acesso import UsuarioSessao, acesso_ao_aluno, conferir_aluno, exigir_papel, usuario_atual
 
 router = APIRouter(tags=["tutor"])
+SoDocente = [Depends(exigir_papel("docente"))]
+AlunoOuDocente = [Depends(acesso_ao_aluno("docente"))]
 
 
 @router.post("/tutor/sessao", response_model=SessaoIniciada)
-def criar_sessao(entrada: IniciarSessao) -> SessaoIniciada:
-    """Abre uma sessão de questionário na competência (começa no nível 1)."""
+def criar_sessao(entrada: IniciarSessao, usuario: UsuarioSessao = Depends(usuario_atual)) -> SessaoIniciada:
+    """Abre uma sessão de questionário na competência (começa no nível 1). Só o próprio aluno."""
+    conferir_aluno(usuario, entrada.aluno_id)
     try:
         return iniciar_sessao(entrada)
     except CompetenciaInexistente as erro:
@@ -54,8 +61,9 @@ def criar_sessao(entrada: IniciarSessao) -> SessaoIniciada:
 
 
 @router.post("/tutor/resposta", response_model=Feedback)
-def enviar_resposta(resposta: RespostaAluno) -> Feedback:
-    """Corrige a resposta ao item atual e devolve o feedback com as fontes."""
+def enviar_resposta(resposta: RespostaAluno, usuario: UsuarioSessao = Depends(usuario_atual)) -> Feedback:
+    """Corrige a resposta ao item atual e devolve o feedback com as fontes. Só o próprio aluno."""
+    conferir_aluno(usuario, resposta.aluno_id)
     try:
         return responder(resposta)
     except SessaoInexistente as erro:
@@ -65,22 +73,22 @@ def enviar_resposta(resposta: RespostaAluno) -> Feedback:
 
 
 @router.post("/tutor/perguntar", response_model=RespostaDialogo)
-def enviar_pergunta(entrada: PerguntaAluno) -> RespostaDialogo:
-    """Responde à pergunta livre do aluno só com o material do curso (até 500 caracteres)."""
+def enviar_pergunta(entrada: PerguntaAluno, usuario: UsuarioSessao = Depends(usuario_atual)) -> RespostaDialogo:
+    """Responde à pergunta livre do aluno só com o material do curso (até 500 caracteres). Só o próprio aluno."""
+    conferir_aluno(usuario, entrada.aluno_id)
     try:
         return perguntar(entrada)
     except CompetenciaInexistente as erro:
         raise HTTPException(status_code=422, detail=str(erro))
 
 
-@router.get("/alunos/{aluno_id}/dialogo", response_model=list[ItemDialogo])
+@router.get("/alunos/{aluno_id}/dialogo", response_model=list[ItemDialogo], dependencies=AlunoOuDocente)
 def obter_dialogo(aluno_id: Annotated[str, Path(pattern=PADRAO_CODIGO_ALUNO)]) -> list[dict]:
     """Histórico do diálogo do aluno; resposta vetada vem com a correção do docente."""
     return repositorio.listar_dialogo(aluno_id)
 
 
-# TODO 1.4.6: exigir autenticação de docente
-@router.patch("/tutor/dialogo/{dialogo_id}/veto", response_model=ItemDialogo)
+@router.patch("/tutor/dialogo/{dialogo_id}/veto", response_model=ItemDialogo, dependencies=SoDocente)
 def vetar(dialogo_id: int, veto: Veto) -> dict:
     """Veta (ou retira o veto de) uma resposta do diálogo (R12)."""
     if not repositorio.vetar_dialogo(dialogo_id, veto.vetada, veto.correcao_docente):
@@ -88,15 +96,13 @@ def vetar(dialogo_id: int, veto: Veto) -> dict:
     return repositorio.ler_dialogo(dialogo_id)
 
 
-# TODO 1.4.6: exigir autenticação (o próprio aluno ou um docente)
-@router.get("/alunos/{aluno_id}/feedbacks", response_model=list[ItemFeedback])
+@router.get("/alunos/{aluno_id}/feedbacks", response_model=list[ItemFeedback], dependencies=AlunoOuDocente)
 def obter_feedbacks(aluno_id: Annotated[str, Path(pattern=PADRAO_CODIGO_ALUNO)]) -> list[dict]:
     """Feedbacks gravados das questões do aluno; o vetado vem com a correção do docente."""
     return repositorio.listar_feedbacks(aluno_id)
 
 
-# TODO 1.4.6: exigir autenticação de docente
-@router.patch("/tutor/feedback/{resposta_id}/veto", response_model=ItemFeedback)
+@router.patch("/tutor/feedback/{resposta_id}/veto", response_model=ItemFeedback, dependencies=SoDocente)
 def vetar_feedback(resposta_id: int, veto: Veto) -> dict:
     """Veta (ou aprova / retira o veto de) o feedback de uma questão (R12)."""
     if not repositorio.vetar_feedback(resposta_id, veto.vetada, veto.correcao_docente):
@@ -105,7 +111,7 @@ def vetar_feedback(resposta_id: int, veto: Veto) -> dict:
     return repositorio.ler_feedback(resposta_id)
 
 
-@router.get("/tutor/incentivo/{aluno_id}", response_model=Incentivo)
+@router.get("/tutor/incentivo/{aluno_id}", response_model=Incentivo, dependencies=[Depends(acesso_ao_aluno())])
 def obter_incentivo(aluno_id: Annotated[str, Path(pattern=PADRAO_CODIGO_ALUNO)]) -> Incentivo:
     """Diz se o aluno está inativo e devolve a mensagem de incentivo (registrada na auditoria)."""
     incentivo = montar_incentivo(aluno_id)

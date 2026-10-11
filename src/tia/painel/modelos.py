@@ -169,6 +169,8 @@ class RegistroPainel(BaseModel):
     fontes: list[str] = []
     motivo: str | None = None
     origem_justificativas: str | None = None  # quando o Planejador foi acionado
+    usuario_id: str | None = None   # quem agiu (1.4.6)
+    usuario_papel: str | None = None
 
 
 class PaginaAuditoria(BaseModel):
