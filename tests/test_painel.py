@@ -367,8 +367,8 @@ def test_auditoria_filtra_por_agente_aluno_e_periodo(turma):
     assert datas == sorted(datas, reverse=True)  # mais recente primeiro
 
     planejador = client.get("/painel/auditoria?agente=planejador&por_pagina=100").json()
-    # 12 matrículas + 1 trilha refeita por inatividade (DEMO-P05)
-    assert planejador["total"] == 13
+    # 12 matrículas + 2 trilhas refeitas por inatividade de 7 dias ou mais (DEMO-P04 e DEMO-P05)
+    assert planejador["total"] == 14
     assert all("planejador" in x["agentes"] and x["origem_justificativas"] for x in planejador["registros"])
 
     aluno = client.get("/painel/auditoria?aluno_id=DEMO-P03&por_pagina=100").json()

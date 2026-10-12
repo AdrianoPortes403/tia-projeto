@@ -45,6 +45,8 @@ AVISO_SEGUINTE = "Próxima etapa: \"{proxima}\"."
 AVISO_FIM_DA_TRILHA = "Você concluiu todas as etapas da sua trilha."
 AVISO_REFORCO = ("Vamos revisar \"{reforco}\" antes de continuar \"{original}\". A sessão de \"{original}\" "
                  "fica guardada e volta de onde parou.")
+AVISO_MATERIAL = ("Vamos com calma em \"{competencia}\": revise o material-base antes de seguir{materiais}. "
+                  "Se a dúvida continuar, pergunte ao tutor ou ao docente.")
 AVISO_RETOMADA = "Revisão de \"{reforco}\" concluída! Voltando a \"{original}\" no nível {nivel}, de onde você parou."
 
 
@@ -107,6 +109,25 @@ def regra_queda(tendencia: Tendencia, competencia_id: str | None, respostas_desd
     return Avaliacao("queda", True, "reforcar", competencia_id,
                      f"Desempenho em queda ({queda}): pausar '{competencia_id}' e reforçar o pré-requisito direto "
                      f"'{prerequisito}' a partir do nível 1.", sessao_id, prerequisito)
+
+
+def regra_lacuna(competencia_id: str | None, sessao_id: str | None, prerequisito: str | None,
+                 em_reforco: bool = False, sessao_ja_reforcada: bool = False) -> Avaliacao:
+    """Lacuna (1.2.5, seção 3.2): o Tutor sinalizou erros seguidos no nível 1.
+    Com pré-requisito: reforça o pré-requisito direto (como a R2), uma vez por sessão.
+    Sem pré-requisito (ou se a sessão já foi reforçada): indica o material-base."""
+    if em_reforco:
+        return Avaliacao("lacuna", False, "nenhuma", competencia_id,
+                         "Lacuna dentro de uma sessão de reforço: não se reforça o reforço.", sessao_id)
+    if prerequisito is not None and not sessao_ja_reforcada:
+        return Avaliacao("lacuna", True, "reforcar", competencia_id,
+                         f"Lacuna em '{competencia_id}' (erros seguidos no nível 1): pausar e reforçar o "
+                         f"pré-requisito direto '{prerequisito}' a partir do nível 1.", sessao_id, prerequisito)
+    motivo = ("sem pré-requisito para reforçar" if prerequisito is None
+              else "a sessão já teve um reforço")
+    return Avaliacao("lacuna", True, "revisar_material", competencia_id,
+                     f"Lacuna em '{competencia_id}' (erros seguidos no nível 1), {motivo}: indicar o material-base.",
+                     sessao_id)
 
 
 def _tratada(ultima_acao_ts: str | None, ultima_interacao: str | None) -> bool:

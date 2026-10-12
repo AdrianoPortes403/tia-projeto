@@ -54,6 +54,16 @@ def _avaliar_queda(aluno_id: str, competencia_id: str | None, sessao_id: str) ->
         prerequisito=regras.prerequisito_direto(competencia_id, carregar_ementa()) if competencia_id else None)
 
 
+def _avaliar_lacuna(aluno_id: str, competencia_id: str | None, sessao_id: str) -> regras.Avaliacao:
+    reforcos = repositorio.listar_decisoes(aluno_id, "reforcar")
+    ativo = repositorio.reforco_ativo(aluno_id)
+    return regras.regra_lacuna(
+        competencia_id, sessao_id,
+        regras.prerequisito_direto(competencia_id, carregar_ementa()) if competencia_id else None,
+        em_reforco=ativo is not None and ativo["sessao_reforco_id"] == sessao_id,
+        sessao_ja_reforcada=any(r["sessao_id"] == sessao_id for r in reforcos))
+
+
 def _competencia_da_sessao(aluno_id: str, sessao_id: str) -> str | None:
     sessao = tutor.repositorio.ler_sessao(sessao_id, aluno_id)
     return sessao.competencia_id if sessao else None
@@ -76,7 +86,10 @@ def _despachar(aluno_id: str, evento: EventoTutor, agora: datetime) -> Resultado
                 if avaliacao.dispara:
                     decisoes.append(fluxo.aplicar(aluno_id, avaliacao, evento.evento_id, agora))
         else:
-            avaliacao = _avaliar_queda(aluno_id, competencia, evento.sessao_id)
+            # lacuna (1.2.5) tem prioridade; se ela não agiu, avalia a queda (R2)
+            avaliacao = _avaliar_lacuna(aluno_id, competencia, evento.sessao_id) if feedback.lacuna else None
+            if avaliacao is None or not avaliacao.dispara:
+                avaliacao = _avaliar_queda(aluno_id, competencia, evento.sessao_id)
             if avaliacao.dispara:
                 decisoes.append(fluxo.aplicar(aluno_id, avaliacao, evento.evento_id, agora))
     elif evento.tipo == "conclusao":

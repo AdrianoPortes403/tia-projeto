@@ -155,6 +155,8 @@ def criar_tabelas():
     # pausada: sessão suspensa pelo orquestrador durante um reforço (R2); guarda
     # nível e itens e é retomada de onde parou. NULL/0 = não pausada.
     _acrescentar_colunas(cursor, "tutor_sessoes", {"pausada": "INTEGER"})
+    # regras do 1.2.5 (12/10/2026): sequências de acertos e erros no nível atual
+    _acrescentar_colunas(cursor, "tutor_sessoes", {"acertos_seguidos": "INTEGER", "erros_seguidos": "INTEGER"})
 
     # Diálogo livre com o Tutor (parte 2b). A pergunta do aluno é texto livre:
     # fica só aqui no banco, nunca em log (R08). vetada/correcao_docente: veto

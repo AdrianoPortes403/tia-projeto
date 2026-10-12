@@ -51,6 +51,10 @@ def llm_mockado(monkeypatch):
     return chamadas
 
 
+# acertar tudo conclui um tópico da base comum (2 itens por nível) em 6 respostas pelas regras do
+# 1.2.5 (3 acertos seguidos sobem; o tópico também termina quando os itens acabam)
+CONCLUI = "111111"
+
 contador = iter(range(1, 10_000))
 
 
@@ -149,7 +153,7 @@ def test_fluxo_completo_da_matricula_ao_relatorio(llm_mockado):
     assert (corpo["proxima"]["acao"], corpo["proxima"]["competencia_id"]) == ("iniciar_sessao", "recursao")
     assert llm_mockado["planejador"] == 1
 
-    resultados = estudar("1111")
+    resultados = estudar(CONCLUI)
     final = resultados[-1]
     assert final["feedback"]["concluida"] is True
     (decisao,) = final["decisoes"]
@@ -166,7 +170,7 @@ def test_fluxo_completo_da_matricula_ao_relatorio(llm_mockado):
 def test_conclusao_avanca_replaneja_so_o_que_falta_e_avisa():
     iniciar()
     assert a_fazer() == ["funcoes", "listas_strings", "recursao"]
-    final = estudar("1111")[-1]
+    final = estudar(CONCLUI)[-1]
     (decisao,) = final["decisoes"]
     assert (decisao["acao"], decisao["competencia_id"]) == ("avancar", "funcoes")
     assert "funcoes, listas_strings, recursao -> listas_strings, recursao" in decisao["motivo"]
@@ -181,7 +185,7 @@ def test_conclusao_avanca_replaneja_so_o_que_falta_e_avisa():
 
 def test_replanejamento_nunca_traz_de_volta_uma_concluida():
     iniciar()
-    estudar("1111")  # conclui funcoes
+    estudar(CONCLUI)  # conclui funcoes
     # inatividade longa refaz a trilha: funcoes continua concluída
     verificar_inatividade(agora=datetime.now() + timedelta(days=20))
     assert "funcoes" not in a_fazer()
@@ -193,7 +197,7 @@ def test_evento_conclusao_confere_no_banco_e_nao_repete():
     nao_concluida = evento({"tipo": "conclusao", "competencia_id": "recursao"}).json()
     assert [(d["regra"], d["acao"], d["replanejou"]) for d in nao_concluida["decisoes"]] == [
         ("conclusao", "nenhuma", False)]
-    estudar("1111")
+    estudar(CONCLUI)
     de_novo = evento({"tipo": "conclusao", "competencia_id": "recursao"}).json()
     assert [(d["acao"], d["replanejou"]) for d in de_novo["decisoes"]] == [("nenhuma", False)]
     assert sum(d["acao"] == "avancar" for d in decisoes()) == 1
@@ -216,7 +220,8 @@ def test_sessao_so_para_a_competencia_atual():
 
     aceita = pedir_sessao("funcoes")
     assert aceita.status_code == 200 and aceita.json()["reforco"] is False
-    assert aceita.json()["sessao"]["nivel_atual"] == 1
+    # funcoes teve nota 1/3 no diagnóstico: a sessão começa no nível 2 (nível inicial do Planejador)
+    assert aceita.json()["sessao"]["nivel_atual"] == 2
     assert len(auditoria_de("abrir_sessao")) == 1
 
     repetida = pedir_sessao("funcoes")  # já há sessão aberta
@@ -226,7 +231,7 @@ def test_sessao_so_para_a_competencia_atual():
 
 def test_sessao_recusada_quando_a_trilha_esta_concluida():
     iniciar(diagnostico=DIAGNOSTICO_CURTO)
-    estudar("1111")
+    estudar(CONCLUI)
     resposta = pedir_sessao("recursao")
     assert resposta.status_code == 409 and "Trilha concluída" in resposta.json()["detail"]
 
@@ -248,9 +253,9 @@ def pausada(sessao_id: str) -> bool:
 
 def test_ciclo_completo_queda_pausa_reforco_e_retomada():
     iniciar()
-    estudar("1111")  # conclui funcoes (100%)
+    estudar(CONCLUI)  # conclui funcoes (100%)
     sessao_listas, pergunta = abrir_sessao()
-    resultados = responder_varias(sessao_listas, pergunta, "000")  # queda em listas_strings
+    resultados = responder_varias(sessao_listas, pergunta, "00")  # queda em listas_strings
     (decisao,) = resultados[-1]["decisoes"]
     assert (decisao["regra"], decisao["acao"], decisao["competencia_id"], decisao["sessao_id"]) == (
         "queda", "reforcar", "listas_strings", sessao_listas)
@@ -271,7 +276,7 @@ def test_ciclo_completo_queda_pausa_reforco_e_retomada():
     assert pedir_sessao("listas_strings").status_code == 409
     sessao_reforco, pergunta = abrir_sessao()
     assert estado()["reforco"]["estado"] == "em_andamento"
-    final = responder_varias(sessao_reforco, pergunta, "1111")[-1]
+    final = responder_varias(sessao_reforco, pergunta, CONCLUI)[-1]
     assert final["feedback"]["concluida"] is True
 
     # retomada: volta à sessão original, mesmo nível e mesmo item
@@ -295,10 +300,10 @@ def test_reforco_concluido_nao_conta_no_progresso_da_trilha():
     """O reforço de 'repeticao' (dispensada no diagnóstico) é concluído no Tutor,
     mas a trilha e os indicadores continuam com as 3 competências originais."""
     iniciar()
-    estudar("1111")                                     # conclui funcoes
+    estudar(CONCLUI)                                     # conclui funcoes
     sessao_listas, pergunta = abrir_sessao()
-    pergunta = responder_varias(sessao_listas, pergunta, "000")[-1]["feedback"]["proxima_pergunta"]
-    estudar("1111")                                     # reforço de repeticao, concluído
+    pergunta = responder_varias(sessao_listas, pergunta, "00")[-1]["feedback"]["proxima_pergunta"]
+    estudar(CONCLUI)                                     # reforço de repeticao, concluído
     final = responder_varias(sessao_listas, pergunta, "1" * 12)[-1]  # retoma e conclui listas_strings
     assert final["feedback"]["concluida"] is True
     assert final["decisoes"][0]["acao"] == "avancar"
@@ -313,15 +318,15 @@ def test_reforco_concluido_nao_conta_no_progresso_da_trilha():
     assert (progresso["etapas"], progresso["concluidas"]) == (3, 2)  # antes: 3 de 4
     assert "repeticao" not in [p["competencia_id"] for p in progresso["por_competencia"]]
 
-    estudar("1111")                                     # conclui recursao
+    estudar(CONCLUI)                                     # conclui recursao
     progresso = client.get(f"/relatorio/aluno/{ALUNO}?narrativa=false").json()["progresso"]
     assert (progresso["etapas"], progresso["concluidas"], progresso["percentual"]) == (3, 3, 1.0)  # antes: 4 de 4
 
 
 def test_queda_reforca_uma_vez_por_sessao():
     iniciar()
-    estudar("1111")
-    estudar("000")
+    estudar(CONCLUI)
+    estudar("00")
     assert sum(d["acao"] == "reforcar" for d in decisoes()) == 1
 
 
@@ -345,12 +350,12 @@ def test_inatividade_abaixo_do_limite_nao_faz_nada():
     assert acoes_de_inatividade() == ["nenhuma"]
 
 
-def test_inatividade_de_3_a_13_dias_so_incentiva_sem_refazer_a_trilha(llm_mockado):
+def test_inatividade_de_3_a_6_dias_so_incentiva_sem_refazer_a_trilha(llm_mockado):
     iniciar()
     sessao_id, pergunta = abrir_sessao()
     responder(sessao_id, pergunta, True)
     chamadas_planejador = llm_mockado["planejador"]
-    for dias in (3, 13):  # a segunda verificação não repete o incentivo
+    for dias in (3, 6):  # a segunda verificação não repete o incentivo
         verificar_inatividade(agora=datetime.now() + timedelta(days=dias, minutes=1))
     assert acoes_de_inatividade() == ["incentivar", "nenhuma"]
     incentivo = [d for d in decisoes() if d["acao"] == "incentivar"][0]
@@ -361,14 +366,14 @@ def test_inatividade_de_3_a_13_dias_so_incentiva_sem_refazer_a_trilha(llm_mockad
     conexao.close()
 
 
-def test_inatividade_de_14_dias_refaz_a_trilha_uma_vez(llm_mockado):
+def test_inatividade_de_7_dias_refaz_a_trilha_uma_vez(llm_mockado):
     iniciar()
     sessao_id, pergunta = abrir_sessao()
     responder(sessao_id, pergunta, True)
-    verificar_inatividade(agora=datetime.now() + timedelta(days=13, hours=23))
+    verificar_inatividade(agora=datetime.now() + timedelta(days=6, hours=23))
     assert acoes_de_inatividade() == ["incentivar"]
     chamadas_planejador = llm_mockado["planejador"]
-    verificar_inatividade(agora=datetime.now() + timedelta(days=14, minutes=1))
+    verificar_inatividade(agora=datetime.now() + timedelta(days=7, minutes=1))
     verificar_inatividade(agora=datetime.now() + timedelta(days=20))
     assert acoes_de_inatividade() == ["incentivar", "refazer_trilha", "nenhuma"]
     refeita = [d for d in decisoes() if d["acao"] == "refazer_trilha"][0]
@@ -446,8 +451,8 @@ def test_aluno_inexistente_e_validacoes():
 
 def test_cada_decisao_vai_para_a_auditoria_com_motivo():
     iniciar()
-    estudar("1111")
-    estudar("000")
+    estudar(CONCLUI)
+    estudar("00")
     evento({"tipo": "inatividade"})
     registros = [r for r in client.get(f"/auditoria/{ALUNO}").json() if r["tipo"] == "decisao_orquestrador"]
     tomadas = decisoes()

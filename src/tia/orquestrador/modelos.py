@@ -20,15 +20,17 @@ from tia.agentes.tutor.modelos import Feedback, Pergunta, SessaoIniciada
 
 TipoEvento = Literal["resposta", "conclusao", "inatividade"]
 # matricula: trilha inicial; conclusao (R1), queda (R2), inatividade (R3): regras;
+# lacuna: erros seguidos no nível 1 do Tutor (1.2.5, seção 3.2);
 # reforco: fim de um reforço; sessao: pedido de abertura de sessão
-Regra = Literal["matricula", "conclusao", "queda", "reforco", "inatividade", "sessao"]
+Regra = Literal["matricula", "conclusao", "queda", "lacuna", "reforco", "inatividade", "sessao"]
 # planejar: trilha inicial; avancar: competência concluída, replaneja o que falta;
 # reforcar: pausa a sessão e abre reforço do pré-requisito direto; retomar_original:
 # reforço concluído, volta à sessão pausada; incentivar: inatividade, só incentivo;
 # refazer_trilha: inatividade longa, replaneja a partir de hoje; abrir_sessao /
-# recusar_sessao: pedido de sessão; nenhuma: a regra avaliou e não fez nada
+# recusar_sessao: pedido de sessão; revisar_material: lacuna sem pré-requisito, indica o
+# material-base do tópico; nenhuma: a regra avaliou e não fez nada
 Acao = Literal["planejar", "avancar", "reforcar", "retomar_original", "incentivar", "refazer_trilha",
-               "abrir_sessao", "recusar_sessao", "nenhuma"]
+               "abrir_sessao", "recusar_sessao", "revisar_material", "nenhuma"]
 AcaoProxima = Literal["iniciar_sessao", "continuar_sessao", "concluido"]
 IdEvento = Annotated[str, Field(pattern=r"^[A-Za-z0-9_.:-]{1,64}$", examples=["evt-0001"])]
 

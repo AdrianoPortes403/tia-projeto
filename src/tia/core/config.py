@@ -151,9 +151,10 @@ RELATORIO_TENDENCIA_LIMIAR = float(os.getenv("RELATORIO_TENDENCIA_LIMIAR", "0.15
 # Queda (R2, PROVISÓRIO): depois de um reforço por queda, só reforça de novo após
 # pelo menos estas respostas novas (além de no máximo um reforço por sessão).
 ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS = int(os.getenv("ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "5"))
-# Inatividade (R3, PROVISÓRIO): a partir de INATIVIDADE_DIAS (acima), só incentivo,
-# sem refazer a trilha; a trilha só é refeita a partir de ORQ_INATIVIDADE_REFAZER_DIAS.
-ORQ_INATIVIDADE_REFAZER_DIAS = int(os.getenv("ORQ_INATIVIDADE_REFAZER_DIAS", "14"))
+# Inatividade (R3; base pedagógica 1.2.5, seção 3.4): a partir de INATIVIDADE_DIAS (acima), só
+# incentivo; a partir de ORQ_INATIVIDADE_REFAZER_DIAS, incentivo com a trilha refeita a partir de hoje.
+# Regime normal: 3 e 7 dias. No piloto de 8 dias (1.5.1): 2 e 4 dias, pelo .env.
+ORQ_INATIVIDADE_REFAZER_DIAS = int(os.getenv("ORQ_INATIVIDADE_REFAZER_DIAS", "7"))
 
 # --- Segurança: autenticação e papéis (EAP 1.4.6) ---
 # "desligada" = MODO DE DESENVOLVIMENTO: nenhuma rota pede login (testes e demos

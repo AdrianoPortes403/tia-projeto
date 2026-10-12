@@ -267,6 +267,14 @@ def aplicar(aluno_id: str, avaliacao: Avaliacao, evento_id: str | None = None,
             aviso = montar_incentivo(aluno_id, agora).mensagem
         return _registrar(aluno_id, avaliacao, avaliacao.acao, motivo, evento_id, agora, True, planejador, aviso)
 
+    if avaliacao.acao == "revisar_material":
+        from tia.agentes.tutor.repositorio import materiais_da_competencia  # import tardio: evita ciclo
+        arquivos = materiais_da_competencia(avaliacao.competencia_id) or []
+        aviso = regras.AVISO_MATERIAL.format(
+            competencia=nomes.get(avaliacao.competencia_id, avaliacao.competencia_id),
+            materiais=(" (" + ", ".join(arquivos) + ")") if arquivos else "")
+        return _registrar(aluno_id, avaliacao, "revisar_material", avaliacao.motivo, evento_id, agora, aviso=aviso)
+
     if avaliacao.acao == "incentivar":
         incentivo = montar_incentivo(aluno_id, agora)
         tutor.repositorio.registrar_incentivo(aluno_id, incentivo.proxima_etapa)
@@ -315,7 +323,12 @@ def abrir_sessao(aluno_id: str, competencia_id: str, agora: datetime | None = No
     exigir_matricula(aluno_id)
     prox = proxima(aluno_id, agora)
     if prox.acao == "iniciar_sessao" and competencia_id == prox.competencia_id:
-        sessao = tutor.iniciar_sessao(IniciarSessao(aluno_id=aluno_id, competencia_id=competencia_id))
+        # nível inicial do diagnóstico (Planejador); reforço sempre do nível 1
+        trilha = None if prox.reforco else ler_trilha(aluno_id)
+        etapa = next((e for e in trilha.etapas if e.competencia_id == competencia_id), None) if trilha else None
+        nivel = etapa.nivel_inicial if etapa and etapa.nivel_inicial else None
+        sessao = tutor.iniciar_sessao(IniciarSessao(aluno_id=aluno_id, competencia_id=competencia_id,
+                                                    nivel_inicial=nivel))
         if prox.reforco:
             repositorio.vincular_sessao_reforco(repositorio.reforco_ativo(aluno_id)["id"], sessao.sessao_id)
         tipo = "reforço" if prox.reforco else "competência atual"

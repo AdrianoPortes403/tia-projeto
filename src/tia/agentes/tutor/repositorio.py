@@ -73,11 +73,12 @@ def criar_sessao(aluno_id: str, estado: EstadoSessao) -> str:
             conexao.execute(
                 """INSERT INTO tutor_sessoes
                    (id, aluno_id, competencia_id, nivel, item_atual_id, itens_usados,
-                    acertos_seguidos_nivel_max, concluida, criado_em, atualizado_em)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    acertos_seguidos_nivel_max, concluida, criado_em, atualizado_em,
+                    acertos_seguidos, erros_seguidos)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (sessao_id, aluno_id, estado.competencia_id, estado.nivel, estado.item_atual_id,
                  json.dumps(list(estado.itens_usados)), estado.acertos_seguidos_nivel_max,
-                 estado.concluida, agora, agora),
+                 estado.concluida, agora, agora, estado.acertos_seguidos, estado.erros_seguidos),
             )
     finally:
         conexao.close()
@@ -102,6 +103,8 @@ def ler_sessao(sessao_id: str, aluno_id: str) -> EstadoSessao | None:
         itens_usados=tuple(json.loads(linha["itens_usados"] or "[]")),
         acertos_seguidos_nivel_max=linha["acertos_seguidos_nivel_max"],
         concluida=bool(linha["concluida"]),
+        acertos_seguidos=linha["acertos_seguidos"] or 0,
+        erros_seguidos=linha["erros_seguidos"] or 0,
     )
 
 
@@ -119,11 +122,13 @@ def registrar_resposta(sessao_id: str, aluno_id: str, item_respondido: dict, nov
             cursor = conexao.execute(
                 """UPDATE tutor_sessoes
                    SET nivel = ?, item_atual_id = ?, itens_usados = ?,
-                       acertos_seguidos_nivel_max = ?, concluida = ?, atualizado_em = ?
+                       acertos_seguidos_nivel_max = ?, concluida = ?, atualizado_em = ?,
+                       acertos_seguidos = ?, erros_seguidos = ?
                    WHERE id = ? AND aluno_id = ? AND item_atual_id = ? AND NOT concluida
                      AND NOT COALESCE(pausada, 0)""",
                 (novo_estado.nivel, novo_estado.item_atual_id, json.dumps(list(novo_estado.itens_usados)),
                  novo_estado.acertos_seguidos_nivel_max, novo_estado.concluida, agora,
+                 novo_estado.acertos_seguidos, novo_estado.erros_seguidos,
                  sessao_id, aluno_id, item_respondido["id"]),
             )
             if cursor.rowcount != 1:

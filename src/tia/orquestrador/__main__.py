@@ -183,11 +183,11 @@ def demonstrar(com_llm: bool):
     imprimir_decisoes([matricula.decisao], "matrícula")
 
     print("\n2. ACERTOS")
-    estudar("1111", "acertos")
+    estudar("111111", "acertos")  # 1.2.5: 3 acertos seguidos sobem; o tópico termina em 6 respostas
     print("\n3. QUEDA")
-    estudar("000", "queda")
+    estudar("00", "queda")
     print("\n4. REFORÇO E RETOMADA")
-    estudar("1111", "reforço")
+    estudar("111111", "reforço")
     estudar("", "reforço")  # termina a competência retomada
 
     dias_refazer = ORQ_INATIVIDADE_REFAZER_DIAS + 1
