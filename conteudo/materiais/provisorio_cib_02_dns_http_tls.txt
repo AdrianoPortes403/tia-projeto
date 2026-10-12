@@ -23,7 +23,8 @@ do cache, mais rápido.
 DNS: transporte e porta. As consultas DNS comuns usam UDP na porta 53 (UDP
 53), porque são mensagens curtas e o UDP evita o handshake. O TCP na porta
 53 (TCP 53) é usado em respostas grandes e em transferências de zona entre
-servidores. Não confunda: UDP 123 é o NTP, que sincroniza relógios. Numa
+servidores (AXFR), e pode ser usado em qualquer consulta: é uma alternativa
+válida ao UDP, não só uma nova tentativa. Não confunda: UDP 123 é o NTP, que sincroniza relógios. Numa
 captura, o filtro de exibição dns no Wireshark, ou port 53 no tcpdump,
 mostra esse tráfego.
 
@@ -95,7 +96,9 @@ HSTS. O cabeçalho HTTP Strict-Transport-Security (HSTS, RFC 6797) instrui o
 navegador a acessar um domínio somente via HTTPS por um período, definido
 em max-age. Isso impede o rebaixamento para HTTP e ataques de SSL
 stripping, em que um intermediário tenta manter a vítima em HTTP sem
-criptografia.
+criptografia. Limitação: o navegador só aprende o HSTS depois de um
+primeiro acesso seguro ao domínio; para proteger também esse primeiro
+acesso, os navegadores mantêm listas de pré-carga (HSTS preload).
 
 TLS e HTTPS. O TLS (Transport Layer Security), sucessor do SSL, fornece a
 criptografia do HTTPS: HTTPS é HTTP sobre TLS. O TLS garante três coisas:
@@ -114,13 +117,16 @@ Handshake do TLS 1.3 e RTT. Em um handshake completo do TLS 1.3, sem
 retomada de sessão, basta 1 RTT (uma ida e volta) antes de o cliente enviar
 dados de aplicação, porque o cliente envia a parte da troca de chaves já no
 ClientHello. O TLS 1.2 precisava de 2 RTT. O 0-RTT só existe na retomada de
-sessão, quando cliente e servidor já se conhecem.
+sessão, quando cliente e servidor já compartilham uma chave (PSK) de uma
+conexão anterior ou combinada antes.
 
 Sigilo futuro (forward secrecy). No TLS 1.3, o sigilo futuro é garantido
 pela troca de chaves Diffie-Hellman efêmera (ECDHE). Com chaves efêmeras,
 novas a cada sessão, o vazamento posterior da chave privada do servidor não
 permite decifrar sessões antigas gravadas. O TLS 1.3 removeu a troca de
-chaves RSA estática, que não tinha essa propriedade.
+chaves RSA estática, que não tinha essa propriedade; todas as trocas de
+chaves com chave pública do TLS 1.3 têm sigilo futuro. A exceção é o modo
+que usa só a chave pré-compartilhada (PSK), sem ECDHE.
 
 O que aparece numa captura de HTTPS. Sem acesso às chaves, o conteúdo HTTP
 (caminho, cookies, cabeçalhos e corpo) trafega cifrado. Ainda aparecem: os
@@ -135,3 +141,16 @@ resposta; filtre tcp.port == 443 e ache o handshake TCP e depois o
 ClientHello do TLS, onde aparece o SNI; num site de laboratório em HTTP
 (porta 80), filtre http e veja o método, o caminho e o código de status em
 claro. Compare o que é visível em HTTP e em HTTPS.
+
+Contexto doutrinário. Na Doutrina Militar de Defesa Cibernética (MD31-M-07,
+2023), analisar o próprio tráfego e configurar corretamente DNS, HTTP e TLS
+faz parte da proteção cibernética, a atividade permanente de garantir o
+funcionamento dos dispositivos e sistemas. Detectar envenenamento de cache,
+certificados inválidos e cookies sem proteção é proteção; testar sistemas
+de terceiros só com autorização formal.
+
+Referências para conferência. RFC 1035 (DNS) e RFC 7766 (DNS sobre TCP),
+RFC 4033 (DNSSEC), RFC 9110 (semântica do HTTP: métodos, códigos de
+status, portas 80 e 443), RFC 6265 (cookies; o atributo SameSite está na revisão
+6265bis), RFC 6797 (HSTS), RFC 8446
+(TLS 1.3), RFC 8484 (DNS sobre HTTPS) e RFC 7858 (DNS sobre TLS).
