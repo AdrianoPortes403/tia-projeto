@@ -46,8 +46,8 @@ from tia.seguranca import usuarios
 
 # PROVISÓRIO: diagnóstico fictício; o perfil intermediário dispensa variáveis, condicionais e repetição
 MATRICULA = Matricula(perfil_id="intermediario", horas_semanais=6, diagnostico={
-    "variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
-    "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0})
+    "variaveis_tipos": 1.0, "condicionais": 1.0, "repeticao": 1.0,
+    "funcoes": 0.34, "listas_strings": 0.34, "recursao": 0.0})
 # aluno -> respostas em cada sessão aberta pelo orquestrador ("1" acerta, "0" erra)
 ALUNOS = {
     "DEMO-W01": [],

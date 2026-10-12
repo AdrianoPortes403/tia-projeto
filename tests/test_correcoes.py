@@ -52,7 +52,7 @@ def evento_respondido(monkeypatch):
     monkeypatch.setattr(tutor, "gerar_feedback", lambda item, indice, materiais, modo=None: ResultadoFeedback(
         montar_veredito(item, indice), TEXTO_LLM, ["provisorio_funcoes.txt"], "LLM"))
     client.post(f"/aluno/{ALUNO}/iniciar", json={"perfil_id": "intermediario", "horas_semanais": 6, "diagnostico": {
-        "variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9}})
+        "variaveis_tipos": 1.0, "condicionais": 1.0, "repeticao": 1.0}})
     sessao = client.post(f"/aluno/{ALUNO}/sessao", json={"competencia_id": "funcoes"}).json()["sessao"]
     corpo = {"evento_id": "evento-a1", "tipo": "resposta", "sessao_id": sessao["sessao_id"],
              "item_id": sessao["pergunta"]["item_id"], "indice_escolhido": 0}

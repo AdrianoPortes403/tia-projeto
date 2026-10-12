@@ -37,6 +37,18 @@ COLUNAS_NOVAS_TRILHA = {
     "criado_em": "DATETIME",
     "origem_justificativa": "TEXT",  # "LLM" ou "fallback"; NULL nas trilhas antigas
     "concluida": "INTEGER",  # etapa já concluída no replanejamento incremental; NULL = não
+    # base pedagógica alinhada à EAP (12/10/2026): por etapa
+    "revisar_antes": "TEXT",      # pré-requisitos a revisar (perfil iniciante), em JSON
+    "nivel_inicial": "INTEGER",   # nível inicial dos itens no Tutor, vindo do diagnóstico
+    "desafio_pratico": "TEXT",    # desafio opcional no fim da etapa (perfil intermediário)
+    # ... e da trilha toda, repetidos em cada linha (como perfil_id)
+    "trilha": "TEXT",             # dev, defesa_cibernetica ou NULL (só base comum)
+    "pontuacao_enquadramento": "REAL",
+    "perfil_automatico": "INTEGER",
+    "prazo_dias": "INTEGER",
+    "cabe_no_prazo": "INTEGER",
+    "opcoes_prazo": "TEXT",       # JSON
+    "avisos": "TEXT",             # JSON
 }
 
 
@@ -226,6 +238,9 @@ def criar_tabelas():
             FOREIGN KEY (aluno_id) REFERENCES alunos(id)
         )
     """)
+    # base pedagógica alinhada à EAP (12/10/2026): trilha, prazo e escopo da matrícula
+    _acrescentar_colunas(cursor, "orquestrador_matriculas",
+                         {"trilha": "TEXT", "prazo_dias": "INTEGER", "escopo": "TEXT"})
     # Eventos recebidos (idempotência): o mesmo evento_id devolve o resultado
     # gravado, sem processar de novo.
     cursor.execute("""

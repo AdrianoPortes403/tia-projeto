@@ -39,8 +39,8 @@ from tia.web import PASTA_ESTATICA, dados_demo
 client = TestClient(app)
 ALUNO = "A2026-W01"
 GABARITO = {i["id"]: i["indice_correto"] for i in carregar_itens()}
-DIAGNOSTICO = {"variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
-               "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0}
+DIAGNOSTICO = {"variaveis_tipos": 1.0, "condicionais": 1.0, "repeticao": 1.0,
+               "funcoes": 0.34, "listas_strings": 0.34, "recursao": 0.0}
 ESTATICOS = {"index.html": "text/html", "comum.js": "javascript", "app.js": "javascript", "tema.css": "text/css",
              "estilo.css": "text/css"}
 

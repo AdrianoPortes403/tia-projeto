@@ -29,10 +29,10 @@ from tia.orquestrador.modelos import EstadoAluno, Reforco
 client = TestClient(app)
 GABARITO = {i["id"]: i["indice_correto"] for i in carregar_itens()}
 ALUNO = "A2026-030"
-# perfil intermediário dispensa variáveis, condicionais e repetição: trilha funcoes -> listas_strings -> recursao
-DIAGNOSTICO = {"variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
-               "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0}
-# só recursao fica na trilha (as outras são dispensáveis com nota alta)
+# variáveis, condicionais e repetição dominadas no diagnóstico (nota 1): trilha funcoes -> listas_strings -> recursao
+DIAGNOSTICO = {"variaveis_tipos": 1.0, "condicionais": 1.0, "repeticao": 1.0,
+               "funcoes": 0.34, "listas_strings": 0.34, "recursao": 0.0}
+# só recursao fica na trilha (as outras foram dominadas no diagnóstico)
 DIAGNOSTICO_CURTO = {"variaveis_tipos": 1, "condicionais": 1, "repeticao": 1, "funcoes": 1, "listas_strings": 1}
 
 

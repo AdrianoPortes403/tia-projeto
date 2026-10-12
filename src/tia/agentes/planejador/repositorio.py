@@ -15,7 +15,7 @@ Pré-requisitos:
 import json
 from datetime import datetime
 
-from tia.agentes.planejador.modelos import EtapaTrilha, Trilha
+from tia.agentes.planejador.modelos import EtapaTrilha, OpcoesPrazo, Trilha
 from tia.core.database import obter_conexao
 
 
@@ -35,15 +35,22 @@ def salvar_trilha(trilha: Trilha, horas_semanais: float):
                 (trilha.aluno_id, trilha.perfil_id, horas_semanais),
             )
             conexao.execute("DELETE FROM trilha_estudo WHERE aluno_id = ?", (trilha.aluno_id,))
+            opcoes = trilha.opcoes_prazo.model_dump_json() if trilha.opcoes_prazo else None
+            avisos = json.dumps(trilha.avisos, ensure_ascii=False)
             conexao.executemany(
                 """INSERT INTO trilha_estudo
                    (aluno_id, semana, topico, horas_previstas, ordem, competencia_id,
-                    perfil_id, materiais, justificativa, criado_em, origem_justificativa, concluida)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    perfil_id, materiais, justificativa, criado_em, origem_justificativa, concluida,
+                    revisar_antes, nivel_inicial, desafio_pratico, trilha, pontuacao_enquadramento,
+                    perfil_automatico, prazo_dias, cabe_no_prazo, opcoes_prazo, avisos)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 [
                     (trilha.aluno_id, e.semana_inicio, e.nome, e.horas, e.ordem, e.competencia_id,
                      trilha.perfil_id, json.dumps(e.materiais, ensure_ascii=False), e.justificativa, agora,
-                     e.origem_justificativa, e.concluida)
+                     e.origem_justificativa, e.concluida,
+                     json.dumps(e.revisar_antes), e.nivel_inicial, e.desafio_pratico, trilha.trilha,
+                     trilha.pontuacao_enquadramento, trilha.perfil_automatico, trilha.prazo_dias,
+                     trilha.cabe_no_prazo, opcoes, avisos)
                     for e in trilha.etapas
                 ],
             )
@@ -77,7 +84,18 @@ def ler_trilha(aluno_id: str) -> Trilha | None:
             justificativa=linha["justificativa"] or "",
             origem_justificativa=linha["origem_justificativa"],
             concluida=bool(linha["concluida"]),
+            revisar_antes=json.loads(linha["revisar_antes"] or "[]"),
+            nivel_inicial=linha["nivel_inicial"],
+            desafio_pratico=linha["desafio_pratico"],
         )
         for linha in linhas
     ]
-    return Trilha(aluno_id=aluno_id, perfil_id=linhas[0]["perfil_id"], etapas=etapas)
+    primeira = linhas[0]
+    cabe = primeira["cabe_no_prazo"]
+    return Trilha(aluno_id=aluno_id, perfil_id=primeira["perfil_id"], etapas=etapas, trilha=primeira["trilha"],
+                  pontuacao_enquadramento=primeira["pontuacao_enquadramento"],
+                  perfil_automatico=bool(primeira["perfil_automatico"]), prazo_dias=primeira["prazo_dias"],
+                  cabe_no_prazo=None if cabe is None else bool(cabe),
+                  opcoes_prazo=OpcoesPrazo.model_validate_json(primeira["opcoes_prazo"])
+                  if primeira["opcoes_prazo"] else None,
+                  avisos=json.loads(primeira["avisos"] or "[]"))

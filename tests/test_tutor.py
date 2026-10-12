@@ -426,23 +426,29 @@ def test_limpar_explicacao_descarta_frase_cortada_pelo_limite_de_tokens():
     assert feedback.limpar_explicacao("Só um pedaço sem fim") == ""  # vira texto do item
 
 
-# --- banco de itens PROVISÓRIO em conteudo/ ---
+# --- banco de itens da base pedagógica (1.2.5) em conteudo/ ---
 
-def test_banco_de_itens_provisorio_e_consistente():
-    with open("conteudo/banco_itens/itens.json", encoding="utf-8") as arquivo:
-        assert json.load(arquivo)["_provisorio"] is True
+def test_banco_de_itens_e_consistente():
     itens = carregar_itens()
-    ids_ementa = {c["id"] for c in carregar_ementa()}
-    assert len({i["id"] for i in itens}) == len(itens)
-    for competencia_id in ids_ementa:
-        for nivel in (1, 2, 3):
-            do_nivel = [i for i in itens if i["competencia_id"] == competencia_id and i["nivel"] == nivel]
-            assert len(do_nivel) == 2, (competencia_id, nivel)
+    ementa = carregar_ementa()
+    ids_ementa = {c["id"] for c in ementa}
+    assert len({i["id"] for i in itens}) == len(itens) == 120
     for i in itens:
         assert i["competencia_id"] in ids_ementa
         assert len(i["alternativas"]) == 4 and len(set(i["alternativas"])) == 4
         assert 0 <= i["indice_correto"] < 4
         assert i["explicacao"].strip()
+        assert i["uso"] in ("diagnostico", "tutoria")
+    def do_nivel(cid, nivel):
+        return [i for i in itens if i["competencia_id"] == cid and i["nivel"] == nivel]
+    # tópicos do piloto: 7 por nível (1 de diagnóstico + 6 de tutoria); base comum: 2 por nível
+    for c in ementa:
+        esperado = 7 if c["no_piloto"] else 2 if c["trilha"] == "base_comum" else 0
+        for nivel in (1, 2, 3):
+            assert len(do_nivel(c["id"], nivel)) == esperado, (c["id"], nivel)
+            if esperado:
+                assert sum(i["uso"] == "diagnostico" for i in do_nivel(c["id"], nivel)) == 1
+    ids_ementa = {i["competencia_id"] for i in itens}  # só os tópicos que têm itens
     # o banco real permite concluir cada competência pelo caminho 1-2-3-3
     for competencia_id in ids_ementa:
         estado = iniciar(itens, competencia_id)

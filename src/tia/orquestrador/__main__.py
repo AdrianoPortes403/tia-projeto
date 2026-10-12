@@ -56,8 +56,8 @@ from tia.orquestrador.modelos import EventoTutor, Matricula
 
 ALUNO = "DEMO-O01"
 MATRICULA = Matricula(perfil_id="intermediario", horas_semanais=6, diagnostico={
-    "variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
-    "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0})
+    "variaveis_tipos": 1.0, "condicionais": 1.0, "repeticao": 1.0,
+    "funcoes": 0.34, "listas_strings": 0.34, "recursao": 0.0})
 # (coluna, tabela) recuadas para simular dias sem atividade
 HORARIOS = [("timestamp", "historico_respostas"), ("criado_em", "tutor_sessoes"), ("atualizado_em", "tutor_sessoes"),
             ("ts", "tutor_dialogo"), ("criado_em", "trilha_estudo"), ("ts", "orquestrador_decisoes"),
