@@ -1,0 +1,143 @@
+Modelo TCP/IP e captura de tráfego (Wireshark e tcpdump)
+
+Visão geral. Para defender uma rede, é preciso saber como o tráfego é
+organizado e como observá-lo. O modelo TCP/IP divide a comunicação em
+camadas, cada uma com uma função. A captura de tráfego, com Wireshark ou
+tcpdump, permite ver os pacotes reais e diagnosticar problemas e ataques.
+Atenção ética e legal: capture e analise tráfego somente em redes próprias,
+de laboratório ou com autorização formal do responsável.
+
+As camadas do modelo TCP/IP. O modelo TCP/IP tem quatro camadas. Aplicação:
+os protocolos usados pelos programas, como HTTP, DNS e SSH. Transporte:
+comunicação entre processos, com TCP ou UDP, identificados por portas.
+Internet (rede): endereçamento e roteamento entre redes, com o protocolo
+IP. Acesso à rede (enlace): a transmissão no meio local, como Ethernet e
+Wi-Fi, com endereços MAC. Cada camada encapsula os dados da camada de cima
+em um cabeçalho próprio: segmento (TCP), pacote (IP) e quadro (Ethernet).
+
+A camada de Internet e o IP. O protocolo IP atua na camada de Internet
+(rede). Ele faz o endereçamento, com endereços como 10.0.0.5, e o
+roteamento entre redes: cada roteador decide para onde encaminhar o pacote
+pelo endereço de destino. O IP não garante entrega nem ordem; isso fica a
+cargo do TCP, na camada de transporte. O cabeçalho IPv4 sem opções tem 20
+bytes e traz, entre outros campos, origem, destino e TTL.
+
+ARP e ICMP. O ARP descobre o endereço MAC correspondente a um endereço IP na
+rede local: pergunta em broadcast quem tem aquele IP, e o dono responde com
+seu MAC. Não confunda: o DNS traduz nomes em IPs e o DHCP distribui
+endereços IP. O ICMP transporta mensagens de controle e erro do IP; o
+comando ping usa o ICMP, enviando Echo Request e esperando Echo Reply.
+
+TCP: orientado a conexão. O TCP é o protocolo de transporte orientado a
+conexão e que garante entrega ordenada. Ele estabelece conexão com o
+handshake, numera os bytes (números de sequência), confirma o recebimento
+(ACK), retransmite perdas e reordena o que chega fora de ordem. O UDP não
+faz nada disso: envia datagramas sem conexão, sem confirmação e sem
+retransmissão, o que o torna mais leve e rápido.
+
+Quando usar UDP. Consultas DNS e transmissões de voz ou vídeo ao vivo
+costumam usar UDP em vez de TCP. O UDP evita o handshake e as
+retransmissões, reduzindo a latência. Para mensagens curtas ou tempo real,
+esperar handshake e retransmissões custa mais do que perder um pacote
+ocasional: em uma chamada de voz, um pacote atrasado já não serve.
+
+Portas padrão que aparecem em toda captura. 20 e 21: FTP. 22: SSH. 23:
+Telnet. 25: SMTP (e-mail). 53: DNS. 80: HTTP. 123: NTP. 443: HTTPS.
+A porta identifica o serviço no host: o mesmo IP pode ter um servidor web
+na porta 80 e um SSH na porta 22. Reconhecer essas portas ajuda a ler a
+captura e a notar serviços que não deveriam estar ali.
+
+Three-way handshake do TCP. A conexão TCP é aberta em três passos: o
+cliente envia SYN, o servidor responde SYN-ACK e o cliente confirma com ACK.
+A sequência é SYN → SYN-ACK → ACK. Só depois disso os dados de aplicação
+começam a trafegar. No Wireshark, os três primeiros segmentos de uma
+conexão mostram exatamente essas flags.
+
+Números de sequência no handshake. Cada lado escolhe um número de
+sequência inicial. O SYN consome um número de sequência, então o servidor
+confirma esperando o próximo. Exemplo: o cliente inicia com SYN de número
+de sequência 1000; o SYN-ACK do servidor traz ACK = 1000 + 1 = 1001.
+
+Número de ACK com dados. O ACK é o número do próximo byte esperado. Se um
+segmento TCP com seq = 5000 carrega 200 bytes de dados, o receptor que o
+recebe corretamente responde com ACK = 5000 + 200 = 5200. Assim o emissor
+sabe exatamente até onde os dados chegaram.
+
+Retransmissão. Quando o Wireshark marca um pacote como "TCP
+Retransmission", um segmento com o mesmo número de sequência foi reenviado
+porque o ACK não chegou a tempo. O remetente reenvia o segmento quando o
+temporizador de retransmissão expira ou quando recebe ACKs duplicados.
+Muitas retransmissões indicam perda de pacotes, congestionamento ou
+problema no enlace.
+
+Flags TCP e encerramento. SYN abre a conexão. ACK confirma. FIN indica que
+um lado terminou de enviar dados e quer encerrar a conexão de forma
+ordenada; cada lado envia seu FIN e recebe ACK. RST (reset) encerra a
+conexão abruptamente, sem a troca ordenada. PSH pede entrega imediata dos
+dados à aplicação.
+
+O que a resposta ao SYN revela sobre a porta. Ao enviar um SYN para uma
+porta: se volta SYN-ACK, a porta está aberta; se volta RST, a porta está
+fechada (o host é alcançável, mas não há serviço naquela porta); se não
+volta nada, há descarte silencioso, em geral por um firewall (porta
+filtrada). É assim que ferramentas de varredura de portas classificam o
+estado de cada porta.
+
+Varredura SYN (half-open). Na varredura SYN do Nmap, o scanner envia SYN e,
+ao receber SYN-ACK, responde com RST em vez de ACK. O SYN-ACK já revela que
+a porta está aberta; abortar com RST faz o handshake não se completar,
+então a conexão não chega à aplicação e tende a deixar menos registros
+nela. Do lado da defesa, muitos SYN seguidos de RST para portas diferentes
+são um sinal típico de varredura. Varreduras, só em redes com autorização.
+
+Window size: controle de fluxo. O campo "window size" do cabeçalho TCP faz
+o controle de fluxo: diz quantos bytes o receptor aceita receber sem
+confirmar. O receptor anuncia o espaço livre no seu buffer, e o emissor não
+pode ter mais bytes pendentes (enviados e não confirmados) que isso. Não
+confunda: o TTL fica no cabeçalho IP, e a numeração dos bytes é o número de
+sequência.
+
+MTU e MSS. A MTU é o maior pacote IP que o enlace transporta; na Ethernet é
+1500 bytes. O MSS é o tamanho máximo de dados TCP por segmento. Com
+cabeçalhos IPv4 e TCP de 20 bytes cada (sem opções), MSS = MTU − cabeçalho
+IP − cabeçalho TCP = 1500 − 20 − 20 = 1460 bytes. Pacotes maiores que a MTU
+precisam ser fragmentados, o que aparece na captura.
+
+Wireshark. O Wireshark é a ferramenta para capturar e inspecionar pacotes
+com interface gráfica. Ele captura e decodifica cada camada: mostra o
+quadro Ethernet, o cabeçalho IP, o segmento TCP ou UDP e o protocolo de
+aplicação. Outras ferramentas têm outro papel: o Nmap faz varredura de
+portas; John the Ripper e Hydra atacam senhas. O recurso "Follow TCP
+Stream" reconstrói a conversa inteira de uma conexão.
+
+Filtros de exibição do Wireshark. O filtro de exibição escolhe o que
+mostrar entre os pacotes já capturados e usa a sintaxe do Wireshark.
+Exemplos: tcp.port == 80 mostra só o tráfego TCP de ou para a porta 80;
+ip.addr == 10.0.0.5 mostra todo o tráfego de ou para o host 10.0.0.5, pois
+ip.addr casa origem OU destino; ip.src pega só a origem e ip.dst só o
+destino. Também valem nomes de protocolo, como dns, http e tcp.flags.syn
+== 1. Já http.port não é um campo válido.
+
+Filtros de captura (BPF) e tcpdump. O filtro de captura decide o que é
+gravado e usa a sintaxe BPF, a mesma do tcpdump. Exemplos: port 80 and tcp,
+host 10.0.0.5, port 53. A sintaxe BPF vale como filtro de CAPTURA, não de
+exibição no Wireshark. O tcpdump é a ferramenta de linha de comando:
+tcpdump -i eth0 port 53 captura, na interface eth0, o tráfego de ou para a
+porta 53 (DNS). O -i escolhe a interface, e port 53 é a expressão BPF que
+filtra origem ou destino na porta 53. Com -w arquivo.pcap a captura é
+gravada para abrir depois no Wireshark.
+
+Captura em rede com switch. Numa rede com switch, a captura mostra só o
+tráfego da sua máquina e os broadcasts. Diferente de um hub, o switch
+aprende os endereços MAC e só encaminha o unicast para a porta de destino,
+isolando o tráfego dos outros hosts. Para capturar o tráfego de outros
+hosts de forma autorizada, usa-se espelhamento de porta (SPAN), configurado
+pelo administrador no switch, que replica o tráfego para a porta do
+analisador.
+
+Roteiro prático de análise. 1) Capture com o filtro de captura mais
+estreito possível. 2) Abra no Wireshark e aplique filtros de exibição. 3)
+Ache o handshake (SYN, SYN-ACK, ACK) da conexão de interesse. 4) Use
+Follow TCP Stream para ver a conversa. 5) Procure anomalias:
+retransmissões, RST inesperados, muitas portas recebendo SYN (varredura),
+protocolos em portas fora do padrão. Sempre com autorização.

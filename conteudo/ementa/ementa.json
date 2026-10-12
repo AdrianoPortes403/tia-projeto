@@ -305,7 +305,9 @@
       "prerequisitos": [
         "repeticao"
       ],
-      "materiais": [],
+      "materiais": [
+        "provisorio_dev_01_complexidade.txt"
+      ],
       "palavras_chave": [
         [
           "complexidade",
@@ -357,7 +359,9 @@
         "dev_01",
         "listas_strings"
       ],
-      "materiais": [],
+      "materiais": [
+        "provisorio_dev_02_estruturas_lineares.txt"
+      ],
       "palavras_chave": [
         [
           "lista encadeada",
@@ -1328,7 +1332,9 @@
       "etapa": 1,
       "horas_estimadas": 1.5,
       "prerequisitos": [],
-      "materiais": [],
+      "materiais": [
+        "provisorio_cib_01_tcpip_captura.txt"
+      ],
       "palavras_chave": [
         [
           "tcp/ip",
@@ -1374,7 +1380,9 @@
       "prerequisitos": [
         "cib_01"
       ],
-      "materiais": [],
+      "materiais": [
+        "provisorio_cib_02_dns_http_tls.txt"
+      ],
       "palavras_chave": [
         [
           "dns",

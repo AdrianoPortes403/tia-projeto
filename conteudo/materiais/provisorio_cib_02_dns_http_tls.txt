@@ -1,0 +1,137 @@
+Protocolos de aplicação na prática: DNS, HTTP e TLS
+
+Visão geral. DNS, HTTP e TLS são os protocolos de aplicação que aparecem em
+quase toda captura de tráfego. O DNS descobre o endereço de um nome, o HTTP
+transporta as páginas e as APIs, e o TLS cifra e autentica a conexão. Um
+acesso a https://www.exemplo.com usa os três em sequência: consulta DNS,
+conexão TCP, handshake TLS e, por fim, as requisições HTTP. Este material
+parte do modelo TCP/IP e da captura de tráfego do tópico anterior.
+
+DNS: função. A função principal do DNS (Domain Name System) é a resolução de
+nomes: traduzir nomes de domínio, como www.exemplo.com, em endereços IP.
+Não confunda: atribuir IPs aos computadores é papel do DHCP, e encaminhar
+pacotes entre redes é papel dos roteadores. O DNS é hierárquico: a raiz
+aponta para os domínios de topo (.com, .br), que apontam para os servidores
+autoritativos de cada domínio.
+
+DNS: resolvedor e cache. O computador pergunta a um resolvedor (em geral do
+provedor ou da instituição). O resolvedor consulta a hierarquia, obtém a
+resposta do servidor autoritativo e a guarda em cache pelo tempo indicado
+no TTL do registro. As próximas consultas pelo mesmo nome são respondidas
+do cache, mais rápido.
+
+DNS: transporte e porta. As consultas DNS comuns usam UDP na porta 53 (UDP
+53), porque são mensagens curtas e o UDP evita o handshake. O TCP na porta
+53 (TCP 53) é usado em respostas grandes e em transferências de zona entre
+servidores. Não confunda: UDP 123 é o NTP, que sincroniza relógios. Numa
+captura, o filtro de exibição dns no Wireshark, ou port 53 no tcpdump,
+mostra esse tráfego.
+
+Registros DNS: A e AAAA. O registro A associa um nome a um endereço IPv4,
+como 203.0.113.10. O registro AAAA associa um nome a um endereço IPv6. O
+registro PTR faz a resolução reversa (IP → nome), usada, por exemplo, em
+registros de log e em servidores de e-mail.
+
+Registros DNS: MX, CNAME, NS e TXT. O registro MX (Mail Exchanger) indica
+os servidores de e-mail de um domínio. O CNAME cria um apelido que aponta
+para outro nome de domínio: por exemplo, www.exemplo.com pode ser um CNAME
+de exemplo.com. O NS indica os servidores de nomes autoritativos, ou seja,
+faz a delegação de um domínio. O TXT guarda texto livre, usado por exemplo
+para o SPF, que lista quem pode enviar e-mail pelo domínio.
+
+Envenenamento de cache DNS. No envenenamento de cache DNS, respostas falsas
+são inseridas no cache de um resolvedor. A partir daí, o resolvedor passa a
+devolver o IP do atacante a todos os clientes que perguntarem por aquele
+nome, que acabam em um servidor falso. O DNSSEC mitiga esse ataque ao
+assinar as respostas.
+
+DNSSEC, DoH e DoT. O DNSSEC garante autenticidade e integridade nas
+respostas DNS: os registros são assinados, e uma resposta não pode ser
+falsificada sem detecção. Mas o DNSSEC não cifra nada: a consulta continua
+visível. Para confidencialidade existem DNS sobre HTTPS (DoH) e DNS sobre
+TLS (DoT), que cifram a consulta entre o cliente e o resolvedor.
+
+HTTP: requisição e resposta. O HTTP funciona por requisição e resposta. O
+cliente envia um método, um caminho e cabeçalhos; o servidor responde com
+um código de status, cabeçalhos e um corpo. A porta padrão do HTTP sem TLS
+é 80; a do HTTPS é 443. Não confunda: 21 é FTP. O HTTP em si não guarda
+estado entre requisições; o estado da sessão é mantido com cookies.
+
+Métodos HTTP. GET obtém um recurso sem alterar o estado do servidor: é um
+método seguro. POST envia dados e cria ou processa algo; PUT substitui um
+recurso; PATCH altera parte dele; DELETE remove. POST, PUT, DELETE e PATCH
+modificam recursos, por isso devem ser protegidos contra requisições
+forjadas e nunca disparados por um simples link.
+
+Códigos de status HTTP. 2xx é sucesso: 200 OK. 3xx é redirecionamento: 301
+é redirecionamento permanente e 302 é temporário. 4xx é erro do cliente:
+401 é não autorizado (falta autenticação), 403 é proibido (autenticado, mas
+sem permissão) e 404 é recurso não encontrado. 5xx é falha do servidor: 500
+é erro interno do servidor. Em uma análise, muitos 401 ou 403 seguidos
+podem indicar tentativa de acesso indevido, e muitos 404 podem indicar
+varredura de caminhos.
+
+301 e 302 na prática. Com 301 (permanente), navegadores e buscadores podem
+memorizar o novo endereço e ir direto para ele nas próximas vezes. Com 302
+(temporário), o endereço original continua valendo e o redirecionamento é
+consultado de novo. Um uso comum do 301 é redirecionar todo o HTTP da porta
+80 para o HTTPS da porta 443.
+
+Cookies e seus atributos de segurança. O cookie de sessão identifica o
+usuário logado, então roubá-lo equivale a roubar a sessão. O atributo
+HttpOnly faz o cookie não poder ser lido por JavaScript na página, o que
+dificulta o roubo via XSS. O atributo Secure faz o cookie ser enviado só por
+HTTPS. O atributo SameSite restringe o envio do cookie ao mesmo site.
+
+SameSite e CSRF. O atributo SameSite=Strict em um cookie de sessão mitiga
+principalmente o Cross-Site Request Forgery (CSRF). No CSRF, uma página de
+outro site faz o navegador da vítima enviar uma requisição ao site
+verdadeiro, que chega com o cookie da vítima. Com Strict, o navegador não
+envia o cookie em requisições originadas de outro site, que é exatamente o
+que o CSRF explora. Tokens anti-CSRF nos formulários são a defesa
+complementar.
+
+HSTS. O cabeçalho HTTP Strict-Transport-Security (HSTS, RFC 6797) instrui o
+navegador a acessar um domínio somente via HTTPS por um período, definido
+em max-age. Isso impede o rebaixamento para HTTP e ataques de SSL
+stripping, em que um intermediário tenta manter a vítima em HTTP sem
+criptografia.
+
+TLS e HTTPS. O TLS (Transport Layer Security), sucessor do SSL, fornece a
+criptografia do HTTPS: HTTPS é HTTP sobre TLS. O TLS garante três coisas:
+confidencialidade (os dados vão cifrados), integridade (alterações são
+detectadas) e autenticação do servidor (pelo certificado). As versões
+atuais são o TLS 1.2 e o TLS 1.3; SSL e TLS 1.0 e 1.1 são obsoletos.
+
+Certificado no handshake TLS. No handshake TLS, o certificado enviado pelo
+servidor serve para autenticar a identidade do servidor e vincular a chave
+pública a ela. O cliente valida a cadeia de certificados até uma autoridade
+certificadora confiável, confere o nome e a validade, e só então confia na
+chave pública do servidor. Um certificado inválido é o sinal de alerta de
+um possível intermediário (man-in-the-middle).
+
+Handshake do TLS 1.3 e RTT. Em um handshake completo do TLS 1.3, sem
+retomada de sessão, basta 1 RTT (uma ida e volta) antes de o cliente enviar
+dados de aplicação, porque o cliente envia a parte da troca de chaves já no
+ClientHello. O TLS 1.2 precisava de 2 RTT. O 0-RTT só existe na retomada de
+sessão, quando cliente e servidor já se conhecem.
+
+Sigilo futuro (forward secrecy). No TLS 1.3, o sigilo futuro é garantido
+pela troca de chaves Diffie-Hellman efêmera (ECDHE). Com chaves efêmeras,
+novas a cada sessão, o vazamento posterior da chave privada do servidor não
+permite decifrar sessões antigas gravadas. O TLS 1.3 removeu a troca de
+chaves RSA estática, que não tinha essa propriedade.
+
+O que aparece numa captura de HTTPS. Sem acesso às chaves, o conteúdo HTTP
+(caminho, cookies, cabeçalhos e corpo) trafega cifrado. Ainda aparecem: os
+IPs e as portas, os tamanhos e horários dos pacotes, a consulta DNS (se não
+for DoH ou DoT) e, no ClientHello, o nome do servidor (SNI) em texto claro,
+sem ECH. O SNI vai em claro para o servidor escolher o certificado certo. A
+extensão ECH (Encrypted Client Hello) existe justamente para cifrar o SNI.
+
+Roteiro prático de análise. Com autorização, capture o acesso a um site.
+No Wireshark: filtre dns e veja a consulta (registro A ou AAAA) e a
+resposta; filtre tcp.port == 443 e ache o handshake TCP e depois o
+ClientHello do TLS, onde aparece o SNI; num site de laboratório em HTTP
+(porta 80), filtre http e veja o método, o caminho e o código de status em
+claro. Compare o que é visível em HTTP e em HTTPS.

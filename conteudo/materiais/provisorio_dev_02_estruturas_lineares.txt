@@ -1,0 +1,150 @@
+Estruturas lineares: lista encadeada, pilha e fila
+
+Visão geral. Estruturas lineares guardam elementos em sequência, um depois
+do outro. As três mais usadas são a lista encadeada, a pilha e a fila. O
+que muda entre elas é ONDE se pode inserir e remover e QUANTO custa cada
+operação. Escolher a estrutura certa é escolher a complexidade certa: a
+mesma tarefa pode custar O(1) em uma estrutura e O(n) em outra. Este
+material usa a notação Big-O do tópico anterior (análise de complexidade).
+
+Lista simplesmente encadeada: o nó. Uma lista encadeada é formada por nós
+espalhados na memória. Na lista simplesmente encadeada, cada nó armazena o
+valor e uma referência (ponteiro) para o próximo nó, em geral chamada next.
+O último nó aponta para None (nulo), que marca o fim da lista. A lista é
+acessada pelo ponteiro head, que aponta para o primeiro nó; algumas
+implementações guardam também um ponteiro tail para o último nó. Em
+Python, um nó pode ser uma classe com dois atributos: valor e proximo.
+
+Lista duplamente encadeada. Na lista duplamente encadeada, cada nó
+armazena o valor e referências para o próximo e para o anterior (next e
+prev). É a referência para o anterior que diferencia as duas: com ela, a
+lista é duplamente encadeada; sem ela, só com o next, é simplesmente
+encadeada. A referência para o anterior permite percorrer a lista nos dois
+sentidos e simplifica remoções, ao custo de mais memória por nó (um
+ponteiro a mais).
+
+Inserir no início da lista encadeada custa O(1). Dado o ponteiro head,
+basta criar o nó, apontá-lo para o antigo head e atualizar head para o nó
+novo. Não é preciso percorrer a lista, então o custo não depende de n. Com
+o ponteiro tail, inserir no FIM também custa O(1): o antigo último nó passa
+a apontar para o novo, e tail é atualizado.
+
+Acessar o k-ésimo elemento da lista encadeada custa O(n) no pior caso. Não
+há acesso por índice como em um vetor: é preciso seguir os ponteiros desde
+o head, um nó de cada vez, até n passos. Essa é a principal desvantagem da
+lista encadeada em relação ao vetor (array), em que v[i] custa O(1). Em
+troca, a lista não precisa de memória contígua e cresce nó a nó.
+
+Remover o último nó de uma lista simplesmente encadeada custa O(n), mesmo
+com os ponteiros head e tail (sem ponteiro para o anterior). O tail aponta
+para o último nó, mas, para removê-lo, é preciso achar o penúltimo nó,
+atualizar o next dele para None e mover o tail para ele. Como cada nó só
+conhece o próximo, achar o penúltimo exige percorrer a lista desde o head.
+
+Remover um nó do meio de uma lista duplamente encadeada custa O(1), dado um
+ponteiro para o próprio nó. O nó já conhece o anterior e o próximo; basta
+religá-los entre si (o anterior passa a apontar para o próximo, e o próximo
+passa a apontar para o anterior), sem percorrer a lista. Na lista
+simplesmente encadeada, a mesma remoção exigiria achar o anterior, em O(n).
+
+Inverter uma lista simplesmente encadeada no próprio lugar custa tempo O(n)
+e espaço O(1). Faz-se uma passada com três ponteiros (anterior, atual,
+próximo): guarda-se o próximo, inverte-se a ligação do atual para apontar
+ao anterior e avança-se um nó. Cada ligação é invertida uma vez e não é
+preciso estrutura auxiliar; ao final, head passa a ser o antigo último nó.
+
+Detectar ciclo em lista encadeada com memória extra O(1): algoritmo de
+Floyd. Usam-se dois ponteiros com velocidades diferentes, a "tartaruga" e
+a "lebre". Um ponteiro anda 1 passo e o outro anda 2 passos a cada rodada.
+Se houver ciclo, eles se encontram dentro dele; se a lebre chegar a None,
+não há ciclo. Guardar os nós visitados em um conjunto também funciona, mas
+usa O(n) de memória.
+
+Pilha: política LIFO. A pilha (stack) segue a política LIFO, último a
+entrar, primeiro a sair (last in, first out). Push e pop ocorrem no mesmo
+extremo, chamado topo, então sai primeiro quem entrou por último. As
+operações são: push (empilhar: insere no topo), pop (desempilhar: remove e
+devolve o topo) e peek, também chamada top (consulta o topo SEM removê-lo).
+Todas custam O(1). Enqueue e dequeue não são operações de pilha, e sim de
+fila.
+
+Exemplo de pilha passo a passo. Pilha vazia; executa-se push(1), push(2),
+push(3) e depois pop(): o topo é o último inserido, 3, e é ele que o pop
+retorna. Outro exemplo: push(4), push(7), pop(), push(9), push(2), pop(),
+pop(). O primeiro pop() tira 7 e a pilha fica [4]; push 9 e 2 deixam
+[4, 9, 2]; o pop seguinte tira 2 e o último pop tira 9. Ao simular, escreva
+a pilha a cada passo, com o topo à direita.
+
+Pilha em Python. Uma lista do Python funciona como pilha: append(x) faz o
+push, pop() remove e devolve o último elemento (o topo) e pilha[-1] faz o
+peek. As duas operações no final da lista custam O(1) (o append tem custo
+amortizado O(1)). Antes de pop ou peek, verifique se a pilha está vazia,
+porque desempilhar uma pilha vazia é um erro (underflow).
+
+Aplicação da pilha: parênteses balanceados. Para verificar se os parênteses
+de uma expressão estão balanceados, a pilha é a estrutura mais adequada.
+Empilha cada abertura, como ( [ {, e desempilha a cada fechamento. O
+fechamento precisa casar com a abertura mais recente, que é exatamente o
+topo (LIFO). A expressão está balanceada se todo fechamento casar e a pilha
+terminar vazia.
+
+Aplicação da pilha: botão "voltar" do navegador. Cada página visitada é
+empilhada; "voltar" desempilha a mais recente (LIFO) e mostra a anterior.
+A mesma ideia aparece no "desfazer" (undo) dos editores e na pilha de
+chamadas das funções recursivas, em que a última chamada feita é a
+primeira a retornar.
+
+Aplicação da pilha: expressão pós-fixa. Na notação pós-fixa (polonesa
+reversa), o operador vem depois dos operandos e não há parênteses. Para
+avaliar, lê-se da esquerda para a direita: número é empilhado; operador
+desempilha dois valores, calcula e empilha o resultado. Exemplo: 3 4 + 2 *.
+Empilha 3 e 4; o + desempilha os dois e empilha 7; empilha 2; o *
+desempilha 7 e 2 e empilha 14. O resultado é 14, o único valor que sobra.
+
+Fila: política FIFO. A fila (queue) segue a política FIFO, primeiro a
+entrar, primeiro a sair (first in, first out). Insere-se no fim, com
+enqueue, e remove-se do início, com dequeue. O dequeue remove o elemento
+mais antigo, o que está esperando há mais tempo. Exemplo natural: uma fila
+de impressão, em que o primeiro pedido enviado é o primeiro impresso.
+Outros usos são filas de atendimento, de tarefas e a busca em largura em
+grafos.
+
+Exemplo de fila passo a passo. Fila vazia; executa-se enqueue(A),
+enqueue(B), dequeue(), enqueue(C), dequeue(). O primeiro dequeue remove A;
+restam B, C; o segundo dequeue remove B. Ao simular, escreva a fila a cada
+passo, com o início à esquerda e o fim à direita.
+
+Fila em Python. Remover do início de uma lista do Python, com pop(0), custa
+O(n), porque todos os elementos são deslocados. Para fila, use
+collections.deque: append(x) faz o enqueue e popleft() faz o dequeue, ambos
+em O(1). Uma lista encadeada com head e tail também implementa fila em
+O(1): enqueue no tail e dequeue no head.
+
+Fila circular em vetor. A fila pode ser guardada em um vetor de capacidade
+fixa, reaproveitando as posições de forma circular. Guardam-se o índice
+head (o primeiro elemento) e o tamanho atual. A posição de inserção é
+(head + tamanho) mod capacidade. Exemplo: capacidade 5 (índices 0 a 4),
+head = 3 e 4 elementos armazenados: (3 + 4) mod 5 = 2, então o próximo
+elemento entra no índice 2. O dequeue avança head para (head + 1) mod
+capacidade.
+
+Fila com duas pilhas. Uma fila pode ser implementada com duas pilhas, uma
+de entrada e uma de saída. O enqueue empilha na pilha de entrada. O
+dequeue desempilha da pilha de saída; se ela estiver vazia, todos os
+elementos são transferidos da entrada para a saída, o que inverte a ordem
+e preserva o FIFO. Exemplo: a pilha de entrada contém 1, 2, 3 (3 no topo)
+e a de saída está vazia; o próximo dequeue transfere tudo, deixando 1 no
+topo da saída, e retorna 1.
+
+Custo amortizado da fila com duas pilhas. Um dequeue isolado pode custar
+O(n), quando há transferência. Mas cada elemento é movido da pilha de
+entrada para a de saída no máximo uma vez, então o custo total de n
+operações é O(n). Dividindo por n, o custo amortizado do dequeue é O(1),
+o mesmo raciocínio do append em vetor dinâmico.
+
+Resumo de custos. Lista simplesmente encadeada: inserir no início O(1);
+acessar o k-ésimo O(n); remover o último O(n). Lista duplamente encadeada:
+remover um nó dado o ponteiro O(1). Pilha: push, pop e peek O(1). Fila
+(deque, lista encadeada ou circular): enqueue e dequeue O(1); com duas
+pilhas, dequeue amortizado O(1). Inverter lista: tempo O(n), espaço O(1).
+Floyd: detecta ciclo com memória O(1).

@@ -129,6 +129,8 @@ replaneja são as regras do orquestrador). Só o próprio aluno escreve; a leitu
 
 - Tópicos Dev/Cyber fora do piloto (`dev_03`…, `cib_03`…) ainda **não têm itens**: abrir sessão neles
   dá `SemItens`. No piloto (`dev_01`, `dev_02`, `cib_01`, `cib_02`) há itens.
-- Tópicos Dev/Cyber **não têm material** no RAG até o pacote 1.5.2; o feedback cita só o material da base comum.
+- Material do RAG: os 4 tópicos do piloto têm material PROVISÓRIO (`conteudo/materiais/provisorio_dev_01_…`,
+  `…dev_02…`, `…cib_01…`, `…cib_02…`), escrito a partir das 21 questões de cada tópico e conferido contra elas
+  (palavras-chave, números e nomes de código). A A4 revisa no 1.5.2. Os demais tópicos Dev/Cyber ainda não têm material.
 - A base comum tem só 2 itens por nível; o questionário pode cair no nível vizinho quando eles acabam.
 - O onboarding por regras entende frases simples; frases livres dependem do LLM local.

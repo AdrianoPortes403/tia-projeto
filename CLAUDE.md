@@ -85,7 +85,7 @@ Sempre ativar o venv da raiz: `source venv/bin/activate`.
   `TIA_AMBIENTE=producao` é o padrão: para `/docs` ou `TIA_AUTH=desligada` na máquina de desenvolvimento,
   use `TIA_AMBIENTE=desenvolvimento` no `.env`.
   Testes de rota rodam com `TIA_AUTH=desligada` (conftest); os de segurança ligam a autenticação.
-- Material real do curso depende da Pessoa 4 (tópicos Dev/Cyber: material no 1.5.2; itens só nos tópicos do piloto).
+- Material real do curso depende da Pessoa 4 (tópicos do piloto: material PROVISÓRIO para a A4 revisar no 1.5.2; demais tópicos Dev/Cyber sem material e sem itens).
 - VM institucional ainda não disponível; testes feitos em notebook e em máquina com RTX 3050.
 
 ## Desempenho (decisão de 10/10)
