@@ -92,24 +92,27 @@
         <button type="submit" class="botao acao">Entrar</button>
       </form>
 
-      <form id="form-matricula" class="cartao" hidden aria-labelledby="titulo-matricula" novalidate>
-        <h2 id="titulo-matricula">Primeiro acesso: montar sua trilha</h2>
-        <p>Este código ainda não tem trilha. Informe o perfil e as horas por semana; o Planejador monta a trilha
-          (pode levar mais de um minuto).</p>
-        <label for="campo-perfil">Perfil</label>
-        <select id="campo-perfil" name="perfil" required>
-          <!-- PROVISÓRIO: perfis de conteudo/perfis/perfis.json (Pessoa 4); não há rota que os liste -->
-          <option value="iniciante">Iniciante</option>
-          <option value="intermediario">Intermediário</option>
-        </select>
-        <label for="campo-horas">Horas de estudo por semana</label>
-        <input id="campo-horas" name="horas" type="number" min="1" max="60" step="1" value="6" required>
-        <p class="dica">Sem diagnóstico nesta tela: todas as competências contam como não dominadas.</p>
+      <div id="primeiro-acesso" class="cartao" hidden aria-labelledby="titulo-primeiro-acesso">
+        <h2 id="titulo-primeiro-acesso">Primeiro acesso: vamos montar sua trilha</h2>
+        <p class="dica">Três passos: uma conversa rápida com o tutor, um diagnóstico de cerca de 15 minutos e o
+          seu plano de estudo, montado pelo Planejador.</p>
+        <h3 id="titulo-onboarding">1. Conversa com o tutor</h3>
+        <ol class="conversa" id="onboarding-conversa" aria-live="polite" aria-labelledby="titulo-onboarding"></ol>
+        <form id="form-onboarding" novalidate>
+          <label for="campo-onboarding">Sua resposta</label>
+          <input id="campo-onboarding" name="resposta" type="text" maxlength="500" required autocomplete="off"
+                 aria-describedby="dica-onboarding">
+          <p class="dica" id="dica-onboarding">Responda do seu jeito. Não escreva dados pessoais.</p>
+          <button type="submit" class="botao acao">Enviar</button>
+        </form>
+        <h3 id="titulo-diagnostico" hidden>2. Diagnóstico</h3>
+        <p class="dica" id="diagnostico-progresso" aria-live="polite" hidden></p>
+        <div id="diagnostico-conteudo"></div>
         <div class="linha-botoes">
-          <button type="submit" class="botao acao">Montar trilha</button>
+          <button type="button" class="botao acao" id="concluir-primeiro-acesso" hidden>3. Montar minha trilha</button>
           <button type="button" class="botao botao--secundario" id="cancelar-matricula">Voltar</button>
         </div>
-      </form>
+      </div>
     </section>
 
     <!-- b) Trilha -->

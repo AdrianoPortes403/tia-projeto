@@ -46,7 +46,7 @@ from tia.seguranca.usuarios import PADRAO_ID
 
 # o que sai de cada tabela na eliminação
 APAGAR = ("trilha_estudo", "orquestrador_matriculas", "orquestrador_reforcos", "orquestrador_eventos",
-          "tutor_sessoes")
+          "tutor_sessoes", "planejador_onboarding", "planejador_diagnosticos")
 DESVINCULAR = {
     "historico_respostas": "aluno_id = NULL, sessao_id = NULL",
     "tutor_feedbacks": "aluno_id = NULL, sessao_id = NULL, " + TEXTOS_FEEDBACK,
@@ -140,6 +140,8 @@ def exportar(aluno_id: str) -> dict:
             "dialogo": por_aluno("tutor_dialogo", "id"),
             "decisoes_do_orquestrador": por_aluno("orquestrador_decisoes", "id"),
             "reforcos": por_aluno("orquestrador_reforcos", "id"),
+            "onboarding": por_aluno("planejador_onboarding", "aluno_id"),
+            "diagnostico_inicial": por_aluno("planejador_diagnosticos", "aluno_id"),
             "eventos": eventos,
             "auditoria": registros,
             "consultas_do_painel_que_mostraram_o_aluno": consultas,

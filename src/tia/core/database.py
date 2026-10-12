@@ -238,6 +238,27 @@ def criar_tabelas():
             FOREIGN KEY (aluno_id) REFERENCES alunos(id)
         )
     """)
+    # Primeiro acesso (Agente 1): sessão do onboarding conversacional e do diagnóstico
+    # inicial, uma por aluno, com o estado em JSON (sem texto do aluno depois de concluído)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS planejador_onboarding (
+            aluno_id TEXT PRIMARY KEY,
+            estado TEXT NOT NULL,
+            concluido INTEGER NOT NULL DEFAULT 0,
+            criado_em DATETIME,
+            atualizado_em DATETIME
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS planejador_diagnosticos (
+            aluno_id TEXT PRIMARY KEY,
+            trilha TEXT,
+            estado TEXT NOT NULL,
+            concluido INTEGER NOT NULL DEFAULT 0,
+            criado_em DATETIME,
+            atualizado_em DATETIME
+        )
+    """)
     # base pedagógica alinhada à EAP (12/10/2026): trilha, prazo e escopo da matrícula
     _acrescentar_colunas(cursor, "orquestrador_matriculas",
                          {"trilha": "TEXT", "prazo_dias": "INTEGER", "escopo": "TEXT"})

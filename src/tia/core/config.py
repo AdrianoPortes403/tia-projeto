@@ -61,17 +61,30 @@ CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "800"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "150"))
 
 # --- Agente 1 (Planejador) ---
-# Arquivos de conteúdo pedagógico (PROVISÓRIOS até a entrega da Pessoa 4)
+# Arquivos de conteúdo pedagógico: base pedagógica alinhada à EAP (1.2.3 e 1.2.4),
+# convertida para o formato deste repositório (base comum de Python + trilhas dev e defesa_cibernetica)
 EMENTA_PATH = os.getenv("EMENTA_PATH", "conteudo/ementa/ementa.json")
 PERFIS_PATH = os.getenv("PERFIS_PATH", "conteudo/perfis/perfis.json")
+# Primeiro acesso (onboarding conversacional + diagnóstico, contrato 1.3.2)
+ONBOARDING_USA_LLM = os.getenv("ONBOARDING_USA_LLM", "1").lower() in ("1", "true", "sim")
+ONBOARDING_TIMEOUT_LLM = int(os.getenv("ONBOARDING_TIMEOUT_LLM", "60"))
+# Piloto (1.5.1): prazo da matrícula em dias (0 = sem prazo) e escopo da trilha.
+# No piloto de 27/10 a 04/11/2026: PILOTO_PRAZO_DIAS=8 e PILOTO_ESCOPO=piloto no .env.
+PILOTO_PRAZO_DIAS = int(os.getenv("PILOTO_PRAZO_DIAS", "0"))
+PILOTO_ESCOPO = os.getenv("PILOTO_ESCOPO", "completa")
 # Tempo máximo (s) para o LLM escrever as justificativas; abaixo do limite de 15 s do R09
 # Decisão de 10/10 (CLAUDE.md): alto em desenvolvimento; o R09 será medido na VM.
 # Com 12 s, as justificativas estouravam em CPU (ReadTimeout) e caíam no texto padrão.
 PLANEJADOR_TIMEOUT_LLM = int(os.getenv("PLANEJADOR_TIMEOUT_LLM", "120"))
 
 # --- Agente 2 (Tutor) ---
-# Banco de itens do questionário (PROVISÓRIO até a entrega da Pessoa 4)
+# Banco de itens do questionário (base pedagógica 1.2.5; itens ainda em revisão docente)
 BANCO_ITENS_PATH = os.getenv("BANCO_ITENS_PATH", "conteudo/banco_itens/itens.json")
+# Avaliação adaptativa (1.2.5, seção 3): sobe de nível com N acertos seguidos, desce com
+# N erros seguidos e conclui com N acertos seguidos no nível 3. A validar com a Pessoa 2.
+TUTOR_ACERTOS_SUBIR = int(os.getenv("TUTOR_ACERTOS_SUBIR", "3"))
+TUTOR_ERROS_DESCER = int(os.getenv("TUTOR_ERROS_DESCER", "2"))
+TUTOR_ACERTOS_CONCLUIR = int(os.getenv("TUTOR_ACERTOS_CONCLUIR", "3"))
 # Decisão de 10/10 (CLAUDE.md): não otimizar para os 15 s do R09 em desenvolvimento;
 # o LLM de produção roda em máquina mais potente. O R09 será medido na VM.
 # Tempo máximo (s) de espera pelo LLM no feedback; alto em desenvolvimento.
@@ -263,7 +276,9 @@ if __name__ == "__main__":
                  "RACIOCINIO_TAGS", "BACKUP_DIR", "BACKUP_DIAS", "API_URL_LOCAL", "R09_LIMITE_SEGUNDOS",
                  "OLLAMA_KEEP_ALIVE", "DB_PATH",
                  "MATERIAIS_DIR", "CHROMA_DIR", "COLLECTION_NAME",
-                 "CHUNK_SIZE", "CHUNK_OVERLAP", "EMENTA_PATH", "PERFIS_PATH",
+                 "CHUNK_SIZE", "CHUNK_OVERLAP", "EMENTA_PATH", "PERFIS_PATH", "ONBOARDING_USA_LLM",
+                 "ONBOARDING_TIMEOUT_LLM", "PILOTO_PRAZO_DIAS", "PILOTO_ESCOPO", "TUTOR_ACERTOS_SUBIR",
+                 "TUTOR_ERROS_DESCER", "TUTOR_ACERTOS_CONCLUIR",
                  "PLANEJADOR_TIMEOUT_LLM", "BANCO_ITENS_PATH", "TUTOR_TIMEOUT_LLM", "TUTOR_MAX_TOKENS", "TUTOR_TEMPERATURA", "TUTOR_TOP_P", "TUTOR_SEED", "TUTOR_MODO_FEEDBACK",
                  "TUTOR_NUM_TRECHOS",
                  "TUTOR_DISTANCIA_MAXIMA", "TUTOR_COBERTURA_MIN", "TUTOR_EXIGE_TERMO_RARO",

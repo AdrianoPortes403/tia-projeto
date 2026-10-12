@@ -229,7 +229,8 @@ def gerar_trilha(entrada: EntradaPlanejador, ementa: list[dict] | None = None,
         horas_acumuladas += horas
 
         if competencia.get("prerequisitos"):
-            motivo = "vem depois de " + ", ".join(competencia["prerequisitos"])
+            nomes = {c["id"]: c["nome"] for c in ementa}
+            motivo = "vem depois de " + ", ".join(f"\"{nomes.get(p, p)}\"" for p in competencia["prerequisitos"])
         else:
             motivo = "é base para as demais competências"
         inicio = f"Nota no diagnóstico {nota:.2f}; " if cid in entrada.diagnostico else "Sem diagnóstico; "

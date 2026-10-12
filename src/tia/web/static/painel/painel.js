@@ -81,6 +81,8 @@
     limpeza_retencao: "limpeza por prazo de retenção",
     retencao: "retenção de dados (LGPD)",
     direito_titular: "direito do titular (LGPD)",
+    onboarding: "cadastro inicial (onboarding)",
+    diagnostico: "resposta ao diagnóstico inicial",
   };
 
   const estado = {
