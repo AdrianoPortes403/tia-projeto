@@ -1,0 +1,22 @@
+# backup do banco, do índice do RAG e do .env (deploy/backup.sh faz o mesmo à mão)
+# Disparado por tia-backup.timer (deploy/instalar.sh troca @TIA_RAIZ@ e @TIA_USUARIO@).
+# Saída no journal: journalctl -u tia-backup.service
+[Unit]
+Description=TIA - backup do banco, do índice do RAG e do .env (deploy/backup.sh faz o mesmo à mão)
+After=network.target
+
+[Service]
+Type=oneshot
+User=@TIA_USUARIO@
+Group=@TIA_USUARIO@
+WorkingDirectory=@TIA_RAIZ@/atual
+EnvironmentFile=@TIA_RAIZ@/config/.env
+ExecStart=@TIA_RAIZ@/atual/venv/bin/python -m tia.implantacao.backup fazer --env @TIA_RAIZ@/config/.env
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=@TIA_RAIZ@/data @TIA_RAIZ@/backup

@@ -1,0 +1,11 @@
+# A cada hora. A API já limpa sozinha a cada AUTH_LIMPEZA_MINUTOS; este timer cobre a API parada.
+[Unit]
+Description=TIA - agenda de tia-limpeza
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

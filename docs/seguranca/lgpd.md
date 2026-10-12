@@ -132,7 +132,8 @@ instituição.
 
 **Confirmação:** o código não chama nenhuma API externa.
 
-- O único cliente HTTP da aplicação é `requests.post`, em `src/tia/core/llm_client.py`, para o Ollama.
+- O cliente HTTP da aplicação é o `requests`, só em `src/tia/core/llm_client.py` (Ollama) e no teste de
+  fumaça da VM (`src/tia/implantacao/verificar.py`, que só chama a própria API em `API_URL_LOCAL`).
 - A API não faz chamadas de saída.
 - O teste `test_pontos_de_rede_do_codigo` varre `src/tia` e falha se aparecer qualquer outro endereço ou
   biblioteca de rede.
@@ -142,10 +143,13 @@ instituição.
 | 1 | API do TIA (FastAPI/uvicorn) | entrada | padrão `127.0.0.1:8000`; na VM, atrás do proxy HTTPS | `tia.api.main` (`uvicorn ...`) | as telas `/app` e `/app/painel` vêm do mesmo endereço |
 | 2 | Ollama, chat | saída | `OLLAMA_URL` (padrão `http://localhost:11434`), `POST /api/chat` | `core/llm_client.chamar_llm` | local ou rede interna; a API não sobe em produção se `OLLAMA_URL` apontar para fora (`config.problemas_de_configuracao`) |
 | 3 | Ollama, embeddings | saída | mesmo host, `POST /api/embeddings` | `core/llm_client.gerar_embedding` | idem |
+| 3b | Ollama, lista de modelos | saída | mesmo host, `GET /api/tags` | `core/llm_client.listar_modelos_instalados` | só na verificação da VM (`implantacao.modelos` e `verificar`) |
 | 4 | Chroma (índice do RAG) | nenhuma | arquivos em `CHROMA_DIR` | `rag/retrieve.abrir_cliente` | **telemetria desligada.** O chromadb 0.5 manda, por padrão, eventos de uso para `https://us.i.posthog.com` (443). Isso acontecia até esta etapa e foi corrigido com `Settings(anonymized_telemetry=False)`; há teste |
 | 5 | SQLite | nenhuma | arquivo `DB_PATH` | `core/database` | |
 | 6 | Navegador do usuário | — | só a própria origem (CSP `'self'`) | `web/static` | nenhuma fonte, script ou imagem externa |
 | 7 | `/docs` (só com `API_DOCS=1`) | saída **do navegador** | `cdn.jsdelivr.net:443`, `fastapi.tiangolo.com:443` | FastAPI | desligado por padrão em produção |
+| 8 | Teste de fumaça da VM | saída local | `API_URL_LOCAL` (padrão `http://127.0.0.1:8000`) | `implantacao/verificar.py` | só a própria API; avisa se apontar para fora da máquina |
+| 9 | Download dos modelos | saída, **só na implantação** | `registry.ollama.ai:443` e o CDN dele | `deploy/modelos.sh` (`ollama pull`) | único passo com rede da VM, isolado e marcado; o resto é instalado sem rede (wheels do pacote) |
 
 Fora da aplicação, só na instalação:
 

@@ -1,0 +1,11 @@
+# Todo dia às 06:00: incentivo a quem parou e trilha refeita após ORQ_INATIVIDADE_REFAZER_DIAS (R3).
+[Unit]
+Description=TIA - agenda de tia-inatividade
+
+[Timer]
+OnCalendar=*-*-* 06:00
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

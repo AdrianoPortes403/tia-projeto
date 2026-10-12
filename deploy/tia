@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Comando do TIA na VM (instalado por deploy/instalar.sh em @TIA_RAIZ@/bin/tia).
+# Roda um módulo do TIA como o usuário do serviço (@TIA_USUARIO@), com o .env
+# da VM e a pasta da versão em uso; os arquivos criados ficam só do dono.
+#
+# Uso: sudo @TIA_RAIZ@/bin/tia <comando> [argumentos]
+#   usuarios ...      python -m tia.seguranca.usuarios (criar, importar, listar...)
+#   titular ...       python -m tia.seguranca.titular (exportar, eliminar)
+#   retencao ...      python -m tia.seguranca.retencao (--simular, --aplicar)
+#   limpeza           python -m tia.seguranca.limpeza
+#   inatividade       python -m tia.orquestrador --verificar-inatividade
+#   indexar           python -m tia.rag.ingest (reindexa o material)
+#   modelos ...       python -m tia.implantacao.modelos
+#   verificar ...     python -m tia.implantacao.verificar
+#   backup ...        python -m tia.implantacao.backup
+#   config            python -m tia.core.config (valores em uso e avisos)
+
+set -euo pipefail
+RAIZ="@TIA_RAIZ@"
+USUARIO="@TIA_USUARIO@"
+[ $# -ge 1 ] || { sed -n '2,20p' "$0"; exit 2; }
+comando="$1"; shift
+case "$comando" in
+    usuarios) modulo=(-m tia.seguranca.usuarios) ;;
+    titular) modulo=(-m tia.seguranca.titular) ;;
+    retencao) modulo=(-m tia.seguranca.retencao) ;;
+    limpeza) modulo=(-m tia.seguranca.limpeza) ;;
+    inatividade) modulo=(-m tia.orquestrador --verificar-inatividade) ;;
+    indexar) modulo=(-m tia.rag.ingest) ;;
+    modelos) modulo=(-m tia.implantacao.modelos) ;;
+    verificar) modulo=(-m tia.implantacao.verificar) ;;
+    backup) modulo=(-m tia.implantacao.backup) ;;
+    config) modulo=(-m tia.core.config) ;;
+    *) echo "comando desconhecido: $comando" >&2; sed -n '2,20p' "$0" >&2; exit 2 ;;
+esac
+executar=(bash -c 'umask 077; unset PYTHONPATH; cd "$1/atual"; set -a; . "$1/config/.env"; set +a; shift; exec "$@"'
+          _ "$RAIZ" "$RAIZ/atual/venv/bin/python" "${modulo[@]}" "$@")
+if [ "$(id -un)" = "$USUARIO" ]; then
+    exec "${executar[@]}"
+fi
+[ "$(id -u)" = 0 ] || { echo "rode com sudo (o comando roda como $USUARIO)" >&2; exit 1; }
+exec runuser -u "$USUARIO" -- "${executar[@]}"

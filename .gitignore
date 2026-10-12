@@ -12,3 +12,7 @@ data/
 # saídas com dados pessoais ou senhas (seguranca.usuarios importar, seguranca.titular exportar)
 senhas_temporarias-*.csv
 titular-*.json
+# pacotes de implantação e medições do R09 (deploy/)
+dist/
+build/
+medicoes/

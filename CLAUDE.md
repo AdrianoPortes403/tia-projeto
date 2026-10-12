@@ -34,6 +34,8 @@ Ollama (`qwen3:*` para chat, `nomic-embed-text` para embeddings).
   (`/app/painel`), em HTML/CSS/JS puros servidos pelo FastAPI. As pastas `web/` e `dashboard/` da raiz
   ficaram vazias. `src/tia/painel/`: consultas somente de leitura do painel. `plugin-ebaula/`: por último.
 - `docs/`: referência, arquitetura, seguranca (LGPD e implantação), evidencias. `infra/`: scripts de ambiente.
+- `deploy/`: pacote de implantação na VM (instalar, modelos, backup, restaurar, verificar, systemd, nginx);
+  a lógica testável fica em `src/tia/implantacao/`. Passo a passo: `docs/implantacao_vm.md`.
 
 ## Quem faz o quê no projeto real
 
@@ -86,3 +88,5 @@ Sempre ativar o venv da raiz: `source venv/bin/activate`.
 - Todo timeout de chamada ao LLM fica em core/config.py (lido do .env), nunca fixo no código.
   Em desenvolvimento usar valores altos (ex.: 120 s). O R09 será medido na VM.
 - Mesmo assim, toda demonstração imprime o tempo gasto, para termos o número quando a VM chegar.
+- Na VM: `deploy/verificar.sh --medir-r09 N` mede cada modelo de `MODELOS_LLM` (p50/p90/p95 contra 15 s).
+  Modelo padrão em `MODELO_PADRAO` (`CHAT_MODEL` ainda vale); raciocínio por modelo em `RACIOCINIO_POR_MODELO`.

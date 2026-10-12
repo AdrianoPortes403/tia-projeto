@@ -1,0 +1,11 @@
+# Toda segunda às 04:00, SÓ SIMULAÇÃO: o resultado fica no journal para o responsável ler. Aplicar é decisão humana: sudo /srv/tia/bin/tia retencao --aplicar (ou trocar --simular por --aplicar na unidade, depois de o jurídico aprovar os prazos).
+[Unit]
+Description=TIA - agenda de tia-retencao
+
+[Timer]
+OnCalendar=Mon *-*-* 04:00
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

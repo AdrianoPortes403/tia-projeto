@@ -69,6 +69,11 @@ Nada disso foi implementado ainda: a escolha depende das respostas abaixo.
 
 ## 5. Lista de conferência para subir na VM
 
+> Os scripts de `deploy/` aplicam quase tudo desta seção: usuário de serviço, permissões, `.env` de
+> produção, systemd com `--proxy-headers` e `--no-access-log`, Ollama só em 127.0.0.1, backup, timers e
+> exemplo de nginx. Passo a passo e reversão: `docs/implantacao_vm.md`. Esta lista continua sendo a
+> conferência final.
+
 Caminhos de exemplo: código em `/srv/tia/app`, dados em `/srv/tia/data`, usuário de serviço `tia`. A
 confirmar com o Tiago.
 

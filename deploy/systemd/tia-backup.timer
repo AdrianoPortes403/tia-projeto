@@ -1,0 +1,11 @@
+# Todo dia às 02:30: backup em BACKUP_DIR e rotação por BACKUP_DIAS. Copie BACKUP_DIR para fora da VM (política do Tiago).
+[Unit]
+Description=TIA - agenda de tia-backup
+
+[Timer]
+OnCalendar=*-*-* 02:30
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

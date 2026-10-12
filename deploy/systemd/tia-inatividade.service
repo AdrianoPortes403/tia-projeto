@@ -1,0 +1,22 @@
+# verificação de inatividade dos alunos (regra R3 do orquestrador)
+# Disparado por tia-inatividade.timer (deploy/instalar.sh troca @TIA_RAIZ@ e @TIA_USUARIO@).
+# Saída no journal: journalctl -u tia-inatividade.service
+[Unit]
+Description=TIA - verificação de inatividade dos alunos (regra R3 do orquestrador)
+After=network.target
+
+[Service]
+Type=oneshot
+User=@TIA_USUARIO@
+Group=@TIA_USUARIO@
+WorkingDirectory=@TIA_RAIZ@/atual
+EnvironmentFile=@TIA_RAIZ@/config/.env
+ExecStart=@TIA_RAIZ@/atual/venv/bin/python -m tia.orquestrador --verificar-inatividade
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=@TIA_RAIZ@/data

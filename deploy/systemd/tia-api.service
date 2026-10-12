@@ -1,0 +1,36 @@
+# API do TIA (FastAPI/uvicorn) atrás do proxy HTTPS (deploy/proxy/nginx-tia.conf).
+# Instalada por deploy/instalar.sh, que troca @TIA_RAIZ@ e @TIA_USUARIO@.
+# - escuta só em 127.0.0.1:8000; o proxy é a única entrada de fora;
+# - --proxy-headers e --forwarded-allow-ips=127.0.0.1: o IP real do aluno vem do
+#   proxy (os limites por IP dependem disso);
+# - --no-access-log: o log de acesso do uvicorn gravaria IP e rotas com o código do aluno (LGPD);
+# - produção: o .env tem TIA_AMBIENTE=producao (padrão); com configuração insegura a API não sobe;
+# - reinicia sozinha se cair; roda como usuário sem privilégio, só escreve em data/.
+[Unit]
+Description=TIA - API (FastAPI/uvicorn)
+After=network.target ollama.service
+Wants=ollama.service
+
+[Service]
+Type=simple
+User=@TIA_USUARIO@
+Group=@TIA_USUARIO@
+WorkingDirectory=@TIA_RAIZ@/atual
+EnvironmentFile=@TIA_RAIZ@/config/.env
+ExecStart=@TIA_RAIZ@/atual/venv/bin/uvicorn tia.api.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1 --no-access-log
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=@TIA_RAIZ@/data
+
+[Install]
+WantedBy=multi-user.target

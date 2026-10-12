@@ -466,3 +466,17 @@ lista de conferência da VM em `docs/seguranca/implantacao.md`.
 - Evento de fim do vínculo (fim do curso) que dispara a eliminação do cadastro e da trilha.
 - `pip-audit` não disponível na máquina de desenvolvimento: varredura de dependências na VM.
 
+
+## Implantação na VM (EAP 1.4.1)
+
+Passo a passo, tempos, o que exige root e rede, e como reverter: `docs/implantacao_vm.md`. Resumo das peças:
+
+| Peça | Implementação |
+|---|---|
+| Modelos | `MODELOS_LLM` (lista baixada e medida) e `MODELO_PADRAO` (o que os agentes usam; `CHAT_MODEL` é o nome antigo, ainda aceito). `llm_client.usar_modelo(nome)` troca o padrão dentro de um bloco (medição) |
+| Raciocínio | `RACIOCINIO_POR_MODELO` (`padrão=modo;...`, primeiro que casar): `prompt` (`/nothink`), `api` (`think: false`), `prompt+api` (Qwen3) ou `nada`. `llm_client.remover_raciocinio` tira `<think>`, `<thinking>` e `<reasoning>` (bloco completo, só o fechamento, ou aberto e cortado) **antes** das guardas e dos limites de tamanho dos agentes. `coletar_chamadas()` registra, por chamada, tempo, raciocínio no texto ou pela API, corte por limite de tokens, resposta vazia e falha |
+| Pacote | `deploy/preparar_pacote.sh` (máquina de desenvolvimento, com rede) gera código, wheels de `deploy/requirements.lock` e SHA256SUMS; `deploy/instalar.sh` instala **sem rede** (`pip --no-index`), com versões lado a lado em `/srv/tia/versoes` e `atual`/`anterior` para reverter |
+| Serviços | `deploy/systemd/`: `tia-api.service` (127.0.0.1:8000, `--proxy-headers`, `--no-access-log`, endurecido) e timers de limpeza, inatividade (R3), retenção em simulação e backup; ajuste do Ollama para 127.0.0.1 |
+| Rede | o único passo com rede na VM é `deploy/modelos.sh` (`ollama pull`), isolado e marcado; `verificar.sh` acusa conexões de saída inesperadas (`/proc/net/tcp`) |
+| Backup | `tia.implantacao.backup` (`deploy/backup.sh` e `restaurar.sh`): SQLite pela API de backup, índice do Chroma em tar, `.env` à parte, 700/600, rotação por `BACKUP_DIAS`; a restauração confere SHA256 e integridade e não apaga nada |
+| Fumaça e R09 | `tia.implantacao.verificar` (`deploy/verificar.sh`): configuração, banco, API e cabeçalhos, login, Ollama, Chroma, rede; `--medir-r09 N` grava CSV por interação e resume por modelo e tipo (média, p50, p90, p95, fração ≤ 15 s, descartes, fallbacks, vazias, cortadas, raciocínio vazando) |

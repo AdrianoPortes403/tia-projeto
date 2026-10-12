@@ -390,6 +390,8 @@ def test_chroma_sem_telemetria(tmp_path, monkeypatch):
 ENDERECOS_PERMITIDOS = {
     "http://localhost:11434",          # Ollama (OLLAMA_URL padrão)
     "http://localhost:8000",           # mensagens "abra ..." dos comandos de demonstração
+    "http://127.0.0.1:8000",           # API_URL_LOCAL: teste de fumaça da VM (implantacao.verificar)
+    "http://127.0.0.1",                # comentário sobre o cookie Secure no teste de fumaça
     "http://localhost",                # comentário sobre o cookie Secure em http://localhost
     "http://www.w3.org",               # namespace do SVG (não é acesso de rede)
     "https://cdn.jsdelivr.net",        # CSP do /docs (desligado em produção)
@@ -407,8 +409,9 @@ def test_pontos_de_rede_do_codigo():
     # a única biblioteca HTTP do código é usada só no llm_client (Ollama)
     for arquivo in (RAIZ / "src/tia").rglob("*.py"):
         texto = arquivo.read_text(encoding="utf-8")
-        if re.search(r"requests\.(post|get|put|request)\(", texto):
-            assert arquivo.name == "llm_client.py", arquivo
+        if re.search(r"(requests|sessao)\.(post|get|put|request)\(", texto):
+            # llm_client: Ollama; implantacao/verificar: a própria API em API_URL_LOCAL (127.0.0.1)
+            assert arquivo.name in ("llm_client.py", "verificar.py"), arquivo
         assert not re.search(r"^\s*import (httpx|urllib3|aiohttp|socket)\b", texto, re.M), arquivo
 
 

@@ -19,10 +19,28 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def _lista(valor: str) -> list[str]:
+    return [parte.strip() for parte in valor.split(",") if parte.strip()]
+
+
 # --- LLM local (Ollama) — requisito R07: nunca API externa ---
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-CHAT_MODEL = os.getenv("CHAT_MODEL", "qwen3:1.7b")
+# Modelos de chat que a VM baixa (deploy/modelos.sh) e mede (verificar.sh --medir-r09).
+# qwen3.5:9b: etiqueta PROVISÓRIA, a confirmar com "ollama pull" na VM.
+MODELOS_LLM = _lista(os.getenv("MODELOS_LLM", "qwen3:1.7b,qwen3:4b,qwen3:8b,qwen3.5:9b"))
+# Modelo usado pelos agentes. CHAT_MODEL é o nome antigo, ainda aceito no .env.
+MODELO_PADRAO = os.getenv("MODELO_PADRAO", os.getenv("CHAT_MODEL", "qwen3:1.7b"))
+CHAT_MODEL = MODELO_PADRAO
 EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text")
+# Como desligar o raciocínio ("thinking") de cada modelo, quando quem chama pede
+# think=False: "padrão=modo" separados por ";", o primeiro padrão que casar
+# (fnmatch) vale. Modos: "prompt" (sufixo /nothink na última mensagem),
+# "api" (opção "think": false do Ollama), "prompt+api" (os dois) ou "nada".
+# Os blocos de raciocínio que vierem no texto (RACIOCINIO_TAGS) são sempre
+# removidos antes das guardas e dos limites de tamanho (llm_client).
+# PROVISÓRIO para qwen3.5 (confirmar na VM com verificar.sh --medir-r09).
+RACIOCINIO_POR_MODELO = os.getenv("RACIOCINIO_POR_MODELO", "qwen3:*=prompt+api;qwen3.5:*=api;*=nada")
+RACIOCINIO_TAGS = _lista(os.getenv("RACIOCINIO_TAGS", "think,thinking,reasoning"))
 # Quanto tempo o Ollama mantém o modelo carregado após a última chamada
 # (evita recarregar a cada interação, o que estouraria o R09)
 OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "30m")
@@ -183,6 +201,15 @@ RETENCAO_AUDITORIA_DIAS = int(os.getenv("RETENCAO_AUDITORIA_DIAS", "730"))
 RETENCAO_COPIAS_DIAS = int(os.getenv("RETENCAO_COPIAS_DIAS", "30"))
 COPIAS_DIR = os.getenv("COPIAS_DIR", "")
 
+# --- Implantação na VM (EAP 1.4.1; deploy/) ---
+# Backup (deploy/backup.sh): pasta e quantos dias guardar; vazio = "backup" ao lado do banco
+BACKUP_DIR = os.getenv("BACKUP_DIR", "")
+BACKUP_DIAS = int(os.getenv("BACKUP_DIAS", "14"))
+# Endereço da API para o teste de fumaça (deploy/verificar.sh): o uvicorn, sem o proxy
+API_URL_LOCAL = os.getenv("API_URL_LOCAL", "http://127.0.0.1:8000")
+# Limite do R09 (s) usado no resumo de verificar.sh --medir-r09
+R09_LIMITE_SEGUNDOS = float(os.getenv("R09_LIMITE_SEGUNDOS", "15"))
+
 # --- Ambiente e API (EAP 1.4.6, D1) ---
 # "producao" (padrão) ou "desenvolvimento". Em produção a API não sobe com
 # configuração insegura (ver problemas_de_configuracao) e /docs fica desligado.
@@ -219,8 +246,22 @@ def problemas_de_configuracao() -> list[str]:
     return problemas
 
 
+def avisos_de_configuracao() -> list[str]:
+    """Inconsistências que não impedem a API de subir (verificar.sh as mostra)."""
+    avisos = []
+    from urllib.parse import urlparse
+
+    if (urlparse(API_URL_LOCAL).hostname or "") not in ("127.0.0.1", "localhost", "::1"):
+        avisos.append(f"API_URL_LOCAL ({API_URL_LOCAL}) não é a própria máquina: o teste de fumaça iria pela rede")
+    if MODELO_PADRAO not in MODELOS_LLM:
+        avisos.append(f"MODELO_PADRAO ({MODELO_PADRAO}) não está em MODELOS_LLM: não é baixado nem medido")
+    return avisos
+
+
 if __name__ == "__main__":
-    for nome in ("OLLAMA_URL", "CHAT_MODEL", "EMBED_MODEL", "OLLAMA_KEEP_ALIVE", "DB_PATH",
+    for nome in ("OLLAMA_URL", "MODELOS_LLM", "MODELO_PADRAO", "EMBED_MODEL", "RACIOCINIO_POR_MODELO",
+                 "RACIOCINIO_TAGS", "BACKUP_DIR", "BACKUP_DIAS", "API_URL_LOCAL", "R09_LIMITE_SEGUNDOS",
+                 "OLLAMA_KEEP_ALIVE", "DB_PATH",
                  "MATERIAIS_DIR", "CHROMA_DIR", "COLLECTION_NAME",
                  "CHUNK_SIZE", "CHUNK_OVERLAP", "EMENTA_PATH", "PERFIS_PATH",
                  "PLANEJADOR_TIMEOUT_LLM", "BANCO_ITENS_PATH", "TUTOR_TIMEOUT_LLM", "TUTOR_MAX_TOKENS", "TUTOR_TEMPERATURA", "TUTOR_TOP_P", "TUTOR_SEED", "TUTOR_MODO_FEEDBACK",
@@ -241,3 +282,5 @@ if __name__ == "__main__":
         print(f"{nome} = {globals()[nome]}")
     for problema in problemas_de_configuracao():
         print(f"ATENÇÃO: {problema}")
+    for aviso in avisos_de_configuracao():
+        print(f"Aviso: {aviso}")
