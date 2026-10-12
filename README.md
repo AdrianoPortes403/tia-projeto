@@ -28,9 +28,25 @@ Abra http://localhost:8000/app/ e entre com um dos códigos:
 - `DEMO-W02`: concluiu Funções e tem uma sessão aberta em Listas e strings;
 - `DEMO-W03`: caiu em Listas e strings e tem uma revisão (reforço) de Repetição pendente.
 
-Um código novo (ex.: `DEMO-W09`) abre a matrícula. Protótipo sem login (TODO 1.4.6): use só códigos
+Um código novo (ex.: `DEMO-W09`) abre o **primeiro acesso**: conversa de cadastro (trilha Dev ou
+Defesa Cibernética, horas por semana, dias, objetivo), diagnóstico inicial (base comum de Python + etapa 1
+da trilha, níveis 1→2→3) e a trilha montada pelo Planejador, com o perfil (iniciante ou intermediário)
+enquadrado pelo diagnóstico. Protótipo sem login (TODO 1.4.6): use só códigos
 fictícios. Cada resposta do tutor leva de 20 a 70 s em CPU; a tela mostra o contador de segundos.
 Detalhes: `docs/arquitetura/arquitetura.md` (seção "Web standalone").
+
+## Piloto (27/10 a 04/11/2026, 1.5.1)
+
+No `.env`:
+
+```bash
+PILOTO_PRAZO_DIAS=8                 # prazo da trilha
+PILOTO_ESCOPO=piloto                # só os tópicos marcados no_piloto (dev_01, dev_02, cib_01, cib_02)
+INATIVIDADE_DIAS=2
+ORQ_INATIVIDADE_REFAZER_DIAS=4
+```
+
+Base pedagógica e regras do Agente 1: `docs/relatorios/base_pedagogica_e_agente1.md`.
 
 ## Testes
 
