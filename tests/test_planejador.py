@@ -64,10 +64,12 @@ def test_pula_competencia_dispensavel():
     assert ids(trilha) == ["b", "c", "d"]  # dependentes de "a" continuam na trilha
 
 
-def test_nao_pula_abaixo_do_limiar_nem_fora_do_perfil():
+def test_nao_pula_abaixo_do_limiar_e_dominado_sai_em_qualquer_perfil():
     assert "a" in ids(gerar_trilha(entrada(diagnostico={"a": 0.79}), EMENTA, PERFIS))
-    # "b" não está em competencias_dispensaveis: nota máxima não basta
-    assert "b" in ids(gerar_trilha(entrada(diagnostico={"b": 1.0}), EMENTA, PERFIS))
+    # base pedagógica (1.2.3): nota 1 no diagnóstico = dominado, sai da trilha mesmo
+    # fora de competencias_dispensaveis (antes, "b" ficava)
+    assert "b" not in ids(gerar_trilha(entrada(diagnostico={"b": 1.0}), EMENTA, PERFIS))
+    assert "b" in ids(gerar_trilha(entrada(diagnostico={"b": 0.99}), EMENTA, PERFIS))
 
 
 def test_detecta_ciclo():
@@ -114,18 +116,24 @@ def test_entrada_recusa_nome_como_aluno_id_e_nota_fora_da_faixa():
 
 # --- conteúdo PROVISÓRIO em conteudo/ ---
 
-def test_conteudo_provisorio_e_consistente():
-    for caminho in ("conteudo/ementa/ementa.json", "conteudo/perfis/perfis.json"):
-        with open(caminho, encoding="utf-8") as arquivo:
-            assert json.load(arquivo)["_provisorio"] is True
+def test_conteudo_da_base_pedagogica_e_consistente():
+    """Conteúdo real (base pedagógica alinhada à EAP): 6 tópicos da base comum
+    + Dev + Cyber, pré-requisitos válidos, materiais existentes e trilha gerada
+    sem erro para cada trilha e perfil."""
     ementa, perfis = carregar_ementa(), carregar_perfis()
-    assert len(ementa) == 6
+    assert len(ementa) == 48
     assert {p["id"] for p in perfis} == {"iniciante", "intermediario"}
+    por_trilha = {}
     for competencia in ementa:
+        por_trilha.setdefault(competencia["trilha"], []).append(competencia["id"])
         for material in competencia["materiais"]:
             assert os.path.exists(os.path.join(MATERIAIS_DIR, material)), material
-    for perfil in perfis:  # gera sem ciclo nem erro com os arquivos reais
-        assert gerar_trilha(entrada(perfil_id=perfil["id"])).etapas
+    assert por_trilha["base_comum"] == ["variaveis_tipos", "condicionais", "repeticao", "funcoes",
+                                        "listas_strings", "recursao"]
+    assert len(por_trilha["dev"]) == 23 and len(por_trilha["defesa_cibernetica"]) == 19
+    for trilha in (None, "dev", "defesa_cibernetica"):
+        for perfil in perfis:  # gera sem ciclo nem erro com os arquivos reais
+            assert gerar_trilha(entrada(perfil_id=perfil["id"], trilha=trilha)).etapas
 
 
 # --- replanejamento incremental (competências concluídas) ---

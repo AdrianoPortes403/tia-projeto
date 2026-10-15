@@ -51,6 +51,9 @@ def resumo_aluno(rel: RelatorioAluno) -> str:
     linhas = []
     if p.tem_trilha:
         linhas.append(f"Trilha: {p.concluidas} de {p.etapas} etapas concluídas ({pct(p.percentual)}).")
+        sem_dominio = [c.nome for c in p.por_competencia if c.com_ressalvas]
+        if sem_dominio:
+            linhas.append("Terminou as questões sem atingir o domínio em: " + ", ".join(sem_dominio) + ".")
     else:
         linhas.append("Trilha: o aluno ainda não gerou a trilha de estudo.")
     linhas.append(f"Acerto geral: {pct(d.geral.taxa)} em {d.geral.respostas} respostas.")
@@ -136,6 +139,8 @@ def formatar_texto_aluno(rel: RelatorioAluno) -> str:
         linhas.append("   Você ainda não tem trilha de estudo. Gere a sua para saber por onde começar.")
     for c in p.por_competencia:
         situacao = "concluída" if c.concluida else (f"nível {c.nivel_atual}" if c.nivel_atual else "não iniciada")
+        if c.com_ressalvas:
+            situacao += f" (com ressalvas: as questões acabaram sem domínio; acerto {pct(c.taxa_sem_dominio)})"
         linhas.append(f"   - {c.nome}: {situacao}")
     linhas += ["", "2. Seus acertos",
                f"   No geral: {pct(d.geral.taxa)} ({d.geral.acertos} de {d.geral.respostas})"]

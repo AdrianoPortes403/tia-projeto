@@ -7,7 +7,15 @@ intermediário e 4 no iniciante (abaixo do grupo mínimo de 5: o filtro por
 perfil "iniciante" mostra o grupo suprimido). Situações variadas:
 
     ativos e indo bem, concluídos, inativos (5, 9 e 20 dias), em queda,
-    com desempenho baixo, recém-matriculado sem atividade
+    com desempenho baixo, recém-matriculado sem atividade, e uma competência
+    terminada sem domínio e sem acerto para avançar (DEMO-P06: concluída com
+    ressalvas, recomeça a competência)
+
+Regras do Tutor do 1.2.5 (15/10/2026): o nível das respostas segue os limiares
+TUTOR_ACERTOS_SUBIR / TUTOR_ERROS_DESCER, e a sessão concluída grava com_ressalvas
+e taxa_acerto como o Tutor grava. Na base comum (2 itens por nível) não há como
+dominar (TUTOR_ACERTOS_CONCLUIR acertos seguidos no nível 3): toda sessão concluída
+termina com ressalvas e só avança com acerto >= ORQ_ACERTO_MIN_AVANCO.
 
 A matrícula passa pelo orquestrador (trilha do Planejador com o texto
 padrão, decisão "planejar" na auditoria). As sessões, respostas e
@@ -40,6 +48,7 @@ from datetime import datetime, timedelta
 
 import tia.core.database as database
 from tia import orquestrador
+from tia.agentes.tutor import adaptativo
 from tia.agentes.tutor.feedback import montar_veredito
 from tia.agentes.tutor.repositorio import DIFICULDADE_POR_NIVEL, carregar_itens, materiais_da_competencia, vetar_dialogo
 from tia.core import auditoria
@@ -47,8 +56,9 @@ from tia.orquestrador.modelos import Matricula
 from tia.web.dados_demo import mostrar_usuarios_demonstracao, sem_llm
 
 # PROVISÓRIO: diagnóstico fictício; no intermediário a trilha fica Funções -> Listas e strings -> Recursão
-DIAGNOSTICO_INTERMEDIARIO = {"variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
-                             "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0}
+# notas na convenção do diagnóstico (1.2.5): 1 = dominado (sai da trilha), 1/3 = começa no nível 2
+DIAGNOSTICO_INTERMEDIARIO = {"variaveis_tipos": 1.0, "condicionais": 1.0, "repeticao": 1.0,
+                             "funcoes": 0.34, "listas_strings": 0.34, "recursao": 0.0}
 MATRICULAS = {
     "intermediario": Matricula(perfil_id="intermediario", horas_semanais=6, diagnostico=DIAGNOSTICO_INTERMEDIARIO),
     "iniciante": Matricula(perfil_id="iniciante", horas_semanais=8, diagnostico={}),
@@ -67,8 +77,8 @@ ALUNOS = [
     ("DEMO-P04", "intermediario", 16, [("funcoes", "1101111", 13, True), ("listas_strings", "11011", 9, False)],
      []),                                                                                    # inativo 9 dias
     ("DEMO-P05", "intermediario", 26, [("funcoes", "10011", 20, False)], [("funcoes", 20, 2)]),  # inativo 20 dias
-    ("DEMO-P06", "intermediario", 10, [("funcoes", "0100100", 3, False), ("funcoes", "010", 1, False)],
-     [("funcoes", 2, 2), ("funcoes", 1, 3)]),                                                # desempenho baixo
+    ("DEMO-P06", "intermediario", 10, [("funcoes", "010010", 3, True), ("funcoes", "010", 1, False)],
+     [("funcoes", 2, 2), ("funcoes", 1, 3)]),             # desempenho baixo; 1ª sessão sem domínio (33%)
     ("DEMO-P07", "intermediario", 8, [("funcoes", "1101111", 5, True), ("listas_strings", "111", 0, False)],
      [("listas_strings", 0, 5)]),
     ("DEMO-P08", "intermediario", 12, [("funcoes", "1111", 6, False), ("funcoes", "0000100", 1, False)],
@@ -134,7 +144,7 @@ def gravar_atividade(aluno_id: str, sessoes: list, dialogos: list, agora: dateti
             for competencia, respostas, dias_atras, concluida in sessoes:
                 inicio = agora - timedelta(days=dias_atras, hours=3)
                 sessao_id = uuid.uuid4().hex
-                nivel = 1
+                nivel, acertos, erros = 1, 0, 0
                 for n, resposta in enumerate(respostas):
                     item = itens[competencia][n % len(itens[competencia])]
                     ts = _ts(inicio + timedelta(minutes=4 * n))
@@ -157,13 +167,28 @@ def gravar_atividade(aluno_id: str, sessoes: list, dialogos: list, agora: dateti
                         (resposta_id, aluno_id, sessao_id, item["id"], competencia, ts,
                          montar_veredito(item, indice), *texto_feedback(item, origem), json.dumps(fontes)))
                     auditoria.registrar(conexao, aluno_id, "resposta_item", resposta_id, origem, fontes, ts=ts)
-                    nivel = min(3, nivel + 1) if resposta == "1" else max(1, nivel - 1)
+                    # regras do 1.2.5: sequências de acertos sobem e de erros descem um nível
+                    if resposta == "1":
+                        acertos, erros = acertos + 1, 0
+                        if acertos >= adaptativo.acertos_para_subir() and nivel < 3:
+                            nivel, acertos = nivel + 1, 0
+                    else:
+                        acertos, erros = 0, erros + 1
+                        if erros >= adaptativo.erros_para_descer():
+                            nivel, erros = max(1, nivel - 1), 0
+                # sessão concluída: como o Tutor grava. Sem itens para o domínio (base comum), com ressalvas
+                por_nivel = [sum(i["nivel"] == n for i in itens[competencia]) for n in (1, 2, 3)]
+                dominavel = (min(por_nivel[:2]) >= adaptativo.acertos_para_subir()
+                             and por_nivel[2] >= adaptativo.acertos_para_concluir())
+                com_ressalvas = (not dominavel) if concluida else None
+                taxa = round(respostas.count("1") / len(respostas), 3) if concluida else None
                 conexao.execute(
                     """INSERT INTO tutor_sessoes (id, aluno_id, competencia_id, nivel, item_atual_id, itens_usados,
-                                                  acertos_seguidos_nivel_max, concluida, criado_em, atualizado_em)
-                       VALUES (?, ?, ?, ?, NULL, '[]', 0, ?, ?, ?)""",
+                                                  acertos_seguidos_nivel_max, concluida, criado_em, atualizado_em,
+                                                  com_ressalvas, taxa_acerto)
+                       VALUES (?, ?, ?, ?, NULL, '[]', 0, ?, ?, ?, ?, ?)""",
                     (sessao_id, aluno_id, competencia, nivel, concluida, _ts(inicio),
-                     _ts(inicio + timedelta(minutes=4 * len(respostas)))))
+                     _ts(inicio + timedelta(minutes=4 * len(respostas))), com_ressalvas, taxa))
             for competencia, dias_atras, indice in dialogos:
                 pergunta, resposta, fonte, origem = DIALOGOS[indice]
                 ts = _ts(agora - timedelta(days=dias_atras, hours=2))

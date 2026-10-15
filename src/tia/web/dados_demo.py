@@ -12,7 +12,13 @@ intermediário com o mesmo diagnóstico (trilha: Funções -> Listas e strings
     DEMO-W03  concluiu Funções e caiu em Listas e strings: reforço de
               Repetição pendente (a tela Estudo abre a revisão)
 
+Tudo passa pelo orquestrador e pelo Tutor de verdade, com as regras do 1.2.5
+(3/2/3). Funções tem 2 itens por nível: acertando os 6, a sessão termina "com
+ressalvas" (sem domínio possível) e avança porque o acerto (100%) passa de
+ORQ_ACERTO_MIN_AVANCO (decisão D9 da arquitetura; 15/10/2026).
+
 Aluno que já existe no banco é mantido como está (rodar de novo não duplica).
+Para refazer com regras novas, guarde o banco antigo e rode num DB_PATH vazio.
 Cria também os usuários FICTÍCIOS do login (1.4.6): o aluno DEMO-W01 e o
 docente DEMO-DOCENTE, com a senha de demonstração (fictícia, pública,
 impressa no fim; só para máquina de desenvolvimento).
@@ -44,15 +50,15 @@ from tia.core.database import criar_tabelas
 from tia.orquestrador.modelos import EventoTutor, Matricula
 from tia.seguranca import usuarios
 
-# PROVISÓRIO: diagnóstico fictício; o perfil intermediário dispensa variáveis, condicionais e repetição
+# diagnóstico fictício (convenção 1.2.5): variáveis, condicionais e repetição dominadas (nota 1) saem da trilha
 MATRICULA = Matricula(perfil_id="intermediario", horas_semanais=6, diagnostico={
-    "variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
-    "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0})
+    "variaveis_tipos": 1.0, "condicionais": 1.0, "repeticao": 1.0,
+    "funcoes": 0.34, "listas_strings": 0.34, "recursao": 0.0})
 # aluno -> respostas em cada sessão aberta pelo orquestrador ("1" acerta, "0" erra)
 ALUNOS = {
     "DEMO-W01": [],
-    "DEMO-W02": ["1111", "1"],
-    "DEMO-W03": ["1111", "000"],
+    "DEMO-W02": ["111111", "1"],   # 1.2.5: acertando tudo, um tópico da base termina em 6 respostas
+    "DEMO-W03": ["111111", "00"],  # 2 erros em listas_strings: queda -> reforço de repetição
 }
 
 contador = itertools.count(1)

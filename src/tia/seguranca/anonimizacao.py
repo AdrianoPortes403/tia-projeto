@@ -39,7 +39,7 @@ ANONIMO = "[anonimizado]"
 # tabelas com a coluna aluno_id (dados de estudo e de cadastro do aluno)
 TABELAS_DO_ALUNO = ("trilha_estudo", "historico_respostas", "tutor_sessoes", "tutor_dialogo", "tutor_feedbacks",
                     "orquestrador_matriculas", "orquestrador_eventos", "orquestrador_decisoes",
-                    "orquestrador_reforcos", "auditoria")
+                    "orquestrador_reforcos", "planejador_onboarding", "planejador_diagnosticos", "auditoria")
 # textos livres: o que a anonimização apaga
 TEXTOS_FEEDBACK = "explicacao = NULL, explicacao_descartada = NULL, correcao_docente = NULL"
 TEM_TEXTO_FEEDBACK = "(explicacao IS NOT NULL OR explicacao_descartada IS NOT NULL OR correcao_docente IS NOT NULL)"

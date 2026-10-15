@@ -217,11 +217,14 @@ def test_alunos_em_risco_e_motivos(turma):
         "DEMO-P03": {"desempenho_em_queda"},
         "DEMO-P04": {"inatividade"},
         "DEMO-P05": {"inatividade"},
-        "DEMO-P06": {"desempenho_baixo"},
+        # 15/10/2026: a 1ª sessão de funções acabou sem domínio e com 33% (abaixo do mínimo): não avançou
+        "DEMO-P06": {"desempenho_baixo", "conclusao_sem_dominio"},
         "DEMO-P08": {"desempenho_em_queda", "desempenho_baixo"},
         "DEMO-P11": {"inatividade"},
     }
-    assert r["alunos"][0]["aluno_id"] == "DEMO-P08"  # mais motivos primeiro
+    # mais motivos primeiro (P06 e P08 empatam em 2 motivos e em dias sem atividade: vale o código)
+    assert [a["aluno_id"] for a in r["alunos"][:2]] == ["DEMO-P06", "DEMO-P08"]
+    assert [len(a["motivos"]) for a in r["alunos"]] == sorted((len(a["motivos"]) for a in r["alunos"]), reverse=True)
     assert r["alunos_avaliados"] == 12
     # concluiu a trilha e está parado há 12 dias: não é risco; recém-matriculado sem atividade também não
     assert "DEMO-P02" not in motivos and "DEMO-P10" not in motivos
@@ -367,8 +370,8 @@ def test_auditoria_filtra_por_agente_aluno_e_periodo(turma):
     assert datas == sorted(datas, reverse=True)  # mais recente primeiro
 
     planejador = client.get("/painel/auditoria?agente=planejador&por_pagina=100").json()
-    # 12 matrículas + 1 trilha refeita por inatividade (DEMO-P05)
-    assert planejador["total"] == 13
+    # 12 matrículas + 2 trilhas refeitas por inatividade de 7 dias ou mais (DEMO-P04 e DEMO-P05)
+    assert planejador["total"] == 14
     assert all("planejador" in x["agentes"] and x["origem_justificativas"] for x in planejador["registros"])
 
     aluno = client.get("/painel/auditoria?aluno_id=DEMO-P03&por_pagina=100").json()

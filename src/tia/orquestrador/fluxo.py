@@ -82,16 +82,34 @@ def exigir_matricula(aluno_id: str) -> dict:
     return matricula
 
 
+def _prazo_restante(matricula: dict, agora: datetime | None) -> int | None:
+    """Dias que faltam do prazo da matrícula (mínimo 1); None sem prazo."""
+    prazo = matricula.get("prazo_dias")
+    if not prazo:
+        return None
+    criado = matricula.get("criado_em")
+    decorridos = (instante(agora) - datetime.fromisoformat(criado)).days if criado else 0
+    return max(1, prazo - max(0, decorridos))
+
+
+def _entrada(aluno_id: str, matricula: dict, concluidas: list[str] | None = None,
+             agora: datetime | None = None) -> EntradaPlanejador:
+    """Pedido ao Planejador a partir da matrícula (perfil, trilha, diagnóstico, prazo)."""
+    return EntradaPlanejador(
+        aluno_id=aluno_id, perfil_id=matricula.get("perfil_id"), trilha=matricula.get("trilha"),
+        diagnostico=matricula["diagnostico"], horas_semanais=matricula["horas_semanais"],
+        concluidas=concluidas or [], prazo_dias=_prazo_restante(matricula, agora),
+        escopo=matricula.get("escopo") or "completa")
+
+
 def competencias_originais(aluno_id: str, matricula: dict) -> set[str]:
     """Competências da trilha original: a que o Planejador monta com o perfil e o
     diagnóstico da matrícula, sem nenhuma concluída (determinístico, sem LLM)."""
-    trilha = gerar_trilha(EntradaPlanejador(
-        aluno_id=aluno_id, perfil_id=matricula["perfil_id"], diagnostico=matricula["diagnostico"],
-        horas_semanais=matricula["horas_semanais"]))
+    trilha = gerar_trilha(_entrada(aluno_id, matricula))
     return {e.competencia_id for e in trilha.etapas}
 
 
-def _planejar(aluno_id: str, matricula: dict) -> tuple[Trilha, dict]:
+def _planejar(aluno_id: str, matricula: dict, agora: datetime | None = None) -> tuple[Trilha, dict]:
     """Aciona o Planejador com as competências já concluídas (só planeja o
     que falta). Devolve a trilha e o resumo para a decisão: origem das
     justificativas (só das etapas que faltam), motivo de falha e tempo.
@@ -101,9 +119,7 @@ def _planejar(aluno_id: str, matricula: dict) -> tuple[Trilha, dict]:
     mas não vira etapa da trilha nem conta no progresso."""
     inicio = time.perf_counter()
     concluidas = tutor.repositorio.competencias_concluidas(aluno_id) & competencias_originais(aluno_id, matricula)
-    trilha = planejar_e_salvar(EntradaPlanejador(
-        aluno_id=aluno_id, perfil_id=matricula["perfil_id"], diagnostico=matricula["diagnostico"],
-        horas_semanais=matricula["horas_semanais"], concluidas=sorted(concluidas)))
+    trilha = planejar_e_salvar(_entrada(aluno_id, matricula, sorted(concluidas), agora))
     origens = {e.origem_justificativa for e in trilha.etapas if not e.concluida}
     origem = None if not origens else "LLM" if origens == {"LLM"} else \
         "fallback" if origens <= {"fallback", None} else "parcial"
@@ -118,14 +134,22 @@ def iniciar(aluno_id: str, matricula: Matricula, agora: datetime | None = None) 
     if repositorio.ler_matricula(aluno_id) is not None:
         raise JaMatriculado(f"Aluno '{aluno_id}' já está matriculado; o replanejamento é feito pelas regras.")
     dados = {"perfil_id": matricula.perfil_id, "horas_semanais": matricula.horas_semanais,
-             "diagnostico": matricula.diagnostico}
-    trilha, planejador = _planejar(aluno_id, dados)  # valida perfil e competências antes de gravar
-    if not repositorio.salvar_matricula(aluno_id, matricula.perfil_id, matricula.horas_semanais,
-                                        matricula.diagnostico, agora):
+             "diagnostico": matricula.diagnostico, "trilha": matricula.trilha,
+             "prazo_dias": matricula.prazo_dias, "escopo": matricula.escopo}
+    trilha, planejador = _planejar(aluno_id, dados, agora)  # valida perfil e competências antes de gravar
+    # grava o perfil em uso: o informado ou o enquadrado pelo Planejador a partir do diagnóstico
+    if not repositorio.salvar_matricula(aluno_id, trilha.perfil_id, matricula.horas_semanais,
+                                        matricula.diagnostico, agora, matricula.trilha, matricula.prazo_dias,
+                                        matricula.escopo):
         raise JaMatriculado(f"Aluno '{aluno_id}' já está matriculado.")
+    como = (f"enquadrado pelo diagnóstico (P = {trilha.pontuacao_enquadramento})"
+            if trilha.perfil_automatico and trilha.pontuacao_enquadramento is not None
+            else "sem diagnóstico" if trilha.perfil_automatico else "informado")
+    trilha_txt = f" na trilha '{matricula.trilha}'" if matricula.trilha else ""
     decisao = repositorio.registrar_decisao(
         aluno_id, "matricula", "planejar", None,
-        f"Matrícula no perfil '{matricula.perfil_id}': trilha inicial com {len(trilha.etapas)} etapas.",
+        f"Matrícula{trilha_txt} no perfil '{trilha.perfil_id}' ({como}): trilha inicial com "
+        f"{len(trilha.etapas)} etapas.",
         True, None, agora, planejador=planejador)
     return ResultadoMatricula(trilha=trilha, decisao=_decisao(decisao), proxima=proxima(aluno_id, agora))
 
@@ -174,6 +198,9 @@ def estado(aluno_id: str, agora: datetime | None = None) -> EstadoAluno:
         perfil_id=matricula["perfil_id"],
         horas_semanais=matricula["horas_semanais"],
         diagnostico=matricula["diagnostico"],
+        trilha=matricula.get("trilha"),
+        prazo_dias=matricula.get("prazo_dias"),
+        escopo=matricula.get("escopo") or "completa",
         etapas=etapas,
         competencia_atual=atual,
         sessao_aberta_id=tutor.repositorio.sessao_aberta(aluno_id, atual) if atual else None,
@@ -229,7 +256,7 @@ def aplicar(aluno_id: str, avaliacao: Avaliacao, evento_id: str | None = None,
     if avaliacao.acao in ("avancar", "refazer_trilha"):
         trilha_antes = ler_trilha(aluno_id)
         antes = [e.competencia_id for e in trilha_antes.etapas if not e.concluida] if trilha_antes else []
-        trilha, planejador = _planejar(aluno_id, matricula)
+        trilha, planejador = _planejar(aluno_id, matricula, agora)
         depois = [e.competencia_id for e in trilha.etapas if not e.concluida]
         motivo = avaliacao.motivo + (f" A fazer: {', '.join(antes) or '-'} -> {', '.join(depois) or '-'}."
                                      if antes != depois else " Etapas a fazer sem mudança; semanas recontadas.")
@@ -240,21 +267,34 @@ def aplicar(aluno_id: str, avaliacao: Avaliacao, evento_id: str | None = None,
             aviso = montar_incentivo(aluno_id, agora).mensagem
         return _registrar(aluno_id, avaliacao, avaliacao.acao, motivo, evento_id, agora, True, planejador, aviso)
 
+    if avaliacao.acao == "revisar_material":
+        from tia.agentes.tutor.repositorio import materiais_da_competencia  # import tardio: evita ciclo
+        arquivos = materiais_da_competencia(avaliacao.competencia_id) or []
+        aviso = regras.AVISO_MATERIAL.format(
+            competencia=nomes.get(avaliacao.competencia_id, avaliacao.competencia_id),
+            materiais=(" (" + ", ".join(arquivos) + ")") if arquivos else "")
+        if avaliacao.regra == "conclusao":  # R1 sem domínio: o aluno recomeça a competência
+            aviso += " " + regras.AVISO_SEM_DOMINIO_DE_NOVO.format(
+                competencia=nomes.get(avaliacao.competencia_id, avaliacao.competencia_id))
+        return _registrar(aluno_id, avaliacao, "revisar_material", avaliacao.motivo, evento_id, agora, aviso=aviso)
+
     if avaliacao.acao == "incentivar":
         incentivo = montar_incentivo(aluno_id, agora)
         tutor.repositorio.registrar_incentivo(aluno_id, incentivo.proxima_etapa)
         return _registrar(aluno_id, avaliacao, "incentivar", avaliacao.motivo, evento_id, agora,
                           aviso=incentivo.mensagem)
 
-    # reforcar: pausa a sessão original e cria o reforço do pré-requisito direto
-    if not tutor.repositorio.pausar_sessao(avaliacao.sessao_id, aluno_id):
+    # reforcar: pausa a sessão original e cria o reforço do pré-requisito direto. Na R1 sem
+    # domínio a sessão já terminou: não há o que pausar e, depois do reforço, o aluno recomeça
+    sem_pausa = avaliacao.regra == "conclusao"
+    if not sem_pausa and not tutor.repositorio.pausar_sessao(avaliacao.sessao_id, aluno_id):
         return _registrar(aluno_id, avaliacao, "nenhuma",
                           avaliacao.motivo + " Mas a sessão não pôde ser pausada (concluída ou já pausada).",
                           evento_id, agora)
     original, reforco = avaliacao.competencia_id, avaliacao.competencia_reforco
+    modelo = regras.AVISO_REFORCO_SEM_DOMINIO if sem_pausa else regras.AVISO_REFORCO
     decisao = _registrar(aluno_id, avaliacao, "reforcar", avaliacao.motivo, evento_id, agora,
-                         aviso=regras.AVISO_REFORCO.format(reforco=nomes.get(reforco, reforco),
-                                                           original=nomes.get(original, original)))
+                         aviso=modelo.format(reforco=nomes.get(reforco, reforco), original=nomes.get(original, original)))
     repositorio.criar_reforco(aluno_id, original, avaliacao.sessao_id, reforco, decisao.decisao_id, agora)
     return decisao
 
@@ -268,15 +308,23 @@ def concluir_reforco(aluno_id: str, sessao_id: str, evento_id: str | None,
     if reforco is None or reforco["sessao_reforco_id"] != sessao_id:
         return None
     repositorio.concluir_reforco(reforco["id"], agora)
-    tutor.repositorio.retomar_sessao(reforco["sessao_original_id"], aluno_id)
     original = tutor.repositorio.ler_sessao(reforco["sessao_original_id"], aluno_id)
     nomes = _nomes()
+    nome_reforco, nome_original = nomes.get(reforco["competencia_reforco"]), nomes.get(reforco["competencia_original"])
+    if original is not None and original.concluida:
+        # a original terminou sem domínio (R1): nada a retomar; o aluno recomeça numa sessão nova
+        avaliacao = Avaliacao("reforco", True, "retomar_original", reforco["competencia_original"],
+                              f"Reforço de '{reforco['competencia_reforco']}' concluído: a sessão de "
+                              f"'{reforco['competencia_original']}' já tinha terminado sem domínio; recomeçar "
+                              f"numa sessão nova.", reforco["sessao_original_id"])
+        aviso = regras.AVISO_RECOMECO.format(reforco=nome_reforco, original=nome_original)
+        return _registrar(aluno_id, avaliacao, "retomar_original", avaliacao.motivo, evento_id, agora, aviso=aviso)
+    tutor.repositorio.retomar_sessao(reforco["sessao_original_id"], aluno_id)
     avaliacao = Avaliacao("reforco", True, "retomar_original", reforco["competencia_original"],
                           f"Reforço de '{reforco['competencia_reforco']}' concluído: retomar "
                           f"'{reforco['competencia_original']}' no nível {original.nivel}, sem zerar.",
                           reforco["sessao_original_id"])
-    aviso = regras.AVISO_RETOMADA.format(reforco=nomes.get(reforco["competencia_reforco"]),
-                                         original=nomes.get(reforco["competencia_original"]), nivel=original.nivel)
+    aviso = regras.AVISO_RETOMADA.format(reforco=nome_reforco, original=nome_original, nivel=original.nivel)
     return _registrar(aluno_id, avaliacao, "retomar_original", avaliacao.motivo, evento_id, agora, aviso=aviso)
 
 
@@ -288,7 +336,12 @@ def abrir_sessao(aluno_id: str, competencia_id: str, agora: datetime | None = No
     exigir_matricula(aluno_id)
     prox = proxima(aluno_id, agora)
     if prox.acao == "iniciar_sessao" and competencia_id == prox.competencia_id:
-        sessao = tutor.iniciar_sessao(IniciarSessao(aluno_id=aluno_id, competencia_id=competencia_id))
+        # nível inicial do diagnóstico (Planejador); reforço sempre do nível 1
+        trilha = None if prox.reforco else ler_trilha(aluno_id)
+        etapa = next((e for e in trilha.etapas if e.competencia_id == competencia_id), None) if trilha else None
+        nivel = etapa.nivel_inicial if etapa and etapa.nivel_inicial else None
+        sessao = tutor.iniciar_sessao(IniciarSessao(aluno_id=aluno_id, competencia_id=competencia_id,
+                                                    nivel_inicial=nivel))
         if prox.reforco:
             repositorio.vincular_sessao_reforco(repositorio.reforco_ativo(aluno_id)["id"], sessao.sessao_id)
         tipo = "reforço" if prox.reforco else "competência atual"

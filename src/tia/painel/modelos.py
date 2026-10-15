@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from tia.agentes.relatorio.modelos import Contagem, Direcao
 
-TipoRisco = Literal["inatividade", "desempenho_em_queda", "desempenho_baixo"]
+TipoRisco = Literal["inatividade", "desempenho_em_queda", "desempenho_baixo", "conclusao_sem_dominio"]
 SituacaoRevisao = Literal["a_revisar", "aprovadas", "vetadas", "todas"]
 
 

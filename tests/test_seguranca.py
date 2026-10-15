@@ -273,7 +273,7 @@ def test_leitura_nao_precisa_do_token(pessoas):
 # --- papéis nas rotas principais ---
 
 LEITURAS_DO_ALUNO = ["/aluno/{a}/estado", "/aluno/{a}/proximo", "/alunos/{a}/trilha", "/alunos/{a}/dialogo",
-                     "/alunos/{a}/feedbacks", "/relatorio/aluno/{a}?narrativa=false"]
+                     "/alunos/{a}/feedbacks", "/relatorio/aluno/{a}?narrativa=false", "/aluno/{a}/primeiro-acesso"]
 ROTAS_DO_DOCENTE = ["/painel/alunos-em-risco", "/painel/competencias", "/painel/revisao", "/painel/auditoria",
                     "/painel/exportar/indicadores.csv", "/relatorio/turma?narrativa=false", "/auditoria/A2026-S01"]
 
@@ -333,6 +333,76 @@ def test_veto_so_docente(pessoas):
         c, csrf = logado(login)
         for rota in ("/tutor/dialogo/9/veto", "/tutor/feedback/9/veto"):
             assert c.patch(rota, json={"vetada": False}, headers=csrf).status_code == esperado, (login, rota)
+
+
+# primeiro acesso do Agente 1 (rotas_primeiro_acesso): as escritas são só do próprio aluno
+ESCRITAS_DO_PRIMEIRO_ACESSO = [
+    ("/aluno/{a}/onboarding/iniciar", None),
+    ("/aluno/{a}/onboarding/mensagem", {"texto": "desenvolvimento"}),
+    ("/aluno/{a}/diagnostico/iniciar", None),
+    ("/aluno/{a}/diagnostico/responder", {"item_id": "variaveis_tipos_n1a", "indice_escolhido": 0}),
+    ("/aluno/{a}/primeiro-acesso/concluir", None),
+]
+
+
+@pytest.mark.parametrize("rota, corpo", ESCRITAS_DO_PRIMEIRO_ACESSO)
+def test_primeiro_acesso_escrita_so_do_proprio_aluno(pessoas, rota, corpo):
+    def post(c, aluno, headers=None):
+        return c.post(rota.format(a=aluno), json=corpo, headers=headers or {})
+
+    assert post(cliente(), "A2026-S01").status_code == 401  # sem login
+    aluno, csrf = logado("A2026-S01")
+    assert post(aluno, "A2026-S01").status_code == 403  # sem o token anti-CSRF
+    assert post(aluno, "A2026-S01", {"X-CSRF-Token": "outro"}).status_code == 403
+    assert permitido(post(aluno, "A2026-S01", csrf))  # o próprio aluno passa (404/409 = regra do fluxo)
+    negado = post(aluno, "A2026-S02", csrf)
+    assert negado.status_code == 403 and negado.json()["detail"] == "Você só pode acessar os seus próprios dados."
+    for login in ("DOC-S01", "ADM-S01"):  # docente lê o passo, mas não age pelo aluno; admin, nada
+        c, csrf_outro = logado(login)
+        recusa = post(c, "A2026-S01", csrf_outro)
+        assert recusa.status_code == 403 and "só o próprio aluno" in recusa.json()["detail"], login
+    negados = [r for r in registros("acesso_negado") if r["referencia_id"].endswith(rota.format(a="A2026-S01"))
+               or r["referencia_id"].endswith(rota.format(a="A2026-S02"))]
+    assert {r["origem"] for r in negados} == {"401", "403"}  # toda recusa vai para a auditoria
+
+
+def test_primeiro_acesso_leitura_aluno_e_docente(pessoas):
+    rota = "/aluno/{a}/primeiro-acesso"
+    assert cliente().get(rota.format(a="A2026-S01")).status_code == 401
+    aluno, _ = logado("A2026-S01")
+    assert aluno.get(rota.format(a="A2026-S01")).status_code == 200
+    assert aluno.get(rota.format(a="A2026-S02")).status_code == 403
+    docente, _ = logado("DOC-S01")
+    assert docente.get(rota.format(a="A2026-S01")).status_code == 200
+    admin, _ = logado("ADM-S01")
+    assert admin.get(rota.format(a="A2026-S01")).status_code == 403
+
+
+def test_primeiro_acesso_completo_com_login_e_objetivo_so_para_o_aluno(pessoas, monkeypatch):
+    """Percurso inteiro com a autenticação ligada; o docente não recebe o objetivo (texto livre)."""
+    import tia.agentes.planejador.justificar as justificar
+    import tia.agentes.planejador.onboarding as onboarding
+    from tia.agentes.tutor.repositorio import carregar_itens
+    monkeypatch.setattr(onboarding, "chamar_llm", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("sem LLM")))
+    monkeypatch.setattr(justificar, "chamar_llm", lambda prompt, **kwargs: "")
+    gabarito = {i["id"]: i["indice_correto"] for i in carregar_itens()}
+    aluno, csrf = logado("A2026-S01")
+    base = "/aluno/A2026-S01"
+    assert aluno.post(base + "/onboarding/iniciar", headers=csrf).status_code == 200
+    for fala in ("desenvolvimento", "3 horas por semana", "estágio em backend", "sim"):
+        assert aluno.post(base + "/onboarding/mensagem", json={"texto": fala}, headers=csrf).status_code == 200
+    situacao = aluno.post(base + "/diagnostico/iniciar", headers=csrf).json()
+    while not situacao["concluido"]:
+        p = situacao["pergunta"]
+        situacao = aluno.post(base + "/diagnostico/responder", headers=csrf, json={
+            "item_id": p["item_id"], "indice_escolhido": gabarito[p["item_id"]]}).json()
+    assert aluno.get(base + "/primeiro-acesso").json()["onboarding"]["objetivo"] == "estágio em backend"
+    docente, _ = logado("DOC-S01")
+    visto = docente.get(base + "/primeiro-acesso").json()
+    assert visto["passo"] == "concluir" and "objetivo" not in (visto["onboarding"] or {})
+    assert aluno.post(base + "/primeiro-acesso/concluir", headers=csrf).status_code == 200
+    quem = {(r["tipo"], r["usuario_id"]) for r in registros() if r["tipo"] in ("onboarding", "diagnostico")}
+    assert quem == {("onboarding", "A2026-S01"), ("diagnostico", "A2026-S01")}
 
 
 def test_conteudo_para_qualquer_usuario_logado(pessoas):

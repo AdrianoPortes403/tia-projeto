@@ -1,7 +1,1603 @@
 {
-  "_provisorio": true,
-  "_nota": "PROVISÓRIO: banco de itens de exemplo criado pela frente de infraestrutura (A3) para a fatia vertical do Agente 2 (Tutor). Substituir pelo banco oficial da Pessoa 4. Formato: 2 itens por competência e nível de dificuldade (1 a 3).",
+  "_versao": "0.3 — 84 itens gerados por LLM (29 e 30/09) + 36 itens da base comum vindos do protótipo da A3 (12/10); todos pendentes de revisão docente",
+  "_nota": "Banco de itens da base pedagógica (1.2.5). 'uso': 'diagnostico' (aplicado uma vez, no diagnóstico inicial) ou 'tutoria'. Status 'rascunho_*': ainda sem revisão docente (protocolo em Base Pedagógica - alinhada EAP/1.2.5_criterios_e_protocolo_itens.md). Os itens da base comum mantêm os IDs da versão provisória da A3.",
   "itens": [
+    {
+      "id": "dev_01_n1_001",
+      "competencia_id": "dev_01",
+      "nivel": 1,
+      "enunciado": "Um laço `for i in range(n)` executa, a cada volta, uma operação de custo constante. Qual a complexidade de tempo do laço?",
+      "alternativas": [
+        "O(1)",
+        "O(n)",
+        "O(log n)",
+        "O(n²)"
+      ],
+      "indice_correto": 1,
+      "explicacao": "O corpo constante é executado n vezes: n · O(1) = O(n).",
+      "uso": "diagnostico",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n1_002",
+      "competencia_id": "dev_01",
+      "nivel": 1,
+      "enunciado": "Qual o custo de acessar o elemento `v[i]` de um vetor (array) pelo índice?",
+      "alternativas": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n log n)"
+      ],
+      "indice_correto": 0,
+      "explicacao": "O endereço é calculado diretamente (base + i · tamanho do elemento), sem percorrer o vetor.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n1_003",
+      "competencia_id": "dev_01",
+      "nivel": 1,
+      "enunciado": "Dois laços aninhados, cada um indo de 0 a n−1, com uma operação constante no corpo interno. Qual a complexidade?",
+      "alternativas": [
+        "O(n)",
+        "O(n log n)",
+        "O(2ⁿ)",
+        "O(n²)"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O laço interno roda n vezes para cada uma das n voltas do externo: n · n = n².",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n1_004",
+      "competencia_id": "dev_01",
+      "nivel": 1,
+      "enunciado": "Para n grande, qual destas funções cresce mais rápido?",
+      "alternativas": [
+        "n³",
+        "n log n",
+        "2ⁿ",
+        "n²"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Funções exponenciais superam qualquer polinômio para n suficientemente grande.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n2_001",
+      "competencia_id": "dev_01",
+      "nivel": 2,
+      "enunciado": "Qual a complexidade de tempo da busca binária em um vetor ordenado com n elementos?",
+      "alternativas": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n log n)"
+      ],
+      "indice_correto": 1,
+      "explicacao": "A cada passo o intervalo de busca cai pela metade; após log₂ n passos resta um elemento.",
+      "uso": "diagnostico",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n2_002",
+      "competencia_id": "dev_01",
+      "nivel": 2,
+      "enunciado": "Qual a complexidade do trecho abaixo?\n\n```\ni = n\nwhile i > 1:\n    i = i // 2\n```",
+      "alternativas": [
+        "O(log n)",
+        "O(1)",
+        "O(n)",
+        "O(n/2)"
+      ],
+      "indice_correto": 0,
+      "explicacao": "i é dividido por 2 a cada volta, então o laço executa cerca de log₂ n vezes.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n2_003",
+      "competencia_id": "dev_01",
+      "nivel": 2,
+      "enunciado": "Qual o limite justo (Θ) de f(n) = 3n² + 100n + 5000?",
+      "alternativas": [
+        "Θ(n)",
+        "Θ(n³)",
+        "Θ(5000)",
+        "Θ(n²)"
+      ],
+      "indice_correto": 3,
+      "explicacao": "Na notação assintótica, constantes e termos de menor ordem são descartados; o termo dominante é n².",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n2_004",
+      "competencia_id": "dev_01",
+      "nivel": 2,
+      "enunciado": "Qual a complexidade do trecho abaixo?\n\n```\nfor i in range(n):\n    for j in range(i, n):\n        op()  # O(1)\n```",
+      "alternativas": [
+        "O(n)",
+        "O(n log n)",
+        "O(n²)",
+        "O(n³)"
+      ],
+      "indice_correto": 2,
+      "explicacao": "O total de execuções é n + (n−1) + … + 1 = n(n+1)/2, que é Θ(n²).",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n3_001",
+      "competencia_id": "dev_01",
+      "nivel": 3,
+      "enunciado": "O merge sort tem recorrência T(n) = 2T(n/2) + Θ(n). Qual a sua complexidade?",
+      "alternativas": [
+        "Θ(n)",
+        "Θ(n log n)",
+        "Θ(n²)",
+        "Θ(log n)"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Pelo Teorema Mestre (caso 2): a = 2, b = 2, f(n) = Θ(n) = Θ(n^(log_b a)), logo T(n) = Θ(n log n).",
+      "uso": "diagnostico",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n3_002",
+      "competencia_id": "dev_01",
+      "nivel": 3,
+      "enunciado": "O Fibonacci recursivo ingênuo `fib(n) = fib(n−1) + fib(n−2)` tem, entre as opções, qual limite superior de tempo mais adequado?",
+      "alternativas": [
+        "O(2ⁿ)",
+        "O(n)",
+        "O(n log n)",
+        "O(n²)"
+      ],
+      "indice_correto": 0,
+      "explicacao": "Cada chamada gera duas outras; o número de chamadas cresce exponencialmente (Θ(φⁿ), φ ≈ 1,618), limitado por O(2ⁿ).",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n3_003",
+      "competencia_id": "dev_01",
+      "nivel": 3,
+      "enunciado": "Qual a complexidade do trecho abaixo?\n\n```\nfor i in range(n):\n    j = 1\n    while j < n:\n        j = j * 2\n```",
+      "alternativas": [
+        "O(n)",
+        "O(log n)",
+        "O(n²)",
+        "O(n log n)"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O laço interno dobra j até n (log₂ n voltas) e é repetido n vezes: n · log n.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n3_004",
+      "competencia_id": "dev_01",
+      "nivel": 3,
+      "enunciado": "Um vetor dinâmico dobra sua capacidade quando fica cheio. Qual o custo AMORTIZADO de uma inserção no final (append)?",
+      "alternativas": [
+        "O(log n) amortizado",
+        "O(n) amortizado",
+        "O(1) amortizado",
+        "O(n) no pior caso de todas as inserções"
+      ],
+      "indice_correto": 2,
+      "explicacao": "As cópias custam 1 + 2 + 4 + … < 2n para n inserções; dividindo por n, o custo médio por inserção é constante.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 75,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n1_001",
+      "competencia_id": "dev_02",
+      "nivel": 1,
+      "enunciado": "Qual estrutura segue a política LIFO (último a entrar, primeiro a sair)?",
+      "alternativas": [
+        "Fila",
+        "Pilha",
+        "Lista ordenada",
+        "Tabela hash"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Na pilha, push e pop ocorrem no mesmo extremo (topo), então sai primeiro quem entrou por último.",
+      "uso": "diagnostico",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n1_002",
+      "competencia_id": "dev_02",
+      "nivel": 1,
+      "enunciado": "Em uma fila (FIFO), a operação dequeue remove:",
+      "alternativas": [
+        "O elemento mais antigo",
+        "O elemento mais recente",
+        "O maior elemento",
+        "Um elemento aleatório"
+      ],
+      "indice_correto": 0,
+      "explicacao": "Fila é FIFO: o primeiro a entrar é o primeiro a sair.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n1_003",
+      "competencia_id": "dev_02",
+      "nivel": 1,
+      "enunciado": "Pilha vazia. Executa-se push(1), push(2), push(3) e depois pop(). Qual valor o pop retorna?",
+      "alternativas": [
+        "1",
+        "2",
+        "A pilha fica vazia",
+        "3"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O topo da pilha é o último inserido, 3.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n1_004",
+      "competencia_id": "dev_02",
+      "nivel": 1,
+      "enunciado": "Em uma lista simplesmente encadeada, cada nó armazena:",
+      "alternativas": [
+        "Apenas o valor",
+        "O valor e referências para o próximo e o anterior",
+        "O valor e uma referência para o próximo nó",
+        "O índice do nó no vetor"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Com referência para o anterior seria uma lista duplamente encadeada.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n2_001",
+      "competencia_id": "dev_02",
+      "nivel": 2,
+      "enunciado": "Qual o custo de inserir um elemento no INÍCIO de uma lista simplesmente encadeada, dado o ponteiro head?",
+      "alternativas": [
+        "O(log n)",
+        "O(1)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Basta criar o nó, apontá-lo para o antigo head e atualizar head; não é preciso percorrer a lista.",
+      "uso": "diagnostico",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n2_002",
+      "competencia_id": "dev_02",
+      "nivel": 2,
+      "enunciado": "Qual o custo de acessar o k-ésimo elemento de uma lista encadeada com n nós, no pior caso?",
+      "alternativas": [
+        "O(n)",
+        "O(1)",
+        "O(log n)",
+        "O(n log n)"
+      ],
+      "indice_correto": 0,
+      "explicacao": "Não há acesso por índice: é preciso seguir os ponteiros desde o head, até n passos.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n2_003",
+      "competencia_id": "dev_02",
+      "nivel": 2,
+      "enunciado": "Fila vazia. Executa-se enqueue(A), enqueue(B), dequeue(), enqueue(C), dequeue(). O que o SEGUNDO dequeue retorna?",
+      "alternativas": [
+        "A",
+        "C",
+        "A fila está vazia",
+        "B"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O primeiro dequeue remove A; restam B, C; o segundo remove B.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n2_004",
+      "competencia_id": "dev_02",
+      "nivel": 2,
+      "enunciado": "Qual estrutura é a mais adequada para verificar se os parênteses de uma expressão estão balanceados?",
+      "alternativas": [
+        "Fila",
+        "Tabela hash",
+        "Pilha",
+        "Lista ordenada"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Empilha cada abertura e desempilha a cada fechamento; o fechamento precisa casar com a abertura mais recente (LIFO).",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n3_001",
+      "competencia_id": "dev_02",
+      "nivel": 3,
+      "enunciado": "Lista simplesmente encadeada com ponteiros head e tail (sem ponteiro para o anterior). Qual o custo de remover o ÚLTIMO nó?",
+      "alternativas": [
+        "O(1)",
+        "O(n)",
+        "O(log n)",
+        "O(n²)"
+      ],
+      "indice_correto": 1,
+      "explicacao": "É preciso achar o penúltimo nó para atualizar seu next e o tail, o que exige percorrer a lista desde o head.",
+      "uso": "diagnostico",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n3_002",
+      "competencia_id": "dev_02",
+      "nivel": 3,
+      "enunciado": "Uma fila é implementada com duas pilhas (entrada e saída). Qual o custo amortizado do dequeue?",
+      "alternativas": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "indice_correto": 0,
+      "explicacao": "Cada elemento é movido da pilha de entrada para a de saída no máximo uma vez, então o custo total de n operações é O(n).",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 75,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n3_003",
+      "competencia_id": "dev_02",
+      "nivel": 3,
+      "enunciado": "Fila circular em vetor de capacidade 5 (índices 0 a 4) com head = 3 e 4 elementos armazenados. Em que índice entra o próximo elemento?",
+      "alternativas": [
+        "0",
+        "1",
+        "3",
+        "2"
+      ],
+      "indice_correto": 3,
+      "explicacao": "Posição de inserção = (head + tamanho) mod capacidade = (3 + 4) mod 5 = 2.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 75,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n3_004",
+      "competencia_id": "dev_02",
+      "nivel": 3,
+      "enunciado": "Qual técnica detecta um ciclo em uma lista encadeada usando memória extra O(1)?",
+      "alternativas": [
+        "Ordenar os nós",
+        "Guardar os nós visitados em um conjunto",
+        "Dois ponteiros com velocidades diferentes (algoritmo de Floyd)",
+        "Busca binária sobre os nós"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Um ponteiro anda 1 passo e outro 2; se houver ciclo eles se encontram. Guardar visitados funciona, mas usa O(n) de memória.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n1_001",
+      "competencia_id": "cib_01",
+      "nivel": 1,
+      "enunciado": "Em qual camada do modelo TCP/IP atua o protocolo IP?",
+      "alternativas": [
+        "Aplicação",
+        "Internet (rede)",
+        "Transporte",
+        "Enlace"
+      ],
+      "indice_correto": 1,
+      "explicacao": "O IP faz endereçamento e roteamento entre redes, função da camada de Internet.",
+      "uso": "diagnostico",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n1_002",
+      "competencia_id": "cib_01",
+      "nivel": 1,
+      "enunciado": "Qual ferramenta é usada para capturar e inspecionar pacotes com interface gráfica?",
+      "alternativas": [
+        "Wireshark",
+        "Nmap",
+        "John the Ripper",
+        "Hydra"
+      ],
+      "indice_correto": 0,
+      "explicacao": "Nmap faz varredura de portas; John e Hydra atacam senhas. O Wireshark captura e decodifica pacotes.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n1_003",
+      "competencia_id": "cib_01",
+      "nivel": 1,
+      "enunciado": "Qual protocolo de transporte é orientado a conexão e garante entrega ordenada?",
+      "alternativas": [
+        "UDP",
+        "ICMP",
+        "ARP",
+        "TCP"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O TCP estabelece conexão (handshake), numera os bytes e retransmite perdas; o UDP não faz nada disso.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n1_004",
+      "competencia_id": "cib_01",
+      "nivel": 1,
+      "enunciado": "Qual a porta padrão do HTTPS?",
+      "alternativas": [
+        "80",
+        "22",
+        "443",
+        "53"
+      ],
+      "indice_correto": 2,
+      "explicacao": "80 é HTTP, 22 é SSH e 53 é DNS.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n2_001",
+      "competencia_id": "cib_01",
+      "nivel": 2,
+      "enunciado": "Qual a sequência do three-way handshake do TCP?",
+      "alternativas": [
+        "SYN → ACK → SYN-ACK",
+        "SYN → SYN-ACK → ACK",
+        "ACK → SYN → FIN",
+        "SYN → FIN → ACK"
+      ],
+      "indice_correto": 1,
+      "explicacao": "O cliente envia SYN, o servidor responde SYN-ACK e o cliente confirma com ACK.",
+      "uso": "diagnostico",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n2_002",
+      "competencia_id": "cib_01",
+      "nivel": 2,
+      "enunciado": "Qual FILTRO DE EXIBIÇÃO do Wireshark mostra apenas o tráfego TCP de ou para a porta 80?",
+      "alternativas": [
+        "tcp.port == 80",
+        "port 80 and tcp",
+        "http.port == 80",
+        "tcp.dstport > 80"
+      ],
+      "indice_correto": 0,
+      "explicacao": "`port 80 and tcp` é sintaxe BPF, válida como filtro de CAPTURA (tcpdump), não de exibição. `http.port` não é um campo válido.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n2_003",
+      "competencia_id": "cib_01",
+      "nivel": 2,
+      "enunciado": "Qual comando do tcpdump captura, na interface eth0, o tráfego de ou para a porta 53?",
+      "alternativas": [
+        "tcpdump --port=53 eth0",
+        "tcpdump -p 53 -i eth0",
+        "tcpdump eth0:53",
+        "tcpdump -i eth0 port 53"
+      ],
+      "indice_correto": 3,
+      "explicacao": "`-i` escolhe a interface e `port 53` é a expressão BPF que filtra origem ou destino na porta 53.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n2_004",
+      "competencia_id": "cib_01",
+      "nivel": 2,
+      "enunciado": "Você envia um SYN para uma porta e recebe de volta um segmento com a flag RST. O que isso indica?",
+      "alternativas": [
+        "A porta está aberta",
+        "Um firewall descartou o pacote silenciosamente",
+        "A porta está fechada",
+        "A conexão foi estabelecida"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Porta aberta responde SYN-ACK; descarte silencioso não gera resposta. RST indica host alcançável sem serviço naquela porta.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n3_001",
+      "competencia_id": "cib_01",
+      "nivel": 3,
+      "enunciado": "O cliente inicia o handshake com um SYN de número de sequência 1000. Qual o número de ACK no SYN-ACK do servidor?",
+      "alternativas": [
+        "1000",
+        "1001",
+        "0",
+        "Um valor aleatório"
+      ],
+      "indice_correto": 1,
+      "explicacao": "O SYN consome um número de sequência, então o servidor confirma esperando o próximo: 1000 + 1.",
+      "uso": "diagnostico",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n3_002",
+      "competencia_id": "cib_01",
+      "nivel": 3,
+      "enunciado": "Um segmento TCP com seq = 5000 carrega 200 bytes de dados. Qual número de ACK o receptor envia ao recebê-lo corretamente?",
+      "alternativas": [
+        "5200",
+        "5000",
+        "5001",
+        "5201"
+      ],
+      "indice_correto": 0,
+      "explicacao": "O ACK é o número do próximo byte esperado: 5000 + 200 = 5200.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n3_003",
+      "competencia_id": "cib_01",
+      "nivel": 3,
+      "enunciado": "O Wireshark marca um pacote como \"TCP Retransmission\". O que aconteceu?",
+      "alternativas": [
+        "O servidor recusou a conexão",
+        "O pacote foi fragmentado pela camada IP",
+        "O TLS renegociou as chaves",
+        "Um segmento com o mesmo número de sequência foi reenviado porque o ACK não chegou a tempo"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O remetente reenvia o segmento quando o temporizador expira ou recebe ACKs duplicados.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n3_004",
+      "competencia_id": "cib_01",
+      "nivel": 3,
+      "enunciado": "Numa rede com switch, sua captura mostra só o tráfego da sua máquina e broadcasts. Por quê, e como capturar o tráfego de outros hosts de forma autorizada?",
+      "alternativas": [
+        "A placa está em modo promíscuo; é preciso desativá-lo",
+        "O Wireshark só captura TCP; é preciso habilitar UDP",
+        "O switch só encaminha unicast para a porta de destino; é preciso usar espelhamento de porta (SPAN)",
+        "Falta instalar o certificado do switch"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Diferente de um hub, o switch aprende MACs e isola o unicast. Espelhamento de porta (configurado pelo administrador) replica o tráfego para o analisador.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 75,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n1_001",
+      "competencia_id": "cib_02",
+      "nivel": 1,
+      "enunciado": "Qual a função principal do DNS?",
+      "alternativas": [
+        "Criptografar o tráfego web",
+        "Traduzir nomes de domínio em endereços IP",
+        "Atribuir IPs automaticamente aos hosts",
+        "Encaminhar pacotes entre redes"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Atribuir IPs é papel do DHCP; encaminhar pacotes é papel dos roteadores.",
+      "uso": "diagnostico",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n1_002",
+      "competencia_id": "cib_02",
+      "nivel": 1,
+      "enunciado": "O que significa o código de status HTTP 404?",
+      "alternativas": [
+        "Recurso não encontrado",
+        "Erro interno do servidor",
+        "Acesso proibido",
+        "Redirecionamento permanente"
+      ],
+      "indice_correto": 0,
+      "explicacao": "500 é erro interno, 403 é proibido e 301 é redirecionamento permanente.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n1_003",
+      "competencia_id": "cib_02",
+      "nivel": 1,
+      "enunciado": "Qual protocolo fornece a criptografia do HTTPS?",
+      "alternativas": [
+        "SSH",
+        "FTP",
+        "SNMP",
+        "TLS"
+      ],
+      "indice_correto": 3,
+      "explicacao": "HTTPS é HTTP sobre TLS.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n1_004",
+      "competencia_id": "cib_02",
+      "nivel": 1,
+      "enunciado": "Qual registro DNS associa um nome a um endereço IPv4?",
+      "alternativas": [
+        "AAAA",
+        "MX",
+        "A",
+        "CNAME"
+      ],
+      "indice_correto": 2,
+      "explicacao": "AAAA é para IPv6, MX indica servidores de e-mail e CNAME é um apelido para outro nome.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n2_001",
+      "competencia_id": "cib_02",
+      "nivel": 2,
+      "enunciado": "Qual método HTTP é usado para obter um recurso sem alterar o estado do servidor?",
+      "alternativas": [
+        "POST",
+        "GET",
+        "DELETE",
+        "PATCH"
+      ],
+      "indice_correto": 1,
+      "explicacao": "GET é um método seguro (não altera estado). POST, DELETE e PATCH modificam recursos.",
+      "uso": "diagnostico",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n2_002",
+      "competencia_id": "cib_02",
+      "nivel": 2,
+      "enunciado": "Qual o transporte e a porta padrão das consultas DNS comuns?",
+      "alternativas": [
+        "UDP 53",
+        "TCP 80",
+        "TCP 443",
+        "UDP 123"
+      ],
+      "indice_correto": 0,
+      "explicacao": "Consultas comuns usam UDP 53; TCP 53 é usado em respostas grandes e transferências de zona. UDP 123 é NTP.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n2_003",
+      "competencia_id": "cib_02",
+      "nivel": 2,
+      "enunciado": "No handshake TLS, para que serve o certificado enviado pelo servidor?",
+      "alternativas": [
+        "Comprimir os dados",
+        "Definir a porta da conexão",
+        "Substituir a senha do usuário",
+        "Autenticar a identidade do servidor e vincular a chave pública a ela"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O cliente valida a cadeia de certificados até uma autoridade confiável antes de confiar na chave pública do servidor.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n2_004",
+      "competencia_id": "cib_02",
+      "nivel": 2,
+      "enunciado": "Qual registro DNS indica os servidores de e-mail de um domínio?",
+      "alternativas": [
+        "A",
+        "TXT",
+        "MX",
+        "NS"
+      ],
+      "indice_correto": 2,
+      "explicacao": "MX (Mail Exchanger). NS indica os servidores de nomes autoritativos; TXT guarda texto livre (como SPF).",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n3_001",
+      "competencia_id": "cib_02",
+      "nivel": 3,
+      "enunciado": "No TLS 1.3, qual mecanismo garante sigilo futuro (forward secrecy)?",
+      "alternativas": [
+        "Troca de chaves RSA estática",
+        "Troca de chaves Diffie-Hellman efêmera (ECDHE)",
+        "Hash SHA-256 do certificado",
+        "Compressão de registros"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Com chaves efêmeras, o vazamento posterior da chave privada do servidor não permite decifrar sessões antigas. O TLS 1.3 removeu a troca de chaves RSA estática.",
+      "uso": "diagnostico",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n3_002",
+      "competencia_id": "cib_02",
+      "nivel": 3,
+      "enunciado": "Numa captura de HTTPS sem acesso às chaves, qual informação ainda aparece em texto claro no ClientHello (sem ECH)?",
+      "alternativas": [
+        "O nome do servidor (SNI)",
+        "A URL completa com o caminho",
+        "O cabeçalho Cookie",
+        "O corpo da requisição"
+      ],
+      "indice_correto": 0,
+      "explicacao": "O SNI vai em claro para o servidor escolher o certificado; caminho, cookies e corpo trafegam cifrados. A extensão ECH existe justamente para cifrar o SNI.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n3_003",
+      "competencia_id": "cib_02",
+      "nivel": 3,
+      "enunciado": "Como se chama o ataque em que respostas falsas são inseridas no cache de um resolvedor DNS?",
+      "alternativas": [
+        "DNS tunneling",
+        "Transferência de zona",
+        "Amplificação DNS",
+        "Envenenamento de cache DNS"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O resolvedor passa a devolver o IP do atacante a todos os clientes. DNSSEC mitiga ao assinar as respostas.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n3_004",
+      "competencia_id": "cib_02",
+      "nivel": 3,
+      "enunciado": "Qual cabeçalho HTTP instrui o navegador a acessar um domínio somente via HTTPS por um período?",
+      "alternativas": [
+        "Content-Security-Policy",
+        "X-Frame-Options",
+        "Strict-Transport-Security",
+        "Access-Control-Allow-Origin"
+      ],
+      "indice_correto": 2,
+      "explicacao": "O HSTS (RFC 6797) impede o rebaixamento para HTTP e ataques de SSL stripping.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n1_005",
+      "competencia_id": "dev_01",
+      "nivel": 1,
+      "enunciado": "Qual o custo, no pior caso, de uma busca linear por um valor em um vetor NÃO ordenado de n elementos?",
+      "alternativas": [
+        "O(1)",
+        "O(n)",
+        "O(log n)",
+        "O(n²)"
+      ],
+      "indice_correto": 1,
+      "explicacao": "No pior caso o valor não está no vetor ou está na última posição, e todos os n elementos são comparados.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n1_006",
+      "competencia_id": "dev_01",
+      "nivel": 1,
+      "enunciado": "Qual a complexidade de somar todos os elementos de uma matriz n × n?",
+      "alternativas": [
+        "O(n²)",
+        "O(n)",
+        "O(n log n)",
+        "O(n³)"
+      ],
+      "indice_correto": 0,
+      "explicacao": "A matriz tem n · n = n² elementos, e cada um é visitado uma vez.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n1_007",
+      "competencia_id": "dev_01",
+      "nivel": 1,
+      "enunciado": "Um algoritmo executa sempre exatamente 5 operações, qualquer que seja o tamanho n da entrada. Qual a sua complexidade?",
+      "alternativas": [
+        "O(5n)",
+        "O(n)",
+        "O(log n)",
+        "O(1)"
+      ],
+      "indice_correto": 3,
+      "explicacao": "Um número fixo de operações não cresce com n; constantes são absorvidas em O(1).",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n2_005",
+      "competencia_id": "dev_01",
+      "nivel": 2,
+      "enunciado": "Um algoritmo executa um laço O(n) e, DEPOIS dele, dois laços aninhados O(n²). Qual a complexidade total?",
+      "alternativas": [
+        "O(n)",
+        "O(n³)",
+        "O(n²)",
+        "O(n + n)"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Etapas em sequência se somam: O(n) + O(n²) = O(n²), pois prevalece o termo dominante. Só etapas aninhadas se multiplicam.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n2_006",
+      "competencia_id": "dev_01",
+      "nivel": 2,
+      "enunciado": "O algoritmo A é O(n log n) e o algoritmo B é O(n²). Para entradas muito grandes, qual tende a ser mais rápido?",
+      "alternativas": [
+        "B",
+        "A",
+        "Os dois são equivalentes",
+        "Depende apenas do hardware"
+      ],
+      "indice_correto": 1,
+      "explicacao": "n log n cresce mais devagar que n²; para n grande, A vence mesmo que tenha constantes maiores.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n2_007",
+      "competencia_id": "dev_01",
+      "nivel": 2,
+      "enunciado": "Qual o espaço ADICIONAL usado para inverter um vetor no próprio lugar (in-place), trocando os extremos com dois índices?",
+      "alternativas": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "indice_correto": 0,
+      "explicacao": "Só se guardam os dois índices e uma variável temporária para a troca, independentemente de n.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n3_005",
+      "competencia_id": "dev_01",
+      "nivel": 3,
+      "enunciado": "A busca binária recursiva tem recorrência T(n) = T(n/2) + Θ(1). Qual a sua complexidade?",
+      "alternativas": [
+        "Θ(1)",
+        "Θ(n)",
+        "Θ(n log n)",
+        "Θ(log n)"
+      ],
+      "indice_correto": 3,
+      "explicacao": "Pelo Teorema Mestre (caso 2): a = 1, b = 2, n^(log_b a) = n⁰ = 1 = Θ(f(n)), logo T(n) = Θ(log n).",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n3_006",
+      "competencia_id": "dev_01",
+      "nivel": 3,
+      "enunciado": "Uma função recursiva calcula fatorial(n) chamando fatorial(n−1), sem memoização. Qual o espaço usado pela pilha de chamadas?",
+      "alternativas": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "indice_correto": 2,
+      "explicacao": "A recursão desce até n chamadas empilhadas antes de retornar, cada uma ocupando espaço constante.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_01_n3_007",
+      "competencia_id": "dev_01",
+      "nivel": 3,
+      "enunciado": "Qual a solução da recorrência T(n) = 2T(n/2) + Θ(1)?",
+      "alternativas": [
+        "Θ(log n)",
+        "Θ(n)",
+        "Θ(n log n)",
+        "Θ(n²)"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Teorema Mestre (caso 1): n^(log₂ 2) = n cresce mais que f(n) = 1, então T(n) = Θ(n). Um exemplo é percorrer uma árvore binária completa.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
+      "tempo_esperado_s": 75,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n1_005",
+      "competencia_id": "dev_02",
+      "nivel": 1,
+      "enunciado": "Qual operação de pilha devolve o elemento do topo SEM removê-lo?",
+      "alternativas": [
+        "peek (top)",
+        "push",
+        "pop",
+        "enqueue"
+      ],
+      "indice_correto": 0,
+      "explicacao": "push insere, pop remove e devolve; peek só consulta o topo. enqueue é operação de fila.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n1_006",
+      "competencia_id": "dev_02",
+      "nivel": 1,
+      "enunciado": "Qual estrutura modela naturalmente uma fila de impressão, em que o primeiro pedido enviado é o primeiro impresso?",
+      "alternativas": [
+        "Pilha",
+        "Árvore",
+        "Tabela hash",
+        "Fila"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O primeiro a entrar é o primeiro a sair: política FIFO, a da fila.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n1_007",
+      "competencia_id": "dev_02",
+      "nivel": 1,
+      "enunciado": "Em uma lista DUPLAMENTE encadeada, cada nó armazena:",
+      "alternativas": [
+        "Apenas o valor",
+        "O valor e uma referência para o próximo",
+        "O valor e referências para o próximo e para o anterior",
+        "Dois valores e nenhuma referência"
+      ],
+      "indice_correto": 2,
+      "explicacao": "A referência para o anterior permite percorrer a lista nos dois sentidos.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n2_005",
+      "competencia_id": "dev_02",
+      "nivel": 2,
+      "enunciado": "Qual estrutura é a mais natural para implementar o botão \"voltar\" de um navegador?",
+      "alternativas": [
+        "Fila",
+        "Pilha",
+        "Lista ordenada",
+        "Tabela hash"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Cada página visitada é empilhada; \"voltar\" desempilha a mais recente (LIFO).",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n2_006",
+      "competencia_id": "dev_02",
+      "nivel": 2,
+      "enunciado": "Em uma lista duplamente encadeada, qual o custo de remover um nó do meio, dado um ponteiro para o próprio nó?",
+      "alternativas": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "indice_correto": 0,
+      "explicacao": "O nó já conhece o anterior e o próximo; basta religá-los entre si, sem percorrer a lista.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n2_007",
+      "competencia_id": "dev_02",
+      "nivel": 2,
+      "enunciado": "Pilha vazia. Executa-se push(4), push(7), pop(), push(9), push(2), pop(), pop(). Qual valor o ÚLTIMO pop retorna?",
+      "alternativas": [
+        "4",
+        "7",
+        "2",
+        "9"
+      ],
+      "indice_correto": 3,
+      "explicacao": "Após pop() sai 7 e fica [4]; push 9 e 2 dão [4, 9, 2]; o primeiro pop seguinte tira 2 e o último tira 9.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n3_005",
+      "competencia_id": "dev_02",
+      "nivel": 3,
+      "enunciado": "Usando uma pilha, qual o resultado da expressão pós-fixa `3 4 + 2 *`?",
+      "alternativas": [
+        "10",
+        "11",
+        "14",
+        "24"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Empilha 3 e 4; o + desempilha os dois e empilha 7; empilha 2; o * desempilha 7 e 2 e empilha 14.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n3_006",
+      "competencia_id": "dev_02",
+      "nivel": 3,
+      "enunciado": "Qual a complexidade de inverter uma lista simplesmente encadeada no próprio lugar, reapontando os ponteiros?",
+      "alternativas": [
+        "Tempo O(n), espaço O(n)",
+        "Tempo O(n), espaço O(1)",
+        "Tempo O(n²), espaço O(1)",
+        "Tempo O(log n), espaço O(1)"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Uma passada com três ponteiros (anterior, atual, próximo) inverte cada ligação; não é preciso estrutura auxiliar.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "dev_02_n3_007",
+      "competencia_id": "dev_02",
+      "nivel": 3,
+      "enunciado": "Fila implementada com duas pilhas. A pilha de entrada contém 1, 2, 3 (3 no topo) e a de saída está vazia. O que o próximo dequeue retorna?",
+      "alternativas": [
+        "1",
+        "2",
+        "3",
+        "A fila está vazia"
+      ],
+      "indice_correto": 0,
+      "explicacao": "Com a saída vazia, todos os elementos são transferidos da entrada para a saída, o que inverte a ordem e deixa 1 no topo. Assim se preserva o FIFO.",
+      "uso": "tutoria",
+      "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
+      "tempo_esperado_s": 75,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n1_005",
+      "competencia_id": "cib_01",
+      "nivel": 1,
+      "enunciado": "Qual protocolo descobre o endereço MAC correspondente a um endereço IP na rede local?",
+      "alternativas": [
+        "DNS",
+        "DHCP",
+        "ICMP",
+        "ARP"
+      ],
+      "indice_correto": 3,
+      "explicacao": "O ARP pergunta em broadcast quem tem aquele IP. O DNS traduz nomes e o DHCP distribui endereços.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n1_006",
+      "competencia_id": "cib_01",
+      "nivel": 1,
+      "enunciado": "Qual protocolo é usado pelo comando ping?",
+      "alternativas": [
+        "TCP",
+        "UDP",
+        "ICMP",
+        "ARP"
+      ],
+      "indice_correto": 2,
+      "explicacao": "O ping envia mensagens ICMP Echo Request e espera Echo Reply.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n1_007",
+      "competencia_id": "cib_01",
+      "nivel": 1,
+      "enunciado": "Qual a porta padrão do SSH?",
+      "alternativas": [
+        "21",
+        "22",
+        "23",
+        "25"
+      ],
+      "indice_correto": 1,
+      "explicacao": "21 é FTP, 23 é Telnet e 25 é SMTP.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n2_005",
+      "competencia_id": "cib_01",
+      "nivel": 2,
+      "enunciado": "Qual flag TCP indica que um lado terminou de enviar dados e quer encerrar a conexão de forma ordenada?",
+      "alternativas": [
+        "FIN",
+        "SYN",
+        "PSH",
+        "URG"
+      ],
+      "indice_correto": 0,
+      "explicacao": "FIN inicia o encerramento ordenado; RST encerra abruptamente. SYN abre a conexão.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n2_006",
+      "competencia_id": "cib_01",
+      "nivel": 2,
+      "enunciado": "Qual filtro de exibição do Wireshark mostra todo o tráfego de ou para o host 10.0.0.5?",
+      "alternativas": [
+        "host 10.0.0.5",
+        "ip.src == 10.0.0.5",
+        "tcp.host == 10.0.0.5",
+        "ip.addr == 10.0.0.5"
+      ],
+      "indice_correto": 3,
+      "explicacao": "`ip.addr` casa origem OU destino. `ip.src` pega só a origem, e `host 10.0.0.5` é sintaxe BPF de filtro de captura.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n2_007",
+      "competencia_id": "cib_01",
+      "nivel": 2,
+      "enunciado": "Por que consultas DNS e transmissões de voz ao vivo costumam usar UDP em vez de TCP?",
+      "alternativas": [
+        "O UDP é criptografado",
+        "O UDP garante a entrega",
+        "O UDP evita o handshake e as retransmissões, reduzindo a latência",
+        "O UDP usa portas mais altas"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Para mensagens curtas ou tempo real, esperar handshake e retransmissões custa mais do que perder um pacote ocasional.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n3_005",
+      "competencia_id": "cib_01",
+      "nivel": 3,
+      "enunciado": "Na varredura SYN (half-open) do Nmap, o scanner responde ao SYN-ACK com um RST em vez de ACK. Qual o efeito disso?",
+      "alternativas": [
+        "A porta é fechada no alvo",
+        "O handshake não se completa, então a conexão não chega à aplicação e tende a deixar menos registros nela",
+        "O firewall é desativado",
+        "O tráfego passa a ser cifrado"
+      ],
+      "indice_correto": 1,
+      "explicacao": "O SYN-ACK já revela que a porta está aberta; abortar com RST evita abrir a conexão completa. Varreduras só em redes com autorização.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n3_006",
+      "competencia_id": "cib_01",
+      "nivel": 3,
+      "enunciado": "Qual a função do campo \"window size\" do cabeçalho TCP?",
+      "alternativas": [
+        "Controle de fluxo: quantos bytes o receptor aceita receber sem confirmar",
+        "Definir o tempo máximo de vida do pacote",
+        "Indicar o tamanho do cabeçalho IP",
+        "Numerar os segmentos"
+      ],
+      "indice_correto": 0,
+      "explicacao": "O receptor anuncia o espaço livre no seu buffer; o emissor não pode ter mais bytes pendentes que isso. O TTL fica no IP e a numeração é o número de sequência.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_01_n3_007",
+      "competencia_id": "cib_01",
+      "nivel": 3,
+      "enunciado": "Em uma rede Ethernet com MTU de 1500 bytes, usando cabeçalhos IPv4 e TCP de 20 bytes cada (sem opções), qual o tamanho máximo de dados TCP por segmento (MSS)?",
+      "alternativas": [
+        "1500",
+        "1480",
+        "1440",
+        "1460"
+      ],
+      "indice_correto": 3,
+      "explicacao": "MSS = MTU − cabeçalho IP − cabeçalho TCP = 1500 − 20 − 20 = 1460 bytes.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
+      "tempo_esperado_s": 75,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n1_005",
+      "competencia_id": "cib_02",
+      "nivel": 1,
+      "enunciado": "O que indica o código de status HTTP 500?",
+      "alternativas": [
+        "Recurso não encontrado",
+        "Requisição bem-sucedida",
+        "Erro interno do servidor",
+        "Não autorizado"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Códigos 5xx são falhas do servidor; 404 é não encontrado, 200 é sucesso e 401 é não autorizado.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n1_006",
+      "competencia_id": "cib_02",
+      "nivel": 1,
+      "enunciado": "Qual a porta padrão do HTTP (sem TLS)?",
+      "alternativas": [
+        "443",
+        "80",
+        "8443",
+        "21"
+      ],
+      "indice_correto": 1,
+      "explicacao": "443 é a porta do HTTPS; 21 é FTP.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n1_007",
+      "competencia_id": "cib_02",
+      "nivel": 1,
+      "enunciado": "Qual registro DNS associa um nome a um endereço IPv6?",
+      "alternativas": [
+        "AAAA",
+        "A",
+        "PTR",
+        "MX"
+      ],
+      "indice_correto": 0,
+      "explicacao": "A é para IPv4; PTR faz a resolução reversa (IP → nome); MX indica servidores de e-mail.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 30,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n2_005",
+      "competencia_id": "cib_02",
+      "nivel": 2,
+      "enunciado": "Qual a diferença entre os códigos HTTP 301 e 302?",
+      "alternativas": [
+        "301 é erro do cliente e 302 é erro do servidor",
+        "Os dois indicam sucesso",
+        "301 exige autenticação",
+        "301 é redirecionamento permanente e 302 é temporário"
+      ],
+      "indice_correto": 3,
+      "explicacao": "Com 301, navegadores e buscadores podem memorizar o novo endereço; com 302, o endereço original continua valendo.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n2_006",
+      "competencia_id": "cib_02",
+      "nivel": 2,
+      "enunciado": "Qual o efeito do atributo HttpOnly em um cookie?",
+      "alternativas": [
+        "O cookie só é enviado por HTTPS",
+        "O cookie expira ao fechar o navegador",
+        "O cookie não pode ser lido por JavaScript na página, o que dificulta o roubo via XSS",
+        "O cookie só é enviado ao mesmo site"
+      ],
+      "indice_correto": 2,
+      "explicacao": "Enviar só por HTTPS é o atributo Secure; restringir ao mesmo site é o SameSite.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n2_007",
+      "competencia_id": "cib_02",
+      "nivel": 2,
+      "enunciado": "Para que serve um registro DNS do tipo CNAME?",
+      "alternativas": [
+        "Indicar o servidor de e-mail",
+        "Criar um apelido que aponta para outro nome de domínio",
+        "Guardar o IPv6 do host",
+        "Delegar a zona a outro servidor"
+      ],
+      "indice_correto": 1,
+      "explicacao": "Por exemplo, www.exemplo.com pode ser um CNAME de exemplo.com. Delegação é o registro NS.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 45,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n3_005",
+      "competencia_id": "cib_02",
+      "nivel": 3,
+      "enunciado": "O que o DNSSEC garante nas respostas DNS?",
+      "alternativas": [
+        "Autenticidade e integridade: as respostas são assinadas e não podem ser falsificadas sem detecção",
+        "Confidencialidade: as consultas passam a ser cifradas",
+        "Disponibilidade contra ataques de negação de serviço",
+        "Anonimato de quem consulta"
+      ],
+      "indice_correto": 0,
+      "explicacao": "O DNSSEC assina os registros, mas não cifra nada. Para confidencialidade existem DNS sobre HTTPS e DNS sobre TLS.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n3_006",
+      "competencia_id": "cib_02",
+      "nivel": 3,
+      "enunciado": "O atributo SameSite=Strict em um cookie de sessão mitiga principalmente qual ataque?",
+      "alternativas": [
+        "SQL injection",
+        "Força bruta de senha",
+        "Envenenamento de cache DNS",
+        "Cross-Site Request Forgery (CSRF)"
+      ],
+      "indice_correto": 3,
+      "explicacao": "Com Strict, o navegador não envia o cookie em requisições originadas de outro site, que é exatamente o que o CSRF explora.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 60,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
+    {
+      "id": "cib_02_n3_007",
+      "competencia_id": "cib_02",
+      "nivel": 3,
+      "enunciado": "Em um handshake completo do TLS 1.3 (sem retomada de sessão), quantas idas e voltas (RTT) são necessárias antes de o cliente enviar dados de aplicação?",
+      "alternativas": [
+        "0 RTT",
+        "2 RTT",
+        "1 RTT",
+        "3 RTT"
+      ],
+      "indice_correto": 2,
+      "explicacao": "O TLS 1.3 envia a parte da troca de chaves já no ClientHello, então basta 1 RTT (o TLS 1.2 precisava de 2). O 0-RTT só existe na retomada de sessão.",
+      "uso": "tutoria",
+      "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
+      "tempo_esperado_s": 75,
+      "origem": "llm",
+      "status": "rascunho_llm"
+    },
     {
       "id": "variaveis_tipos_n1a",
       "competencia_id": "variaveis_tipos",
@@ -14,7 +1610,12 @@
         "bool"
       ],
       "indice_correto": 1,
-      "explicacao": "Números com parte decimal são do tipo float; int guarda apenas inteiros."
+      "explicacao": "Números com parte decimal são do tipo float; int guarda apenas inteiros.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "variaveis_tipos_n1b",
@@ -28,7 +1629,12 @@
         "Gera erro porque idade ainda não existe"
       ],
       "indice_correto": 2,
-      "explicacao": "O sinal = é atribuição: guarda o valor da direita no nome da esquerda, e a variável é criada nesse momento."
+      "explicacao": "O sinal = é atribuição: guarda o valor da direita no nome da esquerda, e a variável é criada nesse momento.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "variaveis_tipos_n2a",
@@ -42,7 +1648,12 @@
         "4"
       ],
       "indice_correto": 0,
-      "explicacao": "O operador // faz a divisão inteira e descarta a parte decimal; 7 / 2 é que valeria 3.5."
+      "explicacao": "O operador // faz a divisão inteira e descarta a parte decimal; 7 / 2 é que valeria 3.5.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "variaveis_tipos_n2b",
@@ -56,7 +1667,12 @@
         "Erro de tipo"
       ],
       "indice_correto": 1,
-      "explicacao": "Entre aspas, os valores são textos (str), e + junta textos: o resultado é \"23\"."
+      "explicacao": "Entre aspas, os valores são textos (str), e + junta textos: o resultado é \"23\".",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "variaveis_tipos_n3a",
@@ -70,7 +1686,12 @@
         "400"
       ],
       "indice_correto": 2,
-      "explicacao": "A potência vem primeiro (4 ** 2 = 16), depois a multiplicação (3 * 16 = 48) e por fim a soma (2 + 48 = 50)."
+      "explicacao": "A potência vem primeiro (4 ** 2 = 16), depois a multiplicação (3 * 16 = 48) e por fim a soma (2 + 48 = 50).",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "variaveis_tipos_n3b",
@@ -84,7 +1705,12 @@
         "None"
       ],
       "indice_correto": 0,
-      "explicacao": "x > 3 and x < 5 é False, pois 5 não é menor que 5; not inverte para True, e True or qualquer coisa é True."
+      "explicacao": "x > 3 and x < 5 é False, pois 5 não é menor que 5; not inverte para True, e True or qualquer coisa é True.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "condicionais_n1a",
@@ -98,7 +1724,12 @@
         "Quando a condição é True"
       ],
       "indice_correto": 3,
-      "explicacao": "O bloco do if só executa quando a condição é verdadeira (True); se for False, ele é pulado."
+      "explicacao": "O bloco do if só executa quando a condição é verdadeira (True); se for False, ele é pulado.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "condicionais_n1b",
@@ -112,7 +1743,12 @@
         "Nenhum caractere"
       ],
       "indice_correto": 0,
-      "explicacao": "A linha do if termina com dois-pontos, e o bloco é definido pela indentação."
+      "explicacao": "A linha do if termina com dois-pontos, e o bloco é definido pela indentação.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "condicionais_n2a",
@@ -126,7 +1762,12 @@
         "Nada"
       ],
       "indice_correto": 1,
-      "explicacao": "Como 4 >= 5 é falso, o bloco do else é executado; exatamente um dos dois blocos roda."
+      "explicacao": "Como 4 >= 5 é falso, o bloco do else é executado; exatamente um dos dois blocos roda.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "condicionais_n2b",
@@ -140,7 +1781,12 @@
         "not idade < 18"
       ],
       "indice_correto": 2,
-      "explicacao": "O and exige que as duas comparações sejam verdadeiras; com or, quase qualquer idade passaria, e = é atribuição, não comparação."
+      "explicacao": "O and exige que as duas comparações sejam verdadeiras; com or, quase qualquer idade passaria, e = é atribuição, não comparação.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "condicionais_n3a",
@@ -154,7 +1800,12 @@
         "bom"
       ],
       "indice_correto": 3,
-      "explicacao": "Só o bloco da primeira condição verdadeira executa: nota >= 7 já é True, então o elif é ignorado (as condições estão na ordem errada)."
+      "explicacao": "Só o bloco da primeira condição verdadeira executa: nota >= 7 já é True, então o elif é ignorado (as condições estão na ordem errada).",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "condicionais_n3b",
@@ -168,7 +1819,12 @@
         "Nada"
       ],
       "indice_correto": 0,
-      "explicacao": "x > 5 é verdadeiro, então entra no primeiro bloco; lá, x > 20 é falso e o else interno imprime B."
+      "explicacao": "x > 5 é verdadeiro, então entra no primeiro bloco; lá, x > 20 é falso e o else interno imprime B.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "repeticao_n1a",
@@ -182,7 +1838,12 @@
         "1, 2, 3"
       ],
       "indice_correto": 2,
-      "explicacao": "range(4) começa em 0 e não inclui o valor final 4."
+      "explicacao": "range(4) começa em 0 e não inclui o valor final 4.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "repeticao_n1b",
@@ -196,7 +1857,12 @@
         "Quando a condição se torna falsa"
       ],
       "indice_correto": 3,
-      "explicacao": "O while repete enquanto a condição for verdadeira e para assim que ela fica falsa."
+      "explicacao": "O while repete enquanto a condição for verdadeira e para assim que ela fica falsa.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "repeticao_n2a",
@@ -210,7 +1876,12 @@
         "4"
       ],
       "indice_correto": 0,
-      "explicacao": "range(1, 5) produz 1, 2, 3 e 4, e o acumulador soma todos eles: 1 + 2 + 3 + 4 = 10."
+      "explicacao": "range(1, 5) produz 1, 2, 3 e 4, e o acumulador soma todos eles: 1 + 2 + 3 + 4 = 10.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "repeticao_n2b",
@@ -224,7 +1895,12 @@
         "Encerrar o programa inteiro"
       ],
       "indice_correto": 2,
-      "explicacao": "break interrompe o laço na hora; quem pula para a próxima repetição é o continue."
+      "explicacao": "break interrompe o laço na hora; quem pula para a próxima repetição é o continue.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "repeticao_n3a",
@@ -238,7 +1914,12 @@
         "5"
       ],
       "indice_correto": 2,
-      "explicacao": "Como total = 0 está dentro do laço, o acumulador é zerado a cada volta e só guarda o último i, que é 4."
+      "explicacao": "Como total = 0 está dentro do laço, o acumulador é zerado a cada volta e só guarda o último i, que é 4.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "repeticao_n3b",
@@ -252,7 +1933,12 @@
         "Nada, é um laço infinito"
       ],
       "indice_correto": 1,
-      "explicacao": "A condição é testada antes de cada volta: com i = 9 ainda entra e i vira 12; aí 12 < 10 é falso e o laço termina."
+      "explicacao": "A condição é testada antes de cada volta: com i = 9 ainda entra e i vira 12; aí 12 < 10 é falso e o laço termina.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "funcoes_n1a",
@@ -266,7 +1952,12 @@
         "def"
       ],
       "indice_correto": 3,
-      "explicacao": "Funções são definidas com def, seguido do nome, dos parâmetros entre parênteses e de dois-pontos."
+      "explicacao": "Funções são definidas com def, seguido do nome, dos parâmetros entre parênteses e de dois-pontos.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "funcoes_n1b",
@@ -280,7 +1971,12 @@
         "Gera erro porque x não tem valor"
       ],
       "indice_correto": 1,
-      "explicacao": "Definir a função não a executa; ela só roda quando é chamada, por exemplo dobro(5)."
+      "explicacao": "Definir a função não a executa; ela só roda quando é chamada, por exemplo dobro(5).",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "funcoes_n2a",
@@ -294,7 +1990,12 @@
         "return só funciona com números"
       ],
       "indice_correto": 2,
-      "explicacao": "print apenas mostra um texto na tela; return entrega o valor para ser guardado ou usado em outra expressão."
+      "explicacao": "print apenas mostra um texto na tela; return entrega o valor para ser guardado ou usado em outra expressão.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "funcoes_n2b",
@@ -308,7 +2009,12 @@
         "Erro de sintaxe"
       ],
       "indice_correto": 0,
-      "explicacao": "A função calcula x * 2 mas não tem return, e toda função sem return devolve None."
+      "explicacao": "A função calcula x * 2 mas não tem return, e toda função sem return devolve None.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "funcoes_n3a",
@@ -322,7 +2028,12 @@
         "Erro (NameError), pois resultado só existe dentro da função"
       ],
       "indice_correto": 3,
-      "explicacao": "resultado é uma variável local: existe só durante a execução de soma e não é vista fora dela."
+      "explicacao": "resultado é uma variável local: existe só durante a execução de soma e não é vista fora dela.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "funcoes_n3b",
@@ -336,7 +2047,12 @@
         "Imprime \"depois\" e devolve \"não positivo\""
       ],
       "indice_correto": 1,
-      "explicacao": "O return encerra a função na hora: como 3 > 0, devolve \"positivo\" e as linhas seguintes não executam."
+      "explicacao": "O return encerra a função na hora: como 3 > 0, devolve \"positivo\" e as linhas seguintes não executam.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "listas_strings_n1a",
@@ -350,7 +2066,12 @@
         "IndexError"
       ],
       "indice_correto": 0,
-      "explicacao": "Os índices começam em 0, então notas[0] é o primeiro elemento, 7."
+      "explicacao": "Os índices começam em 0, então notas[0] é o primeiro elemento, 7.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "listas_strings_n1b",
@@ -364,7 +2085,12 @@
         "6"
       ],
       "indice_correto": 3,
-      "explicacao": "len devolve a quantidade de elementos da sequência, e \"Python\" tem 6 caracteres."
+      "explicacao": "len devolve a quantidade de elementos da sequência, e \"Python\" tem 6 caracteres.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "listas_strings_n2a",
@@ -378,7 +2104,12 @@
         "5"
       ],
       "indice_correto": 2,
-      "explicacao": "Índices negativos contam do fim: notas[-1] é o último elemento, 9."
+      "explicacao": "Índices negativos contam do fim: notas[-1] é o último elemento, 9.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "listas_strings_n2b",
@@ -392,7 +2123,12 @@
         "\"ython\""
       ],
       "indice_correto": 1,
-      "explicacao": "O fatiamento [1:4] pega do índice 1 até o 3 (o fim não entra): y, t, h."
+      "explicacao": "O fatiamento [1:4] pega do índice 1 até o 3 (o fim não entra): y, t, h.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "listas_strings_n3a",
@@ -406,7 +2142,12 @@
         "s vira uma lista de letras"
       ],
       "indice_correto": 0,
-      "explicacao": "Strings não podem ser alteradas no lugar; para \"mudar\" um texto, é preciso criar uma string nova."
+      "explicacao": "Strings não podem ser alteradas no lugar; para \"mudar\" um texto, é preciso criar uma string nova.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "listas_strings_n3b",
@@ -420,7 +2161,12 @@
         "18"
       ],
       "indice_correto": 2,
-      "explicacao": "split quebra o texto em uma lista de 4 palavras, e append acrescenta mais um elemento: 5."
+      "explicacao": "split quebra o texto em uma lista de 4 palavras, e append acrescenta mais um elemento: 5.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "recursao_n1a",
@@ -434,7 +2180,12 @@
         "Uma função com vários parâmetros"
       ],
       "indice_correto": 2,
-      "explicacao": "Recursão é quando uma função chama a si mesma para resolver versões menores do mesmo problema."
+      "explicacao": "Recursão é quando uma função chama a si mesma para resolver versões menores do mesmo problema.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "recursao_n1b",
@@ -448,7 +2199,12 @@
         "Para imprimir o resultado"
       ],
       "indice_correto": 1,
-      "explicacao": "O caso base é a condição de parada: sem ele, a função continuaria chamando a si mesma indefinidamente."
+      "explicacao": "O caso base é a condição de parada: sem ele, a função continuaria chamando a si mesma indefinidamente.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "tempo_esperado_s": 30,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "recursao_n2a",
@@ -462,7 +2218,12 @@
         "Chama a si mesma até esgotar a memória (estouro de pilha)"
       ],
       "indice_correto": 3,
-      "explicacao": "Sem caso base, as chamadas não param até esgotar a memória, o erro de estouro de pilha (stack overflow)."
+      "explicacao": "Sem caso base, as chamadas não param até esgotar a memória, o erro de estouro de pilha (stack overflow).",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "recursao_n2b",
@@ -476,7 +2237,12 @@
         "fatorial(n) = n + 1"
       ],
       "indice_correto": 0,
-      "explicacao": "fatorial(0) = 1 é o caso base; fatorial(n) = n * fatorial(n - 1) é o caso recursivo."
+      "explicacao": "fatorial(0) = 1 é o caso base; fatorial(n) = n * fatorial(n - 1) é o caso recursivo.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "tempo_esperado_s": 45,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "recursao_n3a",
@@ -490,7 +2256,12 @@
         "Estouro de pilha"
       ],
       "indice_correto": 2,
-      "explicacao": "Cada chamada soma n ao resultado de f(n - 1) até o caso base f(0) = 0: 4 + 3 + 2 + 1 + 0 = 10."
+      "explicacao": "Cada chamada soma n ao resultado de f(n - 1) até o caso base f(0) = 0: 4 + 3 + 2 + 1 + 0 = 10.",
+      "uso": "diagnostico",
+      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     },
     {
       "id": "recursao_n3b",
@@ -504,7 +2275,12 @@
         "Estouro de pilha (RecursionError), pois n nunca chega a 0"
       ],
       "indice_correto": 3,
-      "explicacao": "O caso recursivo vai de 3 para 1 e depois para -1, pulando o caso base n == 0, então as chamadas nunca param."
+      "explicacao": "O caso recursivo vai de 3 para 1 e depois para -1, pulando o caso base n == 0, então as chamadas nunca param.",
+      "uso": "tutoria",
+      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "tempo_esperado_s": 60,
+      "origem": "a3_prototipo",
+      "status": "rascunho_a3"
     }
   ]
 }

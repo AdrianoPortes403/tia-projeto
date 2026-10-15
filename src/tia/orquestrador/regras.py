@@ -7,14 +7,22 @@ pedagógica da Pessoa 4.
 Detecção (reaproveita o Agente 3, sem duplicar cálculo):
     R1 conclusão (PROVISÓRIO): a sessão do Tutor na competência foi concluída e a
         conclusão ainda não foi tratada -> "avancar": replaneja só o que falta
-        (Planejador incremental) e avisa o aluno;
+        (Planejador incremental) e avisa o aluno. Se a sessão terminou SEM
+        domínio (os itens acabaram: "concluída com ressalvas"), só avança com
+        acerto da sessão >= ORQ_ACERTO_MIN_AVANCO; abaixo disso (regra_sem_dominio)
+        -> "reforcar" o pré-requisito direto (sem pausa: a sessão já terminou) ou
+        "revisar_material", cada um no máximo uma vez por sessão, e o aluno
+        recomeça a competência numa sessão nova;
     R2 queda (PROVISÓRIO): a tendência do Relatório está "caindo"
         (RELATORIO_TENDENCIA_*), a sessão não é de reforço, ainda não causou
         reforço e houve ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS respostas desde o
         último -> "reforcar": pausa a sessão e abre reforço do pré-requisito
         DIRETO, no nível 1; sem pré-requisito, não reforça;
+    lacuna (PROVISÓRIO): o Tutor sinalizou erros seguidos no nível 1 -> "reforcar"
+        (uma vez por sessão) ou "revisar_material" (também uma vez por sessão);
     fim do reforço: a sessão de reforço foi concluída -> "retomar_original": a
-        sessão pausada volta no nível em que parou;
+        sessão pausada volta no nível em que parou (se a original já tinha
+        terminado sem domínio, o aluno recomeça a competência numa sessão nova);
     R3 inatividade (PROVISÓRIO): avaliada pela verificação agendada. Não vale
         para quem concluiu a trilha (sem reforço em curso).
         A partir de INATIVIDADE_DIAS -> "incentivar" (só incentivo, sem refazer a
@@ -35,8 +43,8 @@ Pré-requisitos:
 from dataclasses import dataclass
 
 from tia.agentes.relatorio.modelos import Engajamento, Tendencia
-from tia.core.config import (INATIVIDADE_DIAS, ORQ_INATIVIDADE_REFAZER_DIAS, ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS,
-                             RELATORIO_TENDENCIA_LIMIAR)
+from tia.core.config import (INATIVIDADE_DIAS, ORQ_ACERTO_MIN_AVANCO, ORQ_INATIVIDADE_REFAZER_DIAS,
+                             ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS, RELATORIO_TENDENCIA_LIMIAR)
 from tia.orquestrador.modelos import EstadoAluno, ProximaAcao
 
 # PROVISÓRIO: textos dos avisos ao aluno, até a revisão pedagógica (Pessoa 4).
@@ -45,7 +53,13 @@ AVISO_SEGUINTE = "Próxima etapa: \"{proxima}\"."
 AVISO_FIM_DA_TRILHA = "Você concluiu todas as etapas da sua trilha."
 AVISO_REFORCO = ("Vamos revisar \"{reforco}\" antes de continuar \"{original}\". A sessão de \"{original}\" "
                  "fica guardada e volta de onde parou.")
+AVISO_MATERIAL = ("Vamos com calma em \"{competencia}\": revise o material-base antes de seguir{materiais}. "
+                  "Se a dúvida continuar, pergunte ao tutor ou ao docente.")
 AVISO_RETOMADA = "Revisão de \"{reforco}\" concluída! Voltando a \"{original}\" no nível {nivel}, de onde você parou."
+AVISO_RECOMECO = "Revisão de \"{reforco}\" concluída! Agora tente de novo \"{original}\", numa sessão nova."
+AVISO_REFORCO_SEM_DOMINIO = ("As questões de \"{original}\" acabaram antes do domínio. Vamos revisar "
+                             "\"{reforco}\" e depois tentar \"{original}\" de novo, numa sessão nova.")
+AVISO_SEM_DOMINIO_DE_NOVO = "Vamos tentar \"{competencia}\" de novo, numa sessão nova."
 
 
 @dataclass
@@ -67,16 +81,56 @@ def prerequisito_direto(competencia_id: str, ementa: list[dict]) -> str | None:
     return prerequisitos[0] if prerequisitos else None
 
 
-def regra_conclusao(competencia_id: str, concluidas: set[str], ja_avancou: bool) -> Avaliacao:
-    """R1. ja_avancou: já houve replanejamento por conclusão desta competência."""
+def _pct(taxa: float | None) -> str:
+    return "-" if taxa is None else f"{round(taxa * 100)}%"
+
+
+def regra_conclusao(competencia_id: str, concluidas: set[str], ja_avancou: bool,
+                    taxa_sem_dominio: float | None = None) -> Avaliacao:
+    """R1. concluidas: competências com sessão que vale como conclusão
+    (tutor.repositorio.competencias_concluidas). ja_avancou: já houve
+    replanejamento por conclusão desta competência. taxa_sem_dominio: acerto
+    da sessão quando ela terminou sem domínio, mas acima do mínimo (só no motivo)."""
     if competencia_id not in concluidas:
         return Avaliacao("conclusao", False, "nenhuma", competencia_id,
                          f"Competência '{competencia_id}' ainda não tem sessão concluída no Tutor.")
     if ja_avancou:
         return Avaliacao("conclusao", False, "nenhuma", competencia_id,
                          f"Conclusão de '{competencia_id}' já foi tratada; nada a replanejar.")
+    ressalva = (f" Concluída com ressalvas: as questões acabaram sem domínio, com acerto {_pct(taxa_sem_dominio)} "
+                f"(mínimo {_pct(ORQ_ACERTO_MIN_AVANCO)})." if taxa_sem_dominio is not None else "")
     return Avaliacao("conclusao", True, "avancar", competencia_id,
-                     f"Competência '{competencia_id}' concluída no Tutor: avançar e replanejar só o que falta.")
+                     f"Competência '{competencia_id}' concluída no Tutor: avançar e replanejar só o que falta."
+                     + ressalva)
+
+
+def avanca_sem_dominio(taxa_acerto: float | None, minimo: float = ORQ_ACERTO_MIN_AVANCO) -> bool:
+    """Sessão terminada sem domínio: avança se o acerto da sessão atingiu o mínimo
+    (mesmo critério de tutor.repositorio.CONCLUSAO_QUE_VALE)."""
+    return taxa_acerto is not None and taxa_acerto >= minimo - 1e-9
+
+
+def regra_sem_dominio(competencia_id: str, sessao_id: str | None, taxa_acerto: float | None,
+                      prerequisito: str | None, sessao_ja_reforcada: bool = False,
+                      sessao_ja_com_material: bool = False, minimo: float = ORQ_ACERTO_MIN_AVANCO) -> Avaliacao:
+    """R1 sem domínio (PROVISÓRIO): os itens acabaram e o acerto da sessão ficou
+    abaixo do mínimo, então a competência NÃO avança. Reforço do pré-requisito
+    direto (sem pausa: a sessão já terminou) ou o material-base, cada um no
+    máximo uma vez por sessão; se os dois já foram usados nesta sessão, não
+    dispara (a decisão "nenhuma" é gravada com o motivo). Em todos os casos o
+    aluno recomeça a competência numa sessão nova."""
+    base = (f"As questões de '{competencia_id}' acabaram sem domínio, com acerto {_pct(taxa_acerto)} na sessão "
+            f"(mínimo {_pct(minimo)} para avançar): não avança")
+    if prerequisito is not None and not sessao_ja_reforcada:
+        return Avaliacao("conclusao", True, "reforcar", competencia_id,
+                         f"{base}; reforçar o pré-requisito direto '{prerequisito}' a partir do nível 1 e recomeçar "
+                         f"'{competencia_id}' numa sessão nova.", sessao_id, prerequisito)
+    if not sessao_ja_com_material:
+        motivo = "sem pré-requisito para reforçar" if prerequisito is None else "a sessão já teve um reforço"
+        return Avaliacao("conclusao", True, "revisar_material", competencia_id,
+                         f"{base}; {motivo}: indicar o material-base e recomeçar numa sessão nova.", sessao_id)
+    return Avaliacao("conclusao", False, "nenhuma", competencia_id,
+                     f"{base}; reforço e material já indicados nesta sessão: recomeçar numa sessão nova.", sessao_id)
 
 
 def regra_queda(tendencia: Tendencia, competencia_id: str | None, respostas_desde_ultimo_reforco: int | None,
@@ -107,6 +161,30 @@ def regra_queda(tendencia: Tendencia, competencia_id: str | None, respostas_desd
     return Avaliacao("queda", True, "reforcar", competencia_id,
                      f"Desempenho em queda ({queda}): pausar '{competencia_id}' e reforçar o pré-requisito direto "
                      f"'{prerequisito}' a partir do nível 1.", sessao_id, prerequisito)
+
+
+def regra_lacuna(competencia_id: str | None, sessao_id: str | None, prerequisito: str | None,
+                 em_reforco: bool = False, sessao_ja_reforcada: bool = False,
+                 sessao_ja_com_material: bool = False) -> Avaliacao:
+    """Lacuna (1.2.5, seção 3.2): o Tutor sinalizou erros seguidos no nível 1.
+    Com pré-requisito: reforça o pré-requisito direto (como a R2), uma vez por sessão.
+    Sem pré-requisito (ou se a sessão já foi reforçada): indica o material-base,
+    também no máximo uma vez por sessão."""
+    if em_reforco:
+        return Avaliacao("lacuna", False, "nenhuma", competencia_id,
+                         "Lacuna dentro de uma sessão de reforço: não se reforça o reforço.", sessao_id)
+    if prerequisito is not None and not sessao_ja_reforcada:
+        return Avaliacao("lacuna", True, "reforcar", competencia_id,
+                         f"Lacuna em '{competencia_id}' (erros seguidos no nível 1): pausar e reforçar o "
+                         f"pré-requisito direto '{prerequisito}' a partir do nível 1.", sessao_id, prerequisito)
+    if sessao_ja_com_material:
+        return Avaliacao("lacuna", False, "nenhuma", competencia_id,
+                         f"Lacuna em '{competencia_id}' já tratada nesta sessão (material-base indicado).", sessao_id)
+    motivo = ("sem pré-requisito para reforçar" if prerequisito is None
+              else "a sessão já teve um reforço")
+    return Avaliacao("lacuna", True, "revisar_material", competencia_id,
+                     f"Lacuna em '{competencia_id}' (erros seguidos no nível 1), {motivo}: indicar o material-base.",
+                     sessao_id)
 
 
 def _tratada(ultima_acao_ts: str | None, ultima_interacao: str | None) -> bool:

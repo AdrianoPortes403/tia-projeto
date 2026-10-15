@@ -33,8 +33,8 @@ from tia.agentes.relatorio.modelos import Direcao, GrupoTaxa
 from tia.agentes.relatorio.repositorio import ler_dados_aluno, listar_alunos
 from tia.agentes.tutor.repositorio import PREFIXO_VETO_FEEDBACK, carregar_itens
 from tia.core import auditoria
-from tia.core.config import INATIVIDADE_DIAS, PAINEL_DESEMPENHO_BAIXO, PAINEL_MIN_RESPOSTAS, RELATORIO_MIN_GRUPO, \
-    RELATORIO_TENDENCIA_LIMIAR
+from tia.core.config import INATIVIDADE_DIAS, ORQ_ACERTO_MIN_AVANCO, PAINEL_DESEMPENHO_BAIXO, PAINEL_MIN_RESPOSTAS, \
+    RELATORIO_MIN_GRUPO, RELATORIO_TENDENCIA_LIMIAR
 from tia.core.database import obter_conexao
 from tia.painel.modelos import (AlunoEmRisco, CompetenciaEmenta, CompetenciaTurma, ConsultaRisco,
                                 DesempenhoCompetencias, ItemRevisao, ItemTurma, ListaRevisao, MotivoRisco,
@@ -103,6 +103,16 @@ def avaliar_risco(dados, agora: datetime, nomes: dict[str, str]) -> AlunoEmRisco
         motivos.append(MotivoRisco(tipo="desempenho_baixo", descricao=(
             f"Acertou {geral.acertos} de {geral.respostas} ({_porcento(geral.taxa)}; "
             f"alerta abaixo de {_porcento(PAINEL_DESEMPENHO_BAIXO)}).")))
+    # itens da competência acabaram sem domínio e o acerto não bastou para avançar: o aluno
+    # recomeça a competência (reforço ou material). A ressalva de quem avançou (acerto acima do
+    # mínimo) fica no relatório do aluno, não vira alerta: na base comum (2 itens por nível) toda
+    # conclusão é sem domínio, e o alerta perderia o sentido
+    for c in progresso.por_competencia:
+        if c.com_ressalvas and not c.concluida:
+            motivos.append(MotivoRisco(tipo="conclusao_sem_dominio", descricao=(
+                f"Terminou as questões de {c.nome} sem atingir o domínio, com acerto "
+                f"{_porcento(c.taxa_sem_dominio)} (mínimo para avançar {_porcento(ORQ_ACERTO_MIN_AVANCO)}): "
+                f"não avançou e recomeça a competência.")))
     if not motivos:
         return None
     return AlunoEmRisco(aluno_id=dados.aluno_id, perfil_id=dados.perfil_id, motivos=motivos,
@@ -125,7 +135,8 @@ def alunos_em_risco(perfil_id: str | None = None, agora: datetime | None = None)
         gerado_em=_texto(agora), perfil_id=perfil_id, alunos_avaliados=len(todos), alunos=em_risco,
         auditoria_id=auditoria_id,
         criterios={"inatividade_dias": INATIVIDADE_DIAS, "queda_pontos": RELATORIO_TENDENCIA_LIMIAR,
-                   "desempenho_baixo": PAINEL_DESEMPENHO_BAIXO, "min_respostas": PAINEL_MIN_RESPOSTAS})
+                   "desempenho_baixo": PAINEL_DESEMPENHO_BAIXO, "min_respostas": PAINEL_MIN_RESPOSTAS,
+                   "acerto_min_avanco": ORQ_ACERTO_MIN_AVANCO})
 
 
 # --- desempenho por competência (só agregados) ---

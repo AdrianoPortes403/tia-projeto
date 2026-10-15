@@ -16,7 +16,7 @@ client = TestClient(app)
 PEDIDO = {
     "aluno_id": "A2026-001",
     "perfil_id": "intermediario",
-    "diagnostico": {"variaveis_tipos": 0.95, "condicionais": 0.4},
+    "diagnostico": {"variaveis_tipos": 1.0, "condicionais": 0.4},  # 1.0 = dominado: sai da trilha
     "horas_semanais": 6,
 }
 

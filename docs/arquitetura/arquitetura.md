@@ -1,8 +1,11 @@
 # Arquitetura do Sistema TIA (EAP 1.3.1) e Orquestração (EAP 1.3.5)
 
-> Protótipo integrado (fatia vertical) da frente A3. Situação em 11/10/2026.
-> Dados pedagógicos (ementa, perfis, banco de itens, material) e regras marcadas como
-> **PROVISÓRIO** dependem da Pessoa 2 (agentes) e da Pessoa 4 (conteúdo).
+> Protótipo integrado (fatia vertical) da frente A3. Situação em 12/10/2026.
+> Desde 12/10/2026 (branch `agente1-tiago`) a ementa, os perfis e o banco de itens são a **base pedagógica
+> alinhada à EAP** (trilhas Dev e Defesa Cibernética sobre a base comum de Python), e o Agente 1 tem
+> primeiro acesso (onboarding + diagnóstico). Resumo: `docs/relatorios/base_pedagogica_e_agente1.md`.
+> Limiares e regras marcadas como **PROVISÓRIO** ainda dependem de validação da Pessoa 2 (agentes) e da
+> Pessoa 4 (conteúdo).
 
 ## Diagrama
 
@@ -32,7 +35,7 @@ flowchart LR
     ORQ["Orquestrador 1.3.5<br/>fluxo · eventos · regras"]
 
     subgraph Agentes
-        A1["Agente 1: Planejador<br/>trilha determinística + justificativas"]
+        A1["Agente 1: Planejador<br/>onboarding + diagnóstico<br/>trilha determinística + justificativas"]
         A2["Agente 2: Tutor<br/>questionário adaptativo · feedback ·<br/>diálogo · incentivo · veto R12"]
         A3["Agente 3: Relatório<br/>5 indicadores (código) + narrativa"]
     end
@@ -43,7 +46,7 @@ flowchart LR
         RAG["RAG: Chroma<br/>conteudo/materiais"]
         DB[("SQLite<br/>data/tia.db")]
         AUD[("auditoria R11<br/>(tabela no SQLite)")]
-        CONT["conteudo/*.json<br/>ementa · perfis · itens (PROVISÓRIO)"]
+        CONT["conteudo/*.json<br/>ementa · perfis · itens<br/>(base alinhada à EAP)"]
     end
 
     WEB & DASH -->|"login: cookie HttpOnly + X-CSRF-Token"| AUTH --> API
@@ -82,8 +85,8 @@ flowchart LR
 |---|---|
 | LLM local (Ollama, qwen3) via `core/llm_client` | **Real** (R07: nunca API externa) |
 | RAG (Chroma + nomic-embed-text) | **Real**. O material é PROVISÓRIO (Pessoa 4) |
-| Agente 1 Planejador | **Real**. Ementa e perfis são PROVISÓRIOS |
-| Agente 2 Tutor (questionário, feedback com guarda, diálogo, incentivo, veto R12) | **Real**. O banco de itens é PROVISÓRIO |
+| Agente 1 Planejador | **Real**: trilha (Dev/Defesa Cibernética + base comum), perfil enquadrado pelo diagnóstico, prazo e escopo do piloto, primeiro acesso (onboarding conversacional e diagnóstico; `rotas_primeiro_acesso.py`). Ementa e perfis: base alinhada à EAP (48 tópicos); limiares PROVISÓRIOS |
+| Agente 2 Tutor (questionário, feedback com guarda, diálogo, incentivo, veto R12) | **Real**. Regras do 1.2.5 (3/2/3, lacuna, nível inicial). Banco de 120 itens alinhado à EAP; tópicos Dev/Cyber fora do piloto ainda sem itens e sem material |
 | Agente 3 Relatório (5 indicadores, narrativa com guarda) | **Real**. Os indicadores são PROVISÓRIOS |
 | Orquestrador (este documento) | **Real**. As regras são PROVISÓRIAS |
 | Agendador da verificação de inatividade (cron/timer na VM) | **Não existe**. O comando e a rota que ele chamará existem (`python -m tia.orquestrador --verificar-inatividade`, `POST /orquestrador/verificar-inatividade`) |
@@ -164,8 +167,9 @@ pedagógica da Pessoa 4 e têm limiar em `core/config.py`.
 | D4 | **Inatividade avaliada por comando/rota chamados por agendador externo** (cron/timer na VM, depois de 15/10; o agendador não faz parte deste pacote) (Pessoa 2) | `python -m tia.orquestrador --verificar-inatividade` e `POST /orquestrador/verificar-inatividade` percorrem os alunos matriculados e registram uma decisão por aluno (inclusive "nenhuma"). Rodar de novo não duplica nada. O `GET /proximo` não pede mais "replanejar" |
 | D5 | **Concluir uma competência avança automaticamente e avisa o aluno.** PROVISÓRIO (Pessoa 4) | R1: `avancar` + aviso por template ("Parabéns! Você concluiu …. Próxima etapa: …") em `DecisaoReplanejamento.aviso` e `ResultadoEvento.avisos` |
 | D6 | **Queda reforça só o pré-requisito direto.** PROVISÓRIO (Pessoa 4) | R2: primeiro pré-requisito da competência na ementa. Sem pré-requisito, não reforça (decisão "nenhuma"). Não há reforço do reforço |
-| D7 | **Inatividade de 3 dias só retoma com incentivo, sem refazer a trilha; a trilha só é refeita após `ORQ_INATIVIDADE_REFAZER_DIAS`** (padrão 14). PROVISÓRIO (Pessoa 4) | R3: `incentivar` (mensagem do incentivo do Tutor, registrada na auditoria) a partir de `INATIVIDADE_DIAS`; `refazer_trilha` a partir de `ORQ_INATIVIDADE_REFAZER_DIAS`. Cada ação vale uma vez por período sem atividade. **Desde 11/10/2026:** quem concluiu a trilha (sem reforço em curso) não recebe incentivo, não tem a trilha refeita e sai com `inativo: false` no `estado` (mesmo critério do painel) |
+| D7 | **Inatividade de 3 dias só retoma com incentivo, sem refazer a trilha; a trilha só é refeita após `ORQ_INATIVIDADE_REFAZER_DIAS`** (padrão 7 desde 12/10/2026; era 14; piloto 2/4). PROVISÓRIO (Pessoa 4) | R3: `incentivar` (mensagem do incentivo do Tutor, registrada na auditoria) a partir de `INATIVIDADE_DIAS`; `refazer_trilha` a partir de `ORQ_INATIVIDADE_REFAZER_DIAS`. Cada ação vale uma vez por período sem atividade. **Desde 11/10/2026:** quem concluiu a trilha (sem reforço em curso) não recebe incentivo, não tem a trilha refeita e sai com `inativo: false` no `estado` (mesmo critério do painel) |
 | D8 | **Autenticação** (pacote 1.4.6, etapa 1, 11/10/2026) | Sessão e papéis em todas as rotas; ver "Segurança" |
+| D9 | **Itens acabaram sem domínio = "concluída com ressalvas", não conclusão plena** (15/10/2026, ajuste de integração do Agente 1). Limiar PROVISÓRIO (Pessoa 4) | O Tutor grava `tutor_sessoes.com_ressalvas` e `taxa_acerto` (ADD COLUMN) e devolve `Feedback.com_ressalvas`. A R1 só avança com acerto da sessão >= `ORQ_ACERTO_MIN_AVANCO` (0,6); abaixo, `reforcar` o pré-requisito direto **sem pausa** (a sessão já terminou) ou `revisar_material`, cada um no máximo uma vez por sessão; depois o aluno recomeça a competência numa sessão nova. Competência com ressalva abaixo do mínimo não conta no progresso, no incentivo nem no Planejador (`tutor.repositorio.CONCLUSAO_QUE_VALE`). O Relatório do aluno mostra toda ressalva; o painel alerta (`conclusao_sem_dominio`) só quando ela impediu o avanço |
 
 ### Quem pode chamar as rotas da orquestração
 
@@ -178,10 +182,12 @@ não passa por HTTP e grava a auditoria com o papel `sistema`.
 
 | Regra | Dispara quando | Ação | Limiares (config) | Status |
 |---|---|---|---|---|
-| R1 conclusão | Sessão do Tutor concluída na competência (2 acertos seguidos no nível 3), conclusão ainda não tratada | `avancar`: Planejador incremental (só o que falta) + aviso | (critério de conclusão do Tutor) | PROVISÓRIO (D5) |
+| R1 conclusão | Sessão do Tutor concluída na competência (`TUTOR_ACERTOS_CONCLUIR` acertos seguidos no nível 3; 3 desde 12/10/2026), conclusão ainda não tratada. Sessão terminada porque os itens acabaram (com ressalvas): só com acerto da sessão >= `ORQ_ACERTO_MIN_AVANCO` | `avancar`: Planejador incremental (só o que falta) + aviso (o motivo cita a ressalva) | (critério de conclusão do Tutor), `ORQ_ACERTO_MIN_AVANCO=0.6` | PROVISÓRIO (D5, D9) |
+| R1 sem domínio | Sessão com ressalvas e acerto abaixo de `ORQ_ACERTO_MIN_AVANCO` (`regras.regra_sem_dominio`) | Com pré-requisito direto e sessão ainda não reforçada: `reforcar` sem pausa; senão, se a sessão ainda não teve material: `revisar_material`; senão `nenhuma` (gravada com o motivo). O aluno recomeça a competência numa sessão nova | `ORQ_ACERTO_MIN_AVANCO=0.6` | PROVISÓRIO (D9) |
 | R2 queda | Tendência do Relatório "caindo" (última sessão contra as anteriores; sem sessão, janela de respostas). A sessão não é de reforço e ainda não causou reforço, há respostas suficientes desde o último reforço e existe pré-requisito direto | `reforcar`: pausa + reforço do pré-requisito direto no nível 1 (sem Planejador) | `RELATORIO_TENDENCIA_LIMIAR=0.15`, `RELATORIO_TENDENCIA_MIN_RESPOSTAS=3`, `RELATORIO_TENDENCIA_JANELA=5`, `ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS=5` | PROVISÓRIO (D6) |
-| Fim do reforço | A sessão de reforço foi concluída | `retomar_original`: a sessão pausada volta no mesmo nível | - | Decisão D2 |
-| R3 inatividade | Engajamento do Relatório: dias sem atividade (sem atividade: desde a trilha). Avaliada pela verificação agendada. Não vale para quem concluiu a trilha (`fluxo.trilha_concluida`) | `incentivar` (>= `INATIVIDADE_DIAS`) ou `refazer_trilha` (>= `ORQ_INATIVIDADE_REFAZER_DIAS`, Planejador incremental). Uma vez por período | `INATIVIDADE_DIAS=3`, `ORQ_INATIVIDADE_REFAZER_DIAS=14` | PROVISÓRIO (D7) |
+| Lacuna (1.2.5) | O Tutor sinaliza `lacuna` (`TUTOR_ERROS_DESCER` erros seguidos já no nível 1). Avaliada antes da queda | Com pré-requisito direto e sessão ainda não reforçada: `reforcar` (como R2). Sem pré-requisito ou já reforçada: `revisar_material` (aviso com o material-base; a sessão segue), no máximo uma vez por sessão (desde 15/10/2026; depois, `nenhuma` e vale a R2) | `TUTOR_ERROS_DESCER=2` | PROVISÓRIO (Pessoa 4) |
+| Fim do reforço | A sessão de reforço foi concluída | `retomar_original`: a sessão pausada volta no mesmo nível. Se a original já tinha terminado sem domínio (R1 sem domínio), não há o que retomar: o aviso pede para recomeçar a competência numa sessão nova | - | Decisão D2, D9 |
+| R3 inatividade | Engajamento do Relatório: dias sem atividade (sem atividade: desde a trilha). Avaliada pela verificação agendada. Não vale para quem concluiu a trilha (`fluxo.trilha_concluida`) | `incentivar` (>= `INATIVIDADE_DIAS`) ou `refazer_trilha` (>= `ORQ_INATIVIDADE_REFAZER_DIAS`, Planejador incremental). Uma vez por período | `INATIVIDADE_DIAS=3`, `ORQ_INATIVIDADE_REFAZER_DIAS=7` | PROVISÓRIO (D7) |
 
 - **Próxima ação** (`GET /proximo`), por prioridade:
   1. reforço em curso (`iniciar_sessao` ou `continuar_sessao`, com `reforco: true`);
@@ -189,18 +195,23 @@ não passa por HTTP e grava a auditoria com o papel `sistema`.
   3. `continuar_sessao` (sessão aberta, não pausada, na competência atual);
   4. `iniciar_sessao` (primeira etapa pendente da trilha).
 - **Decisões:** toda decisão (`planejar`, `avancar`, `reforcar`, `retomar_original`, `incentivar`,
-  `refazer_trilha`, `abrir_sessao`, `recusar_sessao` ou `nenhuma`) vai para `orquestrador_decisoes` e
+  `refazer_trilha`, `revisar_material`, `abrir_sessao`, `recusar_sessao` ou `nenhuma`) vai para `orquestrador_decisoes` e
   para a auditoria, com a regra e o motivo no campo `motivo`.
 
 ## Tabelas acrescentadas (só CREATE TABLE / ADD COLUMN)
 
-- `orquestrador_matriculas`: perfil, horas e diagnóstico do aluno, que o Planejador não grava.
+- `orquestrador_matriculas`: perfil, horas e diagnóstico do aluno, que o Planejador não grava
+  (desde 12/10/2026 também `trilha`, `prazo_dias` e `escopo`).
+- `planejador_onboarding` e `planejador_diagnosticos`: primeiro acesso (cadastro sem o texto da conversa e notas
+  do diagnóstico).
 - `orquestrador_eventos`: `evento_id` e resultado (idempotência).
 - `orquestrador_decisoes`: regra, ação, competência, motivo, aviso, sessão, evento, se replanejou,
   origem e tempo do Planejador.
 - `orquestrador_reforcos`: sessão pausada, competência e sessão de reforço, estado
   (pendente, em_andamento ou concluido).
 - `tutor_sessoes.pausada`: sessão suspensa durante um reforço.
+- `tutor_sessoes.com_ressalvas` e `tutor_sessoes.taxa_acerto` (15/10/2026, D9): sessão terminada porque os
+  itens acabaram, sem domínio, e o acerto da sessão. NULL nas sessões antigas (= conclusão plena).
 - `trilha_estudo.concluida` e `trilha_estudo.origem_justificativa`.
 - `tutor_feedbacks` (11/10/2026, revisão docente R12): texto do feedback de cada resposta (veredito,
   explicação que o aluno viu, origem, falha, fontes, texto do LLM barrado pela guarda e motivo), item,
@@ -220,6 +231,12 @@ não passa por HTTP e grava a auditoria com o papel `sistema`.
   (sessões, respostas, desempenho por competência).
 - **Uma sessão de reforço aberta por `/tutor/sessao` (standalone)** não é vinculada ao reforço. O
   `proximo` continua pedindo para abrir o reforço por `/aluno/{id}/sessao`.
+- **Base comum sem itens para o domínio (D9):** os 6 tópicos da base comum têm 2 itens por nível; com as
+  regras 3/2/3, nenhum aluno chega a 3 acertos seguidos no nível 3. Toda conclusão neles é "com ressalvas" e
+  o avanço depende só do acerto da sessão (`ORQ_ACERTO_MIN_AVANCO`). Resolve-se com mais itens (Pessoa 4).
+- **Recomeço sem limite:** quem não atinge o mínimo recomeça a competência numa sessão nova, e cada sessão
+  pode ter de novo um reforço e um material. Não há limite de tentativas nem encaminhamento automático ao
+  docente além do alerta do painel (pendência para a Pessoa 4).
 - **Sem agendador:** até a VM, a verificação de inatividade só acontece quando alguém roda o comando ou
   chama a rota.
 - ~~Sem autenticação (D8)~~ **Resolvido na etapa 1 do 1.4.6** (ver "Segurança").
@@ -294,7 +311,7 @@ HTML, CSS e JavaScript puros em `src/tia/web/static/painel/`, servidos em **`/ap
 | Tela | O que mostra | Rotas |
 |---|---|---|
 | Visão geral | os 5 indicadores agregados do Agente 3 em cartões (progresso médio, acerto por nível, engajamento, pontos fracos, origem dos feedbacks e taxa de veto), alertas da turma só com contagens, regra do grupo mínimo explicada e a interpretação com a origem (LLM, guarda ou fallback) só quando o docente pede. Filtro por perfil no topo. Exportar CSV e Imprimir | `GET /relatorio/turma?narrativa=false` e `?narrativa=true`, `GET /painel/exportar/indicadores.csv` |
-| Alertas de risco | alunos em risco **com código** (nunca nome): inatividade, desempenho em queda, desempenho baixo, com o motivo em texto, dias sem atividade, acerto, tendência e progresso. Só docente; o rodapé avisa que cada consulta fica na auditoria em nome dele. Cada consulta grava `consulta_painel` na auditoria com os códigos exibidos. Atalho para a auditoria do aluno | `GET /painel/alunos-em-risco` |
+| Alertas de risco | alunos em risco **com código** (nunca nome): inatividade, desempenho em queda, desempenho baixo, competência terminada sem domínio e sem acerto para avançar (D9), com o motivo em texto, dias sem atividade, acerto, tendência e progresso. Só docente; o rodapé avisa que cada consulta fica na auditoria em nome dele. Cada consulta grava `consulta_painel` na auditoria com os códigos exibidos. Atalho para a auditoria do aluno | `GET /painel/alunos-em-risco` |
 | Competências | barras SVG da taxa de acerto por competência (linha de referência em 50%), contagem de alunos por tendência e questões com erro repetido (com enunciado) | `GET /painel/competencias` |
 | Revisão docente (R12) | feedbacks das questões e respostas do diálogo com o texto original, a questão ou a pergunta, o veredito, a origem, as fontes, o texto barrado pela guarda e a correção; filtros por tipo, situação, origem e competência; Aprovar, Vetar (com a correção/motivo) e Retirar veto; taxa de vetos de cada tipo | `GET /painel/revisao`, `PATCH /tutor/dialogo/{id}/veto`, `PATCH /tutor/feedback/{id}/veto` |
 | Auditoria (R11) | tabela filtrável por agente (orquestrador, planejador, tutor, relatório, painel), código do aluno e período, paginada (25 por página) | `GET /painel/auditoria` |
@@ -398,6 +415,8 @@ Pacote `src/tia/seguranca/`, rotas em `tia.api.rotas_auth`. Só biblioteca padr�
 |---|---|---|---|---|
 | `POST /aluno/{id}/iniciar \| sessao \| evento`, `POST /tutor/sessao \| resposta \| perguntar`, `POST /planejador/trilha`, `GET /tutor/incentivo/{id}` | só o próprio (`aluno_id` do caminho ou do corpo) | 403 | 403 | 401 |
 | `GET /aluno/{id}/estado \| proximo`, `GET /alunos/{id}/trilha \| dialogo \| feedbacks`, `GET /relatorio/aluno/{id}` | só o próprio | sim (leitura) | 403 | 401 |
+| Primeiro acesso (Agente 1): `POST /aluno/{id}/onboarding/iniciar \| mensagem`, `POST /aluno/{id}/diagnostico/iniciar \| responder`, `POST /aluno/{id}/primeiro-acesso/concluir` | só o próprio, com o token anti-CSRF | 403 (não age pelo aluno) | 403 | 401 |
+| `GET /aluno/{id}/primeiro-acesso` | só o próprio (com o objetivo) | sim, **sem o objetivo** (texto livre do aluno, R08) | 403 | 401 |
 | `/painel/*`, `GET /relatorio/turma`, `GET /auditoria/{id}`, `PATCH /tutor/dialogo/{id}/veto`, `PATCH /tutor/feedback/{id}/veto` | 403 | sim | 403 | 401 |
 | `POST /orquestrador/verificar-inatividade` | 403 | sim | sim | 401 |
 | `GET /conteudo/ementa \| perfis` | sim | sim | sim | 401 |

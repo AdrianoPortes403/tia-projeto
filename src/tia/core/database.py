@@ -37,6 +37,18 @@ COLUNAS_NOVAS_TRILHA = {
     "criado_em": "DATETIME",
     "origem_justificativa": "TEXT",  # "LLM" ou "fallback"; NULL nas trilhas antigas
     "concluida": "INTEGER",  # etapa já concluída no replanejamento incremental; NULL = não
+    # base pedagógica alinhada à EAP (12/10/2026): por etapa
+    "revisar_antes": "TEXT",      # pré-requisitos a revisar (perfil iniciante), em JSON
+    "nivel_inicial": "INTEGER",   # nível inicial dos itens no Tutor, vindo do diagnóstico
+    "desafio_pratico": "TEXT",    # desafio opcional no fim da etapa (perfil intermediário)
+    # ... e da trilha toda, repetidos em cada linha (como perfil_id)
+    "trilha": "TEXT",             # dev, defesa_cibernetica ou NULL (só base comum)
+    "pontuacao_enquadramento": "REAL",
+    "perfil_automatico": "INTEGER",
+    "prazo_dias": "INTEGER",
+    "cabe_no_prazo": "INTEGER",
+    "opcoes_prazo": "TEXT",       # JSON
+    "avisos": "TEXT",             # JSON
 }
 
 
@@ -143,6 +155,12 @@ def criar_tabelas():
     # pausada: sessão suspensa pelo orquestrador durante um reforço (R2); guarda
     # nível e itens e é retomada de onde parou. NULL/0 = não pausada.
     _acrescentar_colunas(cursor, "tutor_sessoes", {"pausada": "INTEGER"})
+    # regras do 1.2.5 (12/10/2026): sequências de acertos e erros no nível atual
+    _acrescentar_colunas(cursor, "tutor_sessoes", {"acertos_seguidos": "INTEGER", "erros_seguidos": "INTEGER"})
+    # conclusão sem domínio (15/10/2026): os itens acabaram antes de TUTOR_ACERTOS_CONCLUIR acertos
+    # seguidos no nível 3 (com_ressalvas = 1); taxa_acerto = acerto da sessão, gravado ao concluir.
+    # NULL nas sessões antigas = conclusão plena.
+    _acrescentar_colunas(cursor, "tutor_sessoes", {"com_ressalvas": "INTEGER", "taxa_acerto": "REAL"})
 
     # Diálogo livre com o Tutor (parte 2b). A pergunta do aluno é texto livre:
     # fica só aqui no banco, nunca em log (R08). vetada/correcao_docente: veto
@@ -226,6 +244,30 @@ def criar_tabelas():
             FOREIGN KEY (aluno_id) REFERENCES alunos(id)
         )
     """)
+    # Primeiro acesso (Agente 1): sessão do onboarding conversacional e do diagnóstico
+    # inicial, uma por aluno, com o estado em JSON (sem texto do aluno depois de concluído)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS planejador_onboarding (
+            aluno_id TEXT PRIMARY KEY,
+            estado TEXT NOT NULL,
+            concluido INTEGER NOT NULL DEFAULT 0,
+            criado_em DATETIME,
+            atualizado_em DATETIME
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS planejador_diagnosticos (
+            aluno_id TEXT PRIMARY KEY,
+            trilha TEXT,
+            estado TEXT NOT NULL,
+            concluido INTEGER NOT NULL DEFAULT 0,
+            criado_em DATETIME,
+            atualizado_em DATETIME
+        )
+    """)
+    # base pedagógica alinhada à EAP (12/10/2026): trilha, prazo e escopo da matrícula
+    _acrescentar_colunas(cursor, "orquestrador_matriculas",
+                         {"trilha": "TEXT", "prazo_dias": "INTEGER", "escopo": "TEXT"})
     # Eventos recebidos (idempotência): o mesmo evento_id devolve o resultado
     # gravado, sem processar de novo.
     cursor.execute("""

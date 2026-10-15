@@ -43,6 +43,12 @@ class RespostaForaDeOrdem(ErroTutor):
     """Sessão concluída, ou a resposta não é do item atual (ex.: envio duplicado)."""
 
 
+def itens_do_diagnostico(aluno_id: str) -> frozenset[str]:
+    """Itens que o aluno já viu no diagnóstico inicial: o questionário os evita."""
+    from tia.agentes.planejador.diagnostico import itens_respondidos  # import tardio: evita ciclo
+    return frozenset(itens_respondidos(aluno_id))
+
+
 def _pergunta(item: dict) -> Pergunta:
     """Item como o aluno vê: sem gabarito nem explicação."""
     return Pergunta(item_id=item["id"], competencia_id=item["competencia_id"], nivel=item["nivel"],
@@ -63,7 +69,8 @@ def iniciar_sessao(entrada: IniciarSessao) -> SessaoIniciada:
         raise CompetenciaInexistente(f"Competência '{entrada.competencia_id}' não existe na ementa.")
     itens = repositorio.carregar_itens()
     try:
-        estado = adaptativo.iniciar(itens, entrada.competencia_id)
+        estado = adaptativo.iniciar(itens, entrada.competencia_id, entrada.nivel_inicial or adaptativo.NIVEL_MINIMO,
+                                    itens_do_diagnostico(entrada.aluno_id))
     except adaptativo.SemItens as erro:
         raise CompetenciaInexistente(str(erro))
     sessao_id = repositorio.criar_sessao(entrada.aluno_id, estado)
@@ -99,7 +106,7 @@ def responder(resposta: RespostaAluno, modo: str | None = None) -> Feedback:
     acertou = adaptativo.corrigir(item, resposta.indice_escolhido)
     materiais = repositorio.materiais_da_competencia(estado.competencia_id) or []
     resultado = gerar_feedback(item, resposta.indice_escolhido, materiais, modo=modo)
-    novo = adaptativo.avancar(estado, itens, acertou)
+    novo = adaptativo.avancar(estado, itens, acertou, itens_do_diagnostico(resposta.aluno_id))
     tempo_ms = round((time.perf_counter() - inicio) * 1000)
 
     # o texto do feedback é gravado para a revisão docente (R12); o descartado pela guarda também
@@ -114,5 +121,6 @@ def responder(resposta: RespostaAluno, modo: str | None = None) -> Feedback:
     proxima = None if novo.concluida else _pergunta(_item_por_id(itens, novo.item_atual_id))
     return Feedback(acertou=acertou, indice_correto=item["indice_correto"], veredito=resultado.veredito,
                     explicacao=resultado.explicacao, origem=resultado.origem, falha_llm=resultado.falha_llm,
-                    fontes=resultado.fontes, nivel_atual=novo.nivel, concluida=novo.concluida,
+                    fontes=resultado.fontes, nivel_atual=novo.nivel, concluida=novo.concluida, lacuna=novo.lacuna,
+                    com_ressalvas=novo.com_ressalvas,
                     proxima_pergunta=proxima, tempo_ms=tempo_ms, resposta_id=resposta_id)

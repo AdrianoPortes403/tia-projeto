@@ -39,6 +39,7 @@ from tia.api.rotas_orquestrador import router as rotas_orquestrador
 from tia.api.rotas_orquestrador import router_sistema as rotas_orquestrador_sistema
 from tia.api.rotas_painel import router as rotas_painel
 from tia.api.rotas_painel import router_conteudo as rotas_conteudo
+from tia.api.rotas_primeiro_acesso import router as rotas_primeiro_acesso
 from tia.api.rotas_planejador import router as rotas_planejador
 from tia.api.rotas_relatorio import router as rotas_relatorio
 from tia.api.rotas_tutor import router as rotas_tutor
@@ -117,6 +118,7 @@ def criar_app() -> FastAPI:
     app.include_router(rotas_orquestrador_sistema)
     app.include_router(rotas_painel)
     app.include_router(rotas_conteudo)
+    app.include_router(rotas_primeiro_acesso)
     web.montar(app)  # aplicação web standalone em /app (EAP 1.4.4) e painel em /app/painel (1.4.5)
 
     @app.middleware("http")

@@ -15,30 +15,38 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from tia.agentes.planejador.modelos import Nota, Trilha
+from tia.agentes.planejador.modelos import Nota, Trilha, TrilhaId
 from tia.agentes.tutor.modelos import Feedback, Pergunta, SessaoIniciada
 
 TipoEvento = Literal["resposta", "conclusao", "inatividade"]
 # matricula: trilha inicial; conclusao (R1), queda (R2), inatividade (R3): regras;
+# lacuna: erros seguidos no nível 1 do Tutor (1.2.5, seção 3.2);
 # reforco: fim de um reforço; sessao: pedido de abertura de sessão
-Regra = Literal["matricula", "conclusao", "queda", "reforco", "inatividade", "sessao"]
+Regra = Literal["matricula", "conclusao", "queda", "lacuna", "reforco", "inatividade", "sessao"]
 # planejar: trilha inicial; avancar: competência concluída, replaneja o que falta;
 # reforcar: pausa a sessão e abre reforço do pré-requisito direto; retomar_original:
 # reforço concluído, volta à sessão pausada; incentivar: inatividade, só incentivo;
 # refazer_trilha: inatividade longa, replaneja a partir de hoje; abrir_sessao /
-# recusar_sessao: pedido de sessão; nenhuma: a regra avaliou e não fez nada
+# recusar_sessao: pedido de sessão; revisar_material: lacuna sem pré-requisito, indica o
+# material-base do tópico; nenhuma: a regra avaliou e não fez nada
 Acao = Literal["planejar", "avancar", "reforcar", "retomar_original", "incentivar", "refazer_trilha",
-               "abrir_sessao", "recusar_sessao", "nenhuma"]
+               "abrir_sessao", "recusar_sessao", "revisar_material", "nenhuma"]
 AcaoProxima = Literal["iniciar_sessao", "continuar_sessao", "concluido"]
 IdEvento = Annotated[str, Field(pattern=r"^[A-Za-z0-9_.:-]{1,64}$", examples=["evt-0001"])]
 
 
 class Matricula(BaseModel):
     """Entrada de POST /aluno/{id}/iniciar (o mesmo que o Planejador pede)."""
-    perfil_id: str = Field(min_length=1, max_length=64, examples=["intermediario"])
-    # nota do diagnóstico (0..1) por competência; ausente conta como 0
+    # trilha escolhida no onboarding; None = só a base comum (compatibilidade)
+    trilha: TrilhaId | None = None
+    # None (padrão): o Planejador calcula o perfil pelo diagnóstico (1.2.3)
+    perfil_id: str | None = Field(default=None, min_length=1, max_length=64, examples=["intermediario"])
+    # nota do diagnóstico (0..1) por competência; ausente = não diagnosticada
     diagnostico: dict[str, Nota] = {}
     horas_semanais: float = Field(gt=0, le=60)
+    # prazo em dias a partir da matrícula (piloto: 8) e escopo da trilha
+    prazo_dias: int | None = Field(default=None, gt=0, le=730)
+    escopo: Literal["completa", "piloto"] = "completa"
 
 
 class EventoTutor(BaseModel):
@@ -103,6 +111,9 @@ class EstadoAluno(BaseModel):
     perfil_id: str
     horas_semanais: float
     diagnostico: dict[str, float]  # diagnóstico em uso (atualizado a cada replanejamento)
+    trilha: str | None = None       # dev, defesa_cibernetica ou None (só base comum)
+    prazo_dias: int | None = None   # prazo da matrícula (dias a partir dela)
+    escopo: str = "completa"
     etapas: list[EtapaEstado]
     competencia_atual: str | None   # primeira etapa não concluída
     sessao_aberta_id: str | None    # sessão não concluída nem pausada na competência atual

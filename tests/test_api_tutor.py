@@ -61,7 +61,7 @@ def test_inicia_sessao_no_nivel_1_sem_vazar_gabarito():
     assert_sem_gabarito(sessao["pergunta"])
 
 
-def test_resposta_correta_sobe_nivel_cita_fonte_e_grava_historico():
+def test_resposta_correta_cita_fonte_e_grava_historico():
     sessao = iniciar().json()
     resposta = responder(sessao, sessao["pergunta"], correta=True)
     assert resposta.status_code == 200
@@ -71,7 +71,8 @@ def test_resposta_correta_sobe_nivel_cita_fonte_e_grava_historico():
     assert fb["veredito"] == "Você acertou."
     assert fb["explicacao"] == "Explicação gerada pelo LLM." and fb["origem"] == "LLM"
     assert fb["fontes"] == [MATERIAL]
-    assert fb["nivel_atual"] == 2 and fb["proxima_pergunta"]["nivel"] == 2
+    # 1.2.5: um acerto só não sobe de nível (são 3 seguidos)
+    assert fb["nivel_atual"] == 1 and fb["proxima_pergunta"]["nivel"] == 1
     assert fb["concluida"] is False and fb["tempo_ms"] >= 0
     assert_sem_gabarito(fb["proxima_pergunta"])
 
@@ -106,12 +107,12 @@ def test_resposta_incorreta_nao_passa_do_nivel_1():
 def test_fim_da_competencia_e_resposta_depois_do_fim():
     sessao = iniciar().json()
     pergunta, vistas = sessao["pergunta"], []
-    for _ in range(4):  # caminho 1-2-3-3
+    while pergunta is not None:  # acertando tudo, a competência termina (2 itens por nível: 6 respostas)
         vistas.append(pergunta["item_id"])
         fb = responder(sessao, pergunta, correta=True).json()
         pergunta = fb["proxima_pergunta"]
     assert fb["concluida"] is True and fb["proxima_pergunta"] is None and fb["nivel_atual"] == 3
-    assert len(set(vistas)) == 4
+    assert len(vistas) == len(set(vistas)) == 6
     assert responder(sessao, {"item_id": vistas[-1]}, correta=True).status_code == 409
 
 

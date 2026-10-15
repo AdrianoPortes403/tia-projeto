@@ -28,10 +28,11 @@ import tia.agentes.relatorio.narrativa as narrativa
 import tia.agentes.tutor.dialogo as dialogo
 import tia.agentes.tutor.feedback as feedback
 import tia.core.llm_client as llm_client
-from tia.agentes.planejador.modelos import EtapaTrilha, Trilha
+from tia.agentes.planejador.modelos import EtapaTrilha, OpcoesPrazo, Trilha
 from tia.agentes.relatorio import modelos as relatorio
 from tia.agentes.tutor import modelos as tutor
 from tia.agentes.tutor.repositorio import carregar_itens
+import tia.api.rotas_primeiro_acesso as primeiro_acesso
 from tia.api.main import app
 from tia.orquestrador import modelos as orquestracao
 from tia.web import PASTA_ESTATICA, dados_demo
@@ -39,8 +40,8 @@ from tia.web import PASTA_ESTATICA, dados_demo
 client = TestClient(app)
 ALUNO = "A2026-W01"
 GABARITO = {i["id"]: i["indice_correto"] for i in carregar_itens()}
-DIAGNOSTICO = {"variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
-               "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0}
+DIAGNOSTICO = {"variaveis_tipos": 1.0, "condicionais": 1.0, "repeticao": 1.0,
+               "funcoes": 0.34, "listas_strings": 0.34, "recursao": 0.0}
 ESTATICOS = {"index.html": "text/html", "comum.js": "javascript", "app.js": "javascript", "tema.css": "text/css",
              "estilo.css": "text/css"}
 
@@ -168,15 +169,21 @@ CAMPOS_USADOS = {
     orquestracao.ProximaAcao: {"acao", "competencia_id", "sessao_id", "reforco", "motivo", "pergunta"},
     orquestracao.SessaoOrquestrada: {"sessao", "reforco"},
     orquestracao.ResultadoEvento: {"feedback", "avisos", "proxima"},
-    orquestracao.Matricula: {"perfil_id", "horas_semanais", "diagnostico"},
+    primeiro_acesso.PassoPrimeiroAcesso: {"passo", "onboarding"},
+    primeiro_acesso.InicioOnboarding: {"resposta"},
+    primeiro_acesso.onboarding.RespostaOnboarding: {"resposta", "concluido"},
+    primeiro_acesso.SituacaoDiagnostico: {"pergunta", "acertou", "concluido", "topico_atual", "total_topicos"},
     orquestracao.EventoTutor: {"evento_id", "tipo", "sessao_id", "item_id", "indice_escolhido"},
     orquestracao.PedidoSessao: {"competencia_id"},
-    Trilha: {"etapas"},
-    EtapaTrilha: {"competencia_id", "horas", "semana_inicio", "justificativa", "origem_justificativa"},
+    Trilha: {"etapas", "trilha", "perfil_id", "pontuacao_enquadramento", "prazo_dias", "cabe_no_prazo",
+             "opcoes_prazo", "avisos"},
+    EtapaTrilha: {"competencia_id", "horas", "semana_inicio", "justificativa", "origem_justificativa",
+                  "revisar_antes", "desafio_pratico"},
+    OpcoesPrazo: {"horas_semanais_necessarias", "recorte_que_cabe"},
     tutor.SessaoIniciada: {"sessao_id", "pergunta"},
     tutor.Pergunta: {"item_id", "competencia_id", "nivel", "enunciado", "alternativas"},
     tutor.Feedback: {"acertou", "indice_correto", "veredito", "explicacao", "origem", "falha_llm", "fontes",
-                     "nivel_atual", "concluida", "tempo_ms"},
+                     "nivel_atual", "concluida", "com_ressalvas", "tempo_ms"},
     tutor.PerguntaAluno: {"aluno_id", "pergunta", "competencia_id"},
     tutor.RespostaDialogo: {"resposta", "fontes", "origem", "falha_llm", "tempo_ms"},
     tutor.ItemDialogo: {"pergunta", "resposta", "fontes", "origem", "vetada"},
@@ -184,7 +191,7 @@ CAMPOS_USADOS = {
     relatorio.RelatorioAluno: {"progresso", "desempenho", "engajamento", "pontos_fracos", "itens_fracos",
                                "qualidade_feedback", "narrativa"},
     relatorio.Progresso: {"tem_trilha", "etapas", "concluidas", "percentual", "por_competencia"},
-    relatorio.ProgressoCompetencia: {"competencia_id", "nome", "concluida", "nivel_atual"},
+    relatorio.ProgressoCompetencia: {"competencia_id", "nome", "concluida", "nivel_atual", "com_ressalvas"},
     relatorio.Desempenho: {"geral", "por_competencia", "tendencia"},
     relatorio.Taxa: {"chave", "respostas", "acertos", "taxa"},
     relatorio.Tendencia: {"direcao"},

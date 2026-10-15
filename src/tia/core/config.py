@@ -61,17 +61,33 @@ CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "800"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "150"))
 
 # --- Agente 1 (Planejador) ---
-# Arquivos de conteúdo pedagógico (PROVISÓRIOS até a entrega da Pessoa 4)
+# Arquivos de conteúdo pedagógico: base pedagógica alinhada à EAP (1.2.3 e 1.2.4),
+# convertida para o formato deste repositório (base comum de Python + trilhas dev e defesa_cibernetica)
 EMENTA_PATH = os.getenv("EMENTA_PATH", "conteudo/ementa/ementa.json")
 PERFIS_PATH = os.getenv("PERFIS_PATH", "conteudo/perfis/perfis.json")
+# Primeiro acesso (onboarding conversacional + diagnóstico, contrato 1.3.2)
+ONBOARDING_USA_LLM = os.getenv("ONBOARDING_USA_LLM", "1").lower() in ("1", "true", "sim")
+ONBOARDING_TIMEOUT_LLM = int(os.getenv("ONBOARDING_TIMEOUT_LLM", "60"))
+# Máximo de mensagens do aluno numa conversa de cadastro (cada uma pode chamar o LLM).
+# Ao atingir o limite, o cadastro é recusado (409) até ser recomeçado. PROVISÓRIO.
+ONBOARDING_MAX_MENSAGENS = int(os.getenv("ONBOARDING_MAX_MENSAGENS", "12"))
+# Piloto (1.5.1): prazo da matrícula em dias (0 = sem prazo) e escopo da trilha.
+# No piloto de 27/10 a 04/11/2026: PILOTO_PRAZO_DIAS=8 e PILOTO_ESCOPO=piloto no .env.
+PILOTO_PRAZO_DIAS = int(os.getenv("PILOTO_PRAZO_DIAS", "0"))
+PILOTO_ESCOPO = os.getenv("PILOTO_ESCOPO", "completa")
 # Tempo máximo (s) para o LLM escrever as justificativas; abaixo do limite de 15 s do R09
 # Decisão de 10/10 (CLAUDE.md): alto em desenvolvimento; o R09 será medido na VM.
 # Com 12 s, as justificativas estouravam em CPU (ReadTimeout) e caíam no texto padrão.
 PLANEJADOR_TIMEOUT_LLM = int(os.getenv("PLANEJADOR_TIMEOUT_LLM", "120"))
 
 # --- Agente 2 (Tutor) ---
-# Banco de itens do questionário (PROVISÓRIO até a entrega da Pessoa 4)
+# Banco de itens do questionário (base pedagógica 1.2.5; itens ainda em revisão docente)
 BANCO_ITENS_PATH = os.getenv("BANCO_ITENS_PATH", "conteudo/banco_itens/itens.json")
+# Avaliação adaptativa (1.2.5, seção 3): sobe de nível com N acertos seguidos, desce com
+# N erros seguidos e conclui com N acertos seguidos no nível 3. A validar com a Pessoa 2.
+TUTOR_ACERTOS_SUBIR = int(os.getenv("TUTOR_ACERTOS_SUBIR", "3"))
+TUTOR_ERROS_DESCER = int(os.getenv("TUTOR_ERROS_DESCER", "2"))
+TUTOR_ACERTOS_CONCLUIR = int(os.getenv("TUTOR_ACERTOS_CONCLUIR", "3"))
 # Decisão de 10/10 (CLAUDE.md): não otimizar para os 15 s do R09 em desenvolvimento;
 # o LLM de produção roda em máquina mais potente. O R09 será medido na VM.
 # Tempo máximo (s) de espera pelo LLM no feedback; alto em desenvolvimento.
@@ -138,9 +154,14 @@ RELATORIO_TENDENCIA_LIMIAR = float(os.getenv("RELATORIO_TENDENCIA_LIMIAR", "0.15
 # Queda (R2, PROVISÓRIO): depois de um reforço por queda, só reforça de novo após
 # pelo menos estas respostas novas (além de no máximo um reforço por sessão).
 ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS = int(os.getenv("ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "5"))
-# Inatividade (R3, PROVISÓRIO): a partir de INATIVIDADE_DIAS (acima), só incentivo,
-# sem refazer a trilha; a trilha só é refeita a partir de ORQ_INATIVIDADE_REFAZER_DIAS.
-ORQ_INATIVIDADE_REFAZER_DIAS = int(os.getenv("ORQ_INATIVIDADE_REFAZER_DIAS", "14"))
+# Inatividade (R3; base pedagógica 1.2.5, seção 3.4): a partir de INATIVIDADE_DIAS (acima), só
+# incentivo; a partir de ORQ_INATIVIDADE_REFAZER_DIAS, incentivo com a trilha refeita a partir de hoje.
+# Regime normal: 3 e 7 dias. No piloto de 8 dias (1.5.1): 2 e 4 dias, pelo .env.
+ORQ_INATIVIDADE_REFAZER_DIAS = int(os.getenv("ORQ_INATIVIDADE_REFAZER_DIAS", "7"))
+# Conclusão sem domínio (PROVISÓRIO, Pessoa 4): quando os itens de uma competência acabam sem
+# TUTOR_ACERTOS_CONCLUIR acertos seguidos no nível 3, a sessão termina "concluída com ressalvas".
+# A R1 só avança se a taxa de acerto da sessão for pelo menos esta; abaixo, reforço ou material.
+ORQ_ACERTO_MIN_AVANCO = float(os.getenv("ORQ_ACERTO_MIN_AVANCO", "0.6"))
 
 # --- Segurança: autenticação e papéis (EAP 1.4.6) ---
 # "desligada" = MODO DE DESENVOLVIMENTO: nenhuma rota pede login (testes e demos
@@ -263,14 +284,16 @@ if __name__ == "__main__":
                  "RACIOCINIO_TAGS", "BACKUP_DIR", "BACKUP_DIAS", "API_URL_LOCAL", "R09_LIMITE_SEGUNDOS",
                  "OLLAMA_KEEP_ALIVE", "DB_PATH",
                  "MATERIAIS_DIR", "CHROMA_DIR", "COLLECTION_NAME",
-                 "CHUNK_SIZE", "CHUNK_OVERLAP", "EMENTA_PATH", "PERFIS_PATH",
+                 "CHUNK_SIZE", "CHUNK_OVERLAP", "EMENTA_PATH", "PERFIS_PATH", "ONBOARDING_USA_LLM",
+                 "ONBOARDING_TIMEOUT_LLM", "ONBOARDING_MAX_MENSAGENS", "PILOTO_PRAZO_DIAS", "PILOTO_ESCOPO", "TUTOR_ACERTOS_SUBIR",
+                 "TUTOR_ERROS_DESCER", "TUTOR_ACERTOS_CONCLUIR",
                  "PLANEJADOR_TIMEOUT_LLM", "BANCO_ITENS_PATH", "TUTOR_TIMEOUT_LLM", "TUTOR_MAX_TOKENS", "TUTOR_TEMPERATURA", "TUTOR_TOP_P", "TUTOR_SEED", "TUTOR_MODO_FEEDBACK",
                  "TUTOR_NUM_TRECHOS",
                  "TUTOR_DISTANCIA_MAXIMA", "TUTOR_COBERTURA_MIN", "TUTOR_EXIGE_TERMO_RARO",
                  "INATIVIDADE_DIAS", "RELATORIO_MIN_GRUPO", "RELATORIO_TIMEOUT_LLM", "RELATORIO_MAX_TOKENS",
                  "RELATORIO_TEMPERATURA", "RELATORIO_SEED", "RELATORIO_TENDENCIA_JANELA",
                  "RELATORIO_TENDENCIA_MIN_RESPOSTAS", "RELATORIO_TENDENCIA_LIMIAR",
-                 "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_INATIVIDADE_REFAZER_DIAS",
+                 "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_INATIVIDADE_REFAZER_DIAS", "ORQ_ACERTO_MIN_AVANCO",
                  "PAINEL_DESEMPENHO_BAIXO", "PAINEL_MIN_RESPOSTAS", "TIA_AUTH", "AUTH_PROVEDOR",
                  "AUTH_SESSAO_INATIVIDADE_MINUTOS", "AUTH_SESSAO_MAXIMA_MINUTOS", "AUTH_COOKIE_SEGURO",
                  "AUTH_MAX_FALHAS_USUARIO", "AUTH_MAX_FALHAS_IP", "AUTH_JANELA_MINUTOS", "AUTH_ATRASO_SEGUNDOS",

@@ -1,6 +1,6 @@
 # LGPD no Sistema TIA (EAP 1.4.6)
 
-> Frente A3, 11/10/2026. **Proposta técnica, a validar com o jurídico/DEP da instituição.** Os prazos e as
+> Frente A3, 11/10/2026 (inventário atualizado em 15/10/2026 com o primeiro acesso do Agente 1). **Proposta técnica, a validar com o jurídico/DEP da instituição.** Os prazos e as
 > bases legais abaixo são PROVISÓRIOS. Implantação: `docs/seguranca/implantacao.md`. Arquitetura:
 > `docs/arquitetura/arquitetura.md`, seção "Segurança".
 
@@ -25,15 +25,18 @@ Todos ficam no banco SQLite (`DB_PATH`, padrão `data/tia.db`), salvo indicaçã
 | Dado | Tabela / local | Finalidade | Prazo (PROVISÓRIO) |
 |---|---|---|---|
 | Código do aluno, conhecimento prévio, horas por semana | `alunos` | planejar a trilha | enquanto o aluno estuda; sai na eliminação a pedido |
-| Perfil, horas, diagnóstico | `orquestrador_matriculas` | replanejar a trilha | idem |
+| Perfil, horas, diagnóstico, trilha escolhida, prazo e escopo | `orquestrador_matriculas` | replanejar a trilha | idem |
+| **Cadastro inicial (primeiro acesso, Agente 1):** trilha, horas, dias, contadores de mensagens e, enquanto não conclui, a **conversa** (texto livre do aluno e do tutor) | `planejador_onboarding` (`estado`, JSON) | coletar o que o aluno declara para o plano | a conversa é apagada ao concluir; cadastro **não concluído** apagado após `RETENCAO_DIALOGO_DIAS` (180) sem atividade; o concluído fica enquanto o aluno estuda e sai na eliminação a pedido |
+| **Objetivo do aluno** (texto livre opcional, até 200 caracteres; a tela pede para não pôr dados pessoais) | `planejador_onboarding` (`estado.dados.objetivo`) | contexto do plano | tirado do cadastro após `RETENCAO_DIALOGO_DIAS` (180); só o próprio aluno o recebe (o docente não, em `GET /aluno/{id}/primeiro-acesso`) |
+| Diagnóstico inicial (itens respondidos, acerto por nível, notas por tópico; sem texto livre) | `planejador_diagnosticos` (`estado`, JSON) | enquadrar o perfil e evitar repetir itens no Tutor | enquanto o aluno estuda; sai na eliminação a pedido |
 | Trilha de estudo | `trilha_estudo` | mostrar e acompanhar a trilha | idem |
 | Respostas às questões (item, acerto, nível, data, sessão) | `historico_respostas` | questionário adaptativo e indicadores do Agente 3 | desvinculadas do aluno após `RETENCAO_RESPOSTAS_DIAS` (365) |
-| Sessões do questionário | `tutor_sessoes` | retomar o questionário | idem (365) |
+| Sessões do questionário (inclusive se terminou sem domínio e o acerto da sessão) | `tutor_sessoes` | retomar o questionário; decidir o avanço (R1) | idem (365) |
 | Feedback das questões (texto que o aluno viu, texto barrado, correção do docente) | `tutor_feedbacks` | revisão docente (R12) | textos apagados após `RETENCAO_FEEDBACK_TEXTO_DIAS` (180); ligação com o aluno, 365 |
 | **Perguntas livres ao tutor** e respostas, correção do docente | `tutor_dialogo` | diálogo (R03) e revisão docente (R12) | textos apagados e linha desvinculada após `RETENCAO_DIALOGO_DIAS` (180) |
 | Resultado guardado de cada evento (repete o feedback) | `orquestrador_eventos` | idempotência | apagado após 180 dias |
 | Decisões e reforços do orquestrador | `orquestrador_decisoes`, `orquestrador_reforcos` | explicar decisões ao aluno e ao docente | desvinculados após 365 dias |
-| Auditoria (quem, quando, o quê; códigos de aluno e de usuário; nunca texto livre) | `auditoria` | prestação de contas (R11, R12) | **nunca apagada**; códigos anonimizados após `RETENCAO_AUDITORIA_DIAS` (730) |
+| Auditoria (quem, quando, o quê; códigos de aluno e de usuário; nunca texto livre: no primeiro acesso, só o passo, os **nomes** dos campos coletados e o acerto por item do diagnóstico) | `auditoria` | prestação de contas (R11, R12) | **nunca apagada**; códigos anonimizados após `RETENCAO_AUDITORIA_DIAS` (730) |
 | Usuário: login (código), papel, hash da senha (scrypt), situação | `usuarios` | autenticação | enquanto ativo; na eliminação, desativado, com a ligação e a senha apagadas |
 | Sessões de login (hash do token) | `auth_sessoes` | manter o login | 30 min sem uso ou 8 h (apagadas pela limpeza) |
 | Tentativas de login (login digitado, **IP**, sucesso) | `auth_tentativas` | limite de tentativas | `AUTH_RETENCAO_IP_DIAS` (30) |
@@ -89,7 +92,8 @@ jurídico deve dizer se basta ou se essas linhas devem ser apagadas em vez de de
 Os indicadores do Agente 3 são calculados **por aluno**: uma linha desvinculada deixa de contar no relatório
 da turma. Ela continua nas contagens por item, por origem e por veto.
 
-Cadastro, matrícula e trilha não têm prazo por data. Falta definir com a Pessoa 4 e com a instituição o
+Cadastro concluído (sem o objetivo), diagnóstico inicial, matrícula e trilha não têm prazo por data. O
+cadastro inicial não concluído (com a conversa) e o objetivo saem no prazo do diálogo (`RETENCAO_DIALOGO_DIAS`). Falta definir com a Pessoa 4 e com a instituição o
 evento de fim (fim do curso, desligamento) que dispara a eliminação (pendência).
 
 ## 6. Direitos do titular (art. 18)
@@ -102,7 +106,7 @@ código são feitas pela instituição, fora do TIA. No servidor:
 | Confirmação e acesso (I, II) | `python -m tia.seguranca.titular exportar --aluno <código>` gera um JSON com todos os dados do aluno, sem dados de outras pessoas (outros códigos e o login de quem agiu viram `[anonimizado]`; o docente aparece só pelo papel), mais as consultas do painel que mostraram o código dele. Permissão 600; entregar por canal seguro e apagar |
 | Portabilidade (V) | o mesmo JSON (formato aberto) |
 | Correção (III) | perfil e horas: refazendo a matrícula pelo próprio aluno; dados de estudo são registros do que aconteceu e não se corrigem (a auditoria registra) |
-| Eliminação (VI) e anonimização (IV) | `python -m tia.seguranca.titular eliminar --aluno <código>`: pede o código de novo para confirmar, copia o banco, apaga cadastro, matrícula, trilha, sessões e eventos, desvincula e apaga os textos de respostas, feedbacks, diálogo e decisões, anonimiza os códigos dele na auditoria e desativa o usuário. A auditoria ganha um registro **sem o código**, com um **protocolo** para a resposta ao titular |
+| Eliminação (VI) e anonimização (IV) | `python -m tia.seguranca.titular eliminar --aluno <código>`: pede o código de novo para confirmar, copia o banco, apaga cadastro, cadastro inicial e diagnóstico do primeiro acesso, matrícula, trilha, sessões e eventos, desvincula e apaga os textos de respostas, feedbacks, diálogo e decisões, anonimiza os códigos dele na auditoria e desativa o usuário. A auditoria ganha um registro **sem o código**, com um **protocolo** para a resposta ao titular |
 | Informação sobre compartilhamento (VII) | nenhum compartilhamento com terceiros; LLM local (seção 8) |
 | Revogação do consentimento (IX) | se o diálogo livre passar a depender de consentimento: eliminação dos diálogos (pendência de tela) |
 
@@ -170,3 +174,5 @@ Na VM, o firewall deve liberar só a porta do proxy (HTTPS) para fora. A porta 1
    do aluno?
 5. Qual é o canal oficial do titular e o prazo de resposta? Quem confere a identidade?
 6. É preciso aviso de privacidade nas telas do TIA, ou o aviso do EBAULA cobre?
+7. O objetivo do cadastro inicial (texto livre opcional) pode seguir o prazo do diálogo (180 dias), ou deve
+   ser apagado logo depois da matrícula? (Hoje: 180 dias, sem acesso do docente.)
