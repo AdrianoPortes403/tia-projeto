@@ -1,7 +1,7 @@
 """
 Testes do Agente 2 (Tutor): máquina de estados do questionário adaptativo,
 feedback com fonte (llm_client e retrieve mockados), banco de itens
-PROVISÓRIO e migração do historico_respostas.
+(PROVISÓRIO até a revisão da Pessoa 4) e migração do historico_respostas.
 
 Como rodar:
     ./run_tests.sh tests/test_tutor.py
@@ -99,6 +99,52 @@ def test_comeca_no_nivel_do_diagnostico_e_evita_itens_ja_vistos():
     # se só sobrarem itens vistos no diagnóstico, eles voltam (melhor do que encerrar sem pergunta)
     so_vistos = [i for i in ITENS5 if i["id"] in ("m1a", "m1b")]
     assert iniciar(so_vistos, "m", 1, evitar={"m1a", "m1b"}).item_atual_id == "m1a"
+
+
+def test_nao_repete_item_ate_esgotar():
+    # restaurado (15/10/2026) para as regras do 1.2.5: alternando erro e acerto, a sessão usa
+    # cada item da competência uma única vez, nunca pega item de outra e esgota exatamente os 6
+    estados = responder_em_sequencia([False, True] * 3)
+    perguntados = [e.item_atual_id for e in estados if e.item_atual_id]
+    assert len(perguntados) == len(set(perguntados)) == 6
+    assert "outro" not in perguntados  # nunca pega item de outra competência
+    assert estados[-1].concluida and estados[-1].item_atual_id is None
+    assert sorted(estados[-1].itens_usados) == ["n1a", "n1b", "n2a", "n2b", "n3a", "n3b"]
+    assert estados[-1].com_ressalvas  # acabou por falta de itens, sem domínio
+
+
+def test_nunca_pega_item_de_outra_competencia_mesmo_acertando_ou_errando_tudo():
+    for acertou in (True, False):
+        estados = responder_em_sequencia([acertou] * 6)
+        assert all(e.item_atual_id != "outro" for e in estados)
+        assert estados[-1].concluida and len(estados[-1].itens_usados) == 6
+
+
+def test_nivel_sem_itens_usa_o_mais_proximo():
+    # restaurado: erra 2 vezes no nível 1 (esgota o nível 1; lacuna, sem descer) e a terceira
+    # pergunta vem do nível 2, o único a 1 de distância
+    estados = responder_em_sequencia([False, False])
+    assert (estados[-1].item_atual_id, estados[-1].nivel) == ("n2a", 2)
+
+
+def test_nivel_esgotado_depois_de_erro_vai_para_o_mais_facil():
+    # começa no 2 com só 2 itens: acerta um e erra o outro (um erro só não desce); o nível 2
+    # acaba e há empate entre o 1 e o 3: depois de um erro, vai para o mais fácil
+    estados = [iniciar(ITENS, "c", 2)]
+    for acertou in (True, False):
+        estados.append(avancar(estados[-1], ITENS, acertou))
+    assert [e.nivel for e in estados] == [2, 2, 1]
+    assert estados[-1].item_atual_id == "n1a"
+    assert (estados[-1].acertos_seguidos, estados[-1].erros_seguidos) == (0, 0)  # as sequências recomeçam
+
+
+def test_conclusao_por_dominio_nao_tem_ressalva_e_por_fim_dos_itens_tem():
+    dominio = sequencia5([True] * 9)[-1]
+    assert dominio.concluida and not dominio.com_ressalvas and dominio.acertos_seguidos_nivel_max == 3
+    errou_tudo = responder_em_sequencia([False] * 6)[-1]
+    assert errou_tudo.concluida and errou_tudo.com_ressalvas
+    acertou_tudo_sem_itens = responder_em_sequencia([True] * 6)[-1]  # 2 no nível 3 não bastam
+    assert acertou_tudo_sem_itens.concluida and acertou_tudo_sem_itens.com_ressalvas
 
 
 def test_nivel_esgotado_depois_de_acerto_nao_desce():
@@ -481,15 +527,52 @@ def test_banco_de_itens_e_consistente():
             assert len(do_nivel(c["id"], nivel)) == esperado, (c["id"], nivel)
             if esperado:
                 assert sum(i["uso"] == "diagnostico" for i in do_nivel(c["id"], nivel)) == 1
-    ids_ementa = {i["competencia_id"] for i in itens}  # só os tópicos que têm itens
-    # o banco real permite concluir cada competência acertando tudo (por domínio ou fim dos itens)
-    for competencia_id in ids_ementa:
-        estado = iniciar(itens, competencia_id)
+    # o banco real permite concluir cada competência acertando tudo. Asserção FORTE (restaurada em
+    # 15/10/2026): onde há itens suficientes para subir e dominar (TUTOR_ACERTOS_SUBIR nos níveis 1
+    # e 2, TUTOR_ACERTOS_CONCLUIR no 3, sem contar os do diagnóstico, que o aluno já viu), a
+    # conclusão é por DOMÍNIO. Nos outros (base comum, 2 por nível), só pelo fim dos itens: a
+    # sessão termina com ressalvas e quem decide o avanço é a R1 (ORQ_ACERTO_MIN_AVANCO).
+    def tutoria(cid, nivel):
+        return [i for i in do_nivel(cid, nivel) if i["uso"] == "tutoria"]
+    por_dominio = []
+    for competencia_id in {i["competencia_id"] for i in itens}:  # só os tópicos que têm itens
+        do_diagnostico = {i["id"] for i in itens if i["competencia_id"] == competencia_id
+                          and i["uso"] == "diagnostico"}
+        suficiente = (len(tutoria(competencia_id, 1)) >= adaptativo.acertos_para_subir()
+                      and len(tutoria(competencia_id, 2)) >= adaptativo.acertos_para_subir()
+                      and len(tutoria(competencia_id, 3)) >= adaptativo.acertos_para_concluir())
+        estado = iniciar(itens, competencia_id, evitar=do_diagnostico)
         for _ in range(len(itens)):
             if estado.concluida:
                 break
-            estado = adaptativo.avancar(estado, itens, True)
+            estado = adaptativo.avancar(estado, itens, True, do_diagnostico)
         assert estado.concluida, competencia_id
+        if suficiente:
+            por_dominio.append(competencia_id)
+            assert not estado.com_ressalvas, competencia_id
+            assert estado.acertos_seguidos_nivel_max == adaptativo.acertos_para_concluir(), competencia_id
+            assert not set(estado.itens_usados) & do_diagnostico, competencia_id
+        else:
+            assert estado.com_ressalvas, competencia_id
+    assert sorted(por_dominio) == ["cib_01", "cib_02", "dev_01", "dev_02"]
+
+
+# Itens revisados pela Pessoa 4 (1.5.2). Enquanto ela não revisar, fica vazio e nenhum item gerado
+# por LLM pode estar como "validado". Quando a revisão chegar: listar aqui os ids aprovados (com a
+# referência da revisão no commit) e só então trocar o status no itens.json.
+VALIDADOS_PELA_PESSOA_4: set[str] = set()
+
+
+def test_itens_gerados_por_llm_continuam_provisorios():
+    itens = carregar_itens()
+    gerados = [i for i in itens if i.get("origem") == "llm" or i.get("status") == "rascunho_llm"]
+    assert len(gerados) == 84  # dev_01, dev_02, cib_01, cib_02 (branch agente1-tiago)
+    for i in gerados:
+        if i["id"] not in VALIDADOS_PELA_PESSOA_4:
+            assert i["status"] != "validado", f"{i['id']}: marcado como validado sem a revisão da Pessoa 4"
+            assert i["status"].startswith("rascunho"), i["id"]
+    # nenhum item do banco está validado enquanto a lista acima estiver vazia
+    assert all(i["status"] != "validado" for i in itens if i["id"] not in VALIDADOS_PELA_PESSOA_4)
 
 
 # --- banco ---

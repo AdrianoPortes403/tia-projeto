@@ -27,6 +27,7 @@ from datetime import datetime
 from tia.agentes.planejador.planejar import carregar_ementa
 from tia.agentes.tutor.adaptativo import EstadoSessao
 from tia.core import auditoria
+from tia.core import config
 from tia.core.config import BANCO_ITENS_PATH
 from tia.core.database import obter_conexao
 
@@ -105,6 +106,7 @@ def ler_sessao(sessao_id: str, aluno_id: str) -> EstadoSessao | None:
         concluida=bool(linha["concluida"]),
         acertos_seguidos=linha["acertos_seguidos"] or 0,
         erros_seguidos=linha["erros_seguidos"] or 0,
+        com_ressalvas=bool(linha["com_ressalvas"]),
     )
 
 
@@ -153,10 +155,36 @@ def registrar_resposta(sessao_id: str, aluno_id: str, item_respondido: dict, nov
                      feedback.get("veredito"), feedback.get("explicacao"), origem, feedback.get("falha_llm"),
                      json.dumps(fontes, ensure_ascii=False), feedback.get("explicacao_descartada") or None,
                      feedback.get("motivo_descarte") or None))
+            if novo_estado.concluida:
+                # fim da sessão: guarda se foi sem domínio e o acerto da sessão (R1 e painel)
+                conexao.execute(
+                    """UPDATE tutor_sessoes SET com_ressalvas = ?,
+                           taxa_acerto = (SELECT ROUND(AVG(acertou), 3) FROM historico_respostas WHERE sessao_id = ?)
+                       WHERE id = ?""", (novo_estado.com_ressalvas, sessao_id, sessao_id))
             auditoria.registrar(conexao, aluno_id, "resposta_item", resposta_id, origem, fontes, ts=agora)
     finally:
         conexao.close()
     return resposta_id
+
+
+def resultado_sessao(sessao_id: str, aluno_id: str) -> dict | None:
+    """Como a sessão terminou: com_ressalvas (itens acabaram sem domínio) e
+    taxa_acerto da sessão (None se não concluída). None se não existe."""
+    conexao = obter_conexao()
+    try:
+        linha = conexao.execute("SELECT concluida, com_ressalvas, taxa_acerto FROM tutor_sessoes "
+                                "WHERE id = ? AND aluno_id = ?", (sessao_id, aluno_id)).fetchone()
+    finally:
+        conexao.close()
+    if linha is None:
+        return None
+    return {"concluida": bool(linha["concluida"]), "com_ressalvas": bool(linha["com_ressalvas"]),
+            "taxa_acerto": linha["taxa_acerto"]}
+
+
+# Sessão que conta como conclusão da competência (R1, progresso, incentivo): plena, ou com
+# ressalvas mas com acerto da sessão >= ORQ_ACERTO_MIN_AVANCO. Sessões antigas (NULL) = plenas.
+CONCLUSAO_QUE_VALE = "concluida AND (NOT COALESCE(com_ressalvas, 0) OR COALESCE(taxa_acerto, 0) >= ? - 1e-9)"
 
 
 def registrar_dialogo(aluno_id: str, competencia_id: str | None, pergunta: str, resposta: str,
@@ -322,12 +350,14 @@ def ultima_interacao(aluno_id: str) -> datetime | None:
 
 
 def competencias_concluidas(aluno_id: str) -> set[str]:
-    """Competências em que o aluno concluiu ao menos uma sessão do questionário."""
+    """Competências em que o aluno concluiu ao menos uma sessão do questionário,
+    com domínio ou, sem domínio, com acerto de pelo menos ORQ_ACERTO_MIN_AVANCO
+    (CONCLUSAO_QUE_VALE). Sessão sem domínio abaixo disso não conclui a competência."""
     conexao = obter_conexao()
     try:
         linhas = conexao.execute(
-            "SELECT DISTINCT competencia_id FROM tutor_sessoes WHERE aluno_id = ? AND concluida",
-            (aluno_id,),
+            f"SELECT DISTINCT competencia_id FROM tutor_sessoes WHERE aluno_id = ? AND {CONCLUSAO_QUE_VALE}",
+            (aluno_id, config.ORQ_ACERTO_MIN_AVANCO),
         ).fetchall()
     finally:
         conexao.close()

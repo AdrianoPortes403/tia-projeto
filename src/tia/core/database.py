@@ -157,6 +157,10 @@ def criar_tabelas():
     _acrescentar_colunas(cursor, "tutor_sessoes", {"pausada": "INTEGER"})
     # regras do 1.2.5 (12/10/2026): sequências de acertos e erros no nível atual
     _acrescentar_colunas(cursor, "tutor_sessoes", {"acertos_seguidos": "INTEGER", "erros_seguidos": "INTEGER"})
+    # conclusão sem domínio (15/10/2026): os itens acabaram antes de TUTOR_ACERTOS_CONCLUIR acertos
+    # seguidos no nível 3 (com_ressalvas = 1); taxa_acerto = acerto da sessão, gravado ao concluir.
+    # NULL nas sessões antigas = conclusão plena.
+    _acrescentar_colunas(cursor, "tutor_sessoes", {"com_ressalvas": "INTEGER", "taxa_acerto": "REAL"})
 
     # Diálogo livre com o Tutor (parte 2b). A pergunta do aluno é texto livre:
     # fica só aqui no banco, nunca em log (R08). vetada/correcao_docente: veto

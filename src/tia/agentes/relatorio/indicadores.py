@@ -7,6 +7,7 @@ PROVISÓRIO: definições, limiares e janelas abaixo são da frente A3, até a
 validação dos critérios com a Pessoa 4 (docs/arquitetura/relatorio_indicadores.md).
 
     1. progresso:          % de etapas da trilha concluídas e nível atual por competência
+                           (com a ressalva das competências terminadas sem domínio)
     2. desempenho:         taxa de acerto por competência e por nível, com tendência
                            (última sessão x anteriores; sem sessao_id, janela de respostas)
     3. engajamento:        sessões, dias ativos e dias de inatividade (INATIVIDADE_DIAS)
@@ -57,10 +58,29 @@ def _data(ts: str | None) -> datetime | None:
 
 # --- 1. progresso na trilha ---
 
+def _vale_conclusao(registro: dict) -> bool:
+    """A sessão conclui a competência: com domínio ou, sem domínio, com acerto
+    >= ORQ_ACERTO_MIN_AVANCO (calculado no repositório; sem o campo, a conclusão)."""
+    return registro.get("vale_conclusao", registro["concluida"])
+
+
+def _ressalvas(dados: DadosAluno) -> dict[str, float | None]:
+    """Competências cuja ÚLTIMA sessão concluída terminou sem domínio (itens
+    acabaram), com o acerto dessa sessão; uma conclusão plena depois apaga a ressalva."""
+    ultima = {}
+    for registro in dados.sessoes:  # em ordem de atualização: a última vence
+        if registro["concluida"]:
+            ultima[registro["competencia_id"]] = registro
+    return {c: r.get("taxa_acerto") for c, r in ultima.items() if r.get("com_ressalvas")}
+
+
 def progresso(dados: DadosAluno, nomes: dict[str, str]) -> Progresso:
-    """Etapa concluída = sessão do questionário concluída na competência (mesmo
-    critério do incentivo). Nível atual = nível da sessão mais recente."""
-    concluidas = {s["competencia_id"] for s in dados.sessoes if s["concluida"]}
+    """Etapa concluída = sessão do questionário que conclui a competência (com
+    domínio ou, sem domínio, com acerto suficiente; mesmo critério do incentivo
+    e da R1). Nível atual = nível da sessão mais recente. com_ressalvas: a última
+    sessão concluída da competência terminou sem domínio (informação ao docente)."""
+    concluidas = {s["competencia_id"] for s in dados.sessoes if _vale_conclusao(s)}
+    ressalvas = _ressalvas(dados)
     nivel_atual = {}
     for sessao in dados.sessoes:  # em ordem de atualização: a última vence
         nivel_atual[sessao["competencia_id"]] = sessao["nivel"]
@@ -72,13 +92,17 @@ def progresso(dados: DadosAluno, nomes: dict[str, str]) -> Progresso:
     if dados.trilha is not None:
         concluidas |= {e.competencia_id for e in dados.trilha.etapas if e.concluida}
     por_competencia = [ProgressoCompetencia(competencia_id=c, nome=nomes.get(c, c), concluida=c in concluidas,
-                                            nivel_atual=nivel_atual.get(c)) for c in competencias]
+                                            nivel_atual=nivel_atual.get(c), com_ressalvas=c in ressalvas,
+                                            taxa_sem_dominio=ressalvas.get(c)) for c in competencias]
+    com_ressalvas = sum(p.com_ressalvas for p in por_competencia)
     if dados.trilha is None:
-        return Progresso(tem_trilha=False, etapas=0, concluidas=0, percentual=None, por_competencia=por_competencia)
+        return Progresso(tem_trilha=False, etapas=0, concluidas=0, percentual=None, por_competencia=por_competencia,
+                         com_ressalvas=com_ressalvas)
     feitas = sum(p.concluida for p in por_competencia)
     etapas = len(por_competencia)
     return Progresso(tem_trilha=True, etapas=etapas, concluidas=feitas,
-                     percentual=round(feitas / etapas, 3) if etapas else None, por_competencia=por_competencia)
+                     percentual=round(feitas / etapas, 3) if etapas else None, por_competencia=por_competencia,
+                     com_ressalvas=com_ressalvas)
 
 
 # --- 2. desempenho ---
@@ -127,7 +151,7 @@ def trilha_concluida(dados: DadosAluno) -> bool:
     """Tem trilha e todas as etapas estão concluídas (mesmo critério de progresso)."""
     if dados.trilha is None or not dados.trilha.etapas:
         return False
-    concluidas = ({s["competencia_id"] for s in dados.sessoes if s["concluida"]}
+    concluidas = ({s["competencia_id"] for s in dados.sessoes if _vale_conclusao(s)}
                   | {e.competencia_id for e in dados.trilha.etapas if e.concluida})
     return all(e.competencia_id in concluidas for e in dados.trilha.etapas)
 
@@ -290,6 +314,8 @@ def agregar_turma(dados: list[DadosAluno], agora: datetime, min_grupo: int, nome
 
     inativos = sum(e.inativo for e in engajamentos)
     em_queda = sum(t.direcao == "caindo" for t in tendencias)
+    # sem domínio e sem avançar (mesmo critério do alerta de risco do painel)
+    sem_dominio = sum(any(c.com_ressalvas and not c.concluida for c in p.por_competencia) for p in progressos)
     alertas = []
     if inativos:
         alertas.append(AlertaTurma(tipo="inatividade", alunos=contagem(inativos, min_grupo),
@@ -299,6 +325,10 @@ def agregar_turma(dados: list[DadosAluno], agora: datetime, min_grupo: int, nome
                                    descricao=(f"Alunos com acerto na última sessão (ou, sem sessão registrada, nas "
                                               f"últimas {JANELA_TENDENCIA} respostas) {round(LIMIAR_TENDENCIA * 100)} "
                                               f"pontos ou mais abaixo do anterior.")))
+    if sem_dominio:
+        alertas.append(AlertaTurma(tipo="conclusao_sem_dominio", alunos=contagem(sem_dominio, min_grupo),
+                                   descricao="Alunos que terminaram as questões de uma competência sem atingir o "
+                                             "domínio e sem o acerto mínimo para avançar (concluída com ressalvas)."))
     for grupo in por_competencia:
         if not grupo.suprimido and grupo.taxa is not None and grupo.taxa < 1 - TURMA_TAXA_ERRO_ALTO:
             alertas.append(AlertaTurma(tipo="competencia_com_erro_alto", alunos=grupo.alunos,

@@ -14,7 +14,15 @@ Conhecimento NÃO é perguntado: vem do diagnóstico (diagnostico.py).
 
 LGPD (R08): o texto do aluno vai só ao LLM local; o histórico da conversa é
 apagado quando o onboarding termina (fica só o resultado), e nada vai para
-log. O objetivo é texto livre do aluno: a tela pede para não pôr dados pessoais.
+log. O objetivo é texto livre do aluno: a tela pede para não pôr dados pessoais,
+só o próprio aluno o recebe de volta (o docente não) e a retenção o apaga após
+RETENCAO_DIALOGO_DIAS; o cadastro abandonado (com a conversa) também sai nesse prazo
+(seguranca.retencao).
+
+Limite (ONBOARDING_MAX_MENSAGENS): cada conversa aceita no máximo esse número de
+mensagens do aluno (depois, ErroOnboarding: é preciso recomeçar), e o LLM é chamado
+no máximo esse número de vezes por aluno, somando as conversas recomeçadas; depois
+disso a extração segue só por regras. Assim um aluno não gera chamadas ilimitadas.
 
 Não é executável sozinho; rotas em tia.api.rotas_primeiro_acesso.
 
@@ -33,6 +41,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from tia.core import auditoria
+from tia.core import config
 from tia.core.config import ONBOARDING_TIMEOUT_LLM, ONBOARDING_USA_LLM
 from tia.core.database import obter_conexao
 from tia.core.llm_client import chamar_llm
@@ -68,6 +77,8 @@ class SessaoOnboarding(BaseModel):
     perguntados: list[str] = Field(default_factory=list)
     historico: list[dict] = Field(default_factory=list)
     concluido: bool = False
+    mensagens: int = 0      # mensagens do aluno nesta conversa (limite ONBOARDING_MAX_MENSAGENS)
+    chamadas_llm: int = 0   # chamadas ao LLM do aluno, somando as conversas recomeçadas (mesmo limite)
 
 
 class RespostaOnboarding(BaseModel):
@@ -206,20 +217,28 @@ def _resumo(dados: dict, prazo_dias: int | None) -> str:
     return "Confere se está tudo certo:\n" + "\n".join(linhas) + "\n\nPosso seguir? (sim/não)"
 
 
-def nova_sessao(aluno_id: str) -> tuple[SessaoOnboarding, str]:
+def nova_sessao(aluno_id: str, anterior: SessaoOnboarding | None = None) -> tuple[SessaoOnboarding, str]:
+    """Conversa nova; as chamadas ao LLM da conversa anterior continuam contando."""
     sessao = SessaoOnboarding(aluno_id=aluno_id, perguntados=["trilha"],
-                              historico=[{"papel": "tutor", "texto": SAUDACAO}])
+                              historico=[{"papel": "tutor", "texto": SAUDACAO}],
+                              chamadas_llm=anterior.chamadas_llm if anterior else 0)
     return sessao, SAUDACAO
 
 
 def processar(sessao: SessaoOnboarding, texto: str, prazo_dias: int | None = None,
-              usar_llm: bool = ONBOARDING_USA_LLM) -> RespostaOnboarding:
-    """Uma resposta do aluno -> próxima pergunta (altera a sessão recebida)."""
+              usar_llm: bool | None = None) -> RespostaOnboarding:
+    """Uma resposta do aluno -> próxima pergunta (altera a sessão recebida).
+    usar_llm None: ONBOARDING_USA_LLM."""
     if sessao.concluido:
         raise ErroOnboarding("O cadastro já foi concluído.")
+    limite = config.ONBOARDING_MAX_MENSAGENS
+    if sessao.mensagens >= limite:
+        raise ErroOnboarding(f"Limite de {limite} mensagens desta conversa atingido. Recomece o cadastro.")
+    sessao.mensagens += 1
     sessao.historico.append({"papel": "aluno", "texto": texto})
     campos, origem = {}, "regras"
-    if usar_llm:
+    if (ONBOARDING_USA_LLM if usar_llm is None else usar_llm) and sessao.chamadas_llm < limite:
+        sessao.chamadas_llm += 1
         try:
             campos, origem = extrair_com_llm(texto, sessao.ultima_pergunta), "LLM"
         except Exception as erro:  # qualquer falha do LLM: segue por regras

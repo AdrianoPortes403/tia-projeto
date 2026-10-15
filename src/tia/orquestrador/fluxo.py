@@ -273,6 +273,9 @@ def aplicar(aluno_id: str, avaliacao: Avaliacao, evento_id: str | None = None,
         aviso = regras.AVISO_MATERIAL.format(
             competencia=nomes.get(avaliacao.competencia_id, avaliacao.competencia_id),
             materiais=(" (" + ", ".join(arquivos) + ")") if arquivos else "")
+        if avaliacao.regra == "conclusao":  # R1 sem domínio: o aluno recomeça a competência
+            aviso += " " + regras.AVISO_SEM_DOMINIO_DE_NOVO.format(
+                competencia=nomes.get(avaliacao.competencia_id, avaliacao.competencia_id))
         return _registrar(aluno_id, avaliacao, "revisar_material", avaliacao.motivo, evento_id, agora, aviso=aviso)
 
     if avaliacao.acao == "incentivar":
@@ -281,15 +284,17 @@ def aplicar(aluno_id: str, avaliacao: Avaliacao, evento_id: str | None = None,
         return _registrar(aluno_id, avaliacao, "incentivar", avaliacao.motivo, evento_id, agora,
                           aviso=incentivo.mensagem)
 
-    # reforcar: pausa a sessão original e cria o reforço do pré-requisito direto
-    if not tutor.repositorio.pausar_sessao(avaliacao.sessao_id, aluno_id):
+    # reforcar: pausa a sessão original e cria o reforço do pré-requisito direto. Na R1 sem
+    # domínio a sessão já terminou: não há o que pausar e, depois do reforço, o aluno recomeça
+    sem_pausa = avaliacao.regra == "conclusao"
+    if not sem_pausa and not tutor.repositorio.pausar_sessao(avaliacao.sessao_id, aluno_id):
         return _registrar(aluno_id, avaliacao, "nenhuma",
                           avaliacao.motivo + " Mas a sessão não pôde ser pausada (concluída ou já pausada).",
                           evento_id, agora)
     original, reforco = avaliacao.competencia_id, avaliacao.competencia_reforco
+    modelo = regras.AVISO_REFORCO_SEM_DOMINIO if sem_pausa else regras.AVISO_REFORCO
     decisao = _registrar(aluno_id, avaliacao, "reforcar", avaliacao.motivo, evento_id, agora,
-                         aviso=regras.AVISO_REFORCO.format(reforco=nomes.get(reforco, reforco),
-                                                           original=nomes.get(original, original)))
+                         aviso=modelo.format(reforco=nomes.get(reforco, reforco), original=nomes.get(original, original)))
     repositorio.criar_reforco(aluno_id, original, avaliacao.sessao_id, reforco, decisao.decisao_id, agora)
     return decisao
 
@@ -303,15 +308,23 @@ def concluir_reforco(aluno_id: str, sessao_id: str, evento_id: str | None,
     if reforco is None or reforco["sessao_reforco_id"] != sessao_id:
         return None
     repositorio.concluir_reforco(reforco["id"], agora)
-    tutor.repositorio.retomar_sessao(reforco["sessao_original_id"], aluno_id)
     original = tutor.repositorio.ler_sessao(reforco["sessao_original_id"], aluno_id)
     nomes = _nomes()
+    nome_reforco, nome_original = nomes.get(reforco["competencia_reforco"]), nomes.get(reforco["competencia_original"])
+    if original is not None and original.concluida:
+        # a original terminou sem domínio (R1): nada a retomar; o aluno recomeça numa sessão nova
+        avaliacao = Avaliacao("reforco", True, "retomar_original", reforco["competencia_original"],
+                              f"Reforço de '{reforco['competencia_reforco']}' concluído: a sessão de "
+                              f"'{reforco['competencia_original']}' já tinha terminado sem domínio; recomeçar "
+                              f"numa sessão nova.", reforco["sessao_original_id"])
+        aviso = regras.AVISO_RECOMECO.format(reforco=nome_reforco, original=nome_original)
+        return _registrar(aluno_id, avaliacao, "retomar_original", avaliacao.motivo, evento_id, agora, aviso=aviso)
+    tutor.repositorio.retomar_sessao(reforco["sessao_original_id"], aluno_id)
     avaliacao = Avaliacao("reforco", True, "retomar_original", reforco["competencia_original"],
                           f"Reforço de '{reforco['competencia_reforco']}' concluído: retomar "
                           f"'{reforco['competencia_original']}' no nível {original.nivel}, sem zerar.",
                           reforco["sessao_original_id"])
-    aviso = regras.AVISO_RETOMADA.format(reforco=nomes.get(reforco["competencia_reforco"]),
-                                         original=nomes.get(reforco["competencia_original"]), nivel=original.nivel)
+    aviso = regras.AVISO_RETOMADA.format(reforco=nome_reforco, original=nome_original, nivel=original.nivel)
     return _registrar(aluno_id, avaliacao, "retomar_original", avaliacao.motivo, evento_id, agora, aviso=aviso)
 
 

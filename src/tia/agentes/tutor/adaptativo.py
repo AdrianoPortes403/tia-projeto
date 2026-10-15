@@ -17,7 +17,10 @@ sem LLM, sem aleatoriedade). Os limiares vêm de core/config.py:
       mais difícil depois de um acerto e o mais fácil depois de um erro ou
       no início), e o nível passa a ser o desse item (as sequências zeram);
     - a competência termina quando o aluno acerta TUTOR_ACERTOS_CONCLUIR itens
-      seguidos no nível 3, ou quando os itens dela acabam.
+      seguidos no nível 3 (domínio), ou quando os itens dela acabam. No
+      segundo caso a sessão termina "concluída com ressalvas" (com_ressalvas):
+      não é conclusão plena, e quem decide se o aluno avança é o orquestrador
+      (R1, pela taxa de acerto da sessão; ORQ_ACERTO_MIN_AVANCO).
 
 Os itens são dicionários no formato de conteudo/banco_itens/itens.json.
 Quem lê o banco e grava o estado é repositorio.py.
@@ -60,6 +63,7 @@ class EstadoSessao:
     acertos_seguidos: int = 0  # no nível atual
     erros_seguidos: int = 0    # no nível atual
     lacuna: bool = False       # a ÚLTIMA resposta fechou uma sequência de erros no nível 1 (não é gravado)
+    com_ressalvas: bool = False  # concluída porque os itens acabaram, sem domínio
 
 
 class SemItens(ValueError):
@@ -126,7 +130,8 @@ def avancar(estado: EstadoSessao, itens: list[dict], acertou: bool,
     if proximo is None:
         return replace(estado, nivel=nivel, item_atual_id=None, itens_usados=usados,
                        acertos_seguidos_nivel_max=seguidos_max, concluida=True,
-                       acertos_seguidos=acertos, erros_seguidos=erros, lacuna=lacuna)
+                       acertos_seguidos=acertos, erros_seguidos=erros, lacuna=lacuna,
+                       com_ressalvas=seguidos_max < acertos_para_concluir())
     if proximo["nivel"] != nivel:
         # nível sem itens: seguiu para o mais próximo; as sequências recomeçam
         acertos, erros = 0, 0

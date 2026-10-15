@@ -85,6 +85,15 @@ Rodar de novo é seguro: cada passo confere antes e só faz o que falta.
 
 Para ver o resultado: `journalctl -u tia-retencao.service` (e assim por diante); `systemctl list-timers 'tia-*'`.
 
+### Perfil de piloto (1.5.1, 27/10 a 04/11/2026)
+
+O `.env` criado pela instalação vem fora do piloto (sem prazo, escopo completo, inatividade 3 e 7
+dias). No início do piloto, troque no `/srv/tia/config/.env` os valores indicados em
+`deploy/perfil_piloto.env` (`PILOTO_PRAZO_DIAS=8`, `PILOTO_ESCOPO=piloto`, `INATIVIDADE_DIAS=2`,
+`ORQ_INATIVIDADE_REFAZER_DIAS=4`; trocar, não duplicar as chaves), reinicie a API e confira com
+`sudo /srv/tia/bin/tia config`. No fim do piloto, volte aos valores anteriores.
+**`INATIVIDADE_DIAS=2` também muda o alerta de inatividade do painel e do Relatório**, não só o incentivo.
+
 ## 3. Modelos e raciocínio
 
 - **Modelos:** `MODELOS_LLM` (padrão `qwen3:1.7b,qwen3:4b,qwen3:8b,qwen3.5:9b`). **A etiqueta do 9B é

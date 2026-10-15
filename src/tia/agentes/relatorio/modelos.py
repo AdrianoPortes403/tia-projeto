@@ -39,6 +39,10 @@ class ProgressoCompetencia(BaseModel):
     nome: str
     concluida: bool
     nivel_atual: int | None  # nível da sessão mais recente; None se nunca praticou
+    # a última sessão concluída terminou porque os itens acabaram, sem domínio
+    # (concluída com ressalvas); taxa_sem_dominio = acerto dessa sessão
+    com_ressalvas: bool = False
+    taxa_sem_dominio: float | None = None
 
 
 class Progresso(BaseModel):
@@ -47,6 +51,7 @@ class Progresso(BaseModel):
     concluidas: int
     percentual: float | None  # concluidas / etapas; None sem trilha
     por_competencia: list[ProgressoCompetencia] = []
+    com_ressalvas: int = 0  # competências com a ressalva acima
 
 
 # --- 2. desempenho ---
@@ -173,7 +178,7 @@ class EngajamentoTurma(BaseModel):
 
 
 class AlertaTurma(BaseModel):
-    tipo: Literal["inatividade", "desempenho_em_queda", "competencia_com_erro_alto"]
+    tipo: Literal["inatividade", "desempenho_em_queda", "conclusao_sem_dominio", "competencia_com_erro_alto"]
     descricao: str
     alunos: Contagem
     competencia_id: str | None = None

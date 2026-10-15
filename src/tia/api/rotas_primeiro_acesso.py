@@ -10,8 +10,10 @@ pelo Planejador com o perfil enquadrado pelo diagnóstico).
     POST /aluno/{id}/diagnostico/responder            resposta -> próxima questão ou fim
     POST /aluno/{id}/primeiro-acesso/concluir         matricula com onboarding + diagnóstico + piloto
 
-Autenticação (1.4.6): só o próprio aluno (leitura do passo: também docente).
+Autenticação (1.4.6): só o próprio aluno (leitura do passo: também docente, mas
+sem o objetivo, que é texto livre do aluno; R08).
 Nada disso é permitido depois da matrícula (409): o replanejamento é das regras.
+A conversa aceita até ONBOARDING_MAX_MENSAGENS mensagens (depois, 409: recomeçar).
 
 Incluídas em tia.api.main; para subir a API:
     uvicorn tia.api.main:app --reload
@@ -34,11 +36,10 @@ from tia.agentes.tutor.modelos import Pergunta
 from tia.core.config import PILOTO_ESCOPO, PILOTO_PRAZO_DIAS
 from tia.orquestrador import repositorio as repositorio_orquestrador
 from tia.orquestrador.modelos import Matricula, ResultadoMatricula
-from tia.seguranca.acesso import acesso_ao_aluno
+from tia.seguranca.acesso import SEM_LOGIN, UsuarioSessao, acesso_ao_aluno
 
 router = APIRouter(prefix="/aluno", tags=["primeiro acesso"])
 SoOAluno = [Depends(acesso_ao_aluno())]
-AlunoOuDocente = [Depends(acesso_ao_aluno("docente"))]
 CodigoNaRota = Annotated[str, Path(pattern=PADRAO_CODIGO_ALUNO)]
 
 
@@ -97,18 +98,27 @@ def _situacao(estado: diagnostico.EstadoDiagnostico, acertou: bool | None = None
                                notas=dict(estado.notas) if estado.concluido else None)
 
 
-@router.get("/{aluno_id}/primeiro-acesso", response_model=PassoPrimeiroAcesso, dependencies=AlunoOuDocente)
-def passo(aluno_id: CodigoNaRota) -> PassoPrimeiroAcesso:
-    """Em que passo do primeiro acesso o aluno está."""
+# campos do cadastro que só o próprio aluno recebe (texto livre; R08)
+SO_DO_ALUNO = ("objetivo",)
+
+
+@router.get("/{aluno_id}/primeiro-acesso", response_model=PassoPrimeiroAcesso)
+def passo(aluno_id: CodigoNaRota,
+          usuario: UsuarioSessao = Depends(acesso_ao_aluno("docente"))) -> PassoPrimeiroAcesso:
+    """Em que passo do primeiro acesso o aluno está. O docente não recebe o objetivo."""
     comum = {"prazo_dias": _prazo(), "escopo": PILOTO_ESCOPO}
     if repositorio_orquestrador.ler_matricula(aluno_id) is not None:
         return PassoPrimeiroAcesso(passo="matriculado", **comum)
     sessao = onboarding.ler(aluno_id)
+    dados = None
+    if sessao is not None:
+        do_aluno = usuario.papel in ("aluno", SEM_LOGIN)  # SEM_LOGIN: só no modo de desenvolvimento
+        dados = {k: v for k, v in sessao.dados.items() if do_aluno or k not in SO_DO_ALUNO}
     if sessao is None or not sessao.concluido:
-        return PassoPrimeiroAcesso(passo="onboarding", onboarding=sessao.dados if sessao else None, **comum)
+        return PassoPrimeiroAcesso(passo="onboarding", onboarding=dados, **comum)
     estado = diagnostico.ler(aluno_id)
     feito = estado is not None and estado.concluido and estado.trilha == sessao.dados.get("trilha")
-    return PassoPrimeiroAcesso(passo="concluir" if feito else "diagnostico", onboarding=sessao.dados,
+    return PassoPrimeiroAcesso(passo="concluir" if feito else "diagnostico", onboarding=dados,
                                diagnostico_concluido=feito, **comum)
 
 
@@ -116,7 +126,7 @@ def passo(aluno_id: CodigoNaRota) -> PassoPrimeiroAcesso:
 def iniciar_onboarding(aluno_id: CodigoNaRota) -> InicioOnboarding:
     """Começa (ou recomeça) a conversa de cadastro."""
     _exigir_nao_matriculado(aluno_id)
-    sessao, mensagem = onboarding.nova_sessao(aluno_id)
+    sessao, mensagem = onboarding.nova_sessao(aluno_id, onboarding.ler(aluno_id))
     onboarding.salvar(sessao, auditar="inicio")
     return InicioOnboarding(resposta=mensagem, proxima_pergunta=sessao.ultima_pergunta)
 

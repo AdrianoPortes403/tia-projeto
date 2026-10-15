@@ -1,7 +1,9 @@
 """
 Testes do primeiro acesso (Agente 1): diagnóstico inicial (regras puras e
 persistência), onboarding conversacional (regras e LLM mockado) e o percurso
-completo pelas rotas até a matrícula, inclusive LGPD (exportação e eliminação).
+completo pelas rotas até a matrícula, inclusive LGPD (exportação, eliminação e
+retenção do cadastro abandonado e do objetivo) e o limite de mensagens e de
+chamadas ao LLM. A autenticação dessas rotas está em tests/test_seguranca.py.
 
 Como rodar:
     ./run_tests.sh tests/test_primeiro_acesso.py
@@ -173,3 +175,67 @@ def test_lgpd_exporta_e_elimina_cadastro_e_diagnostico():
     assert dados["onboarding"] and dados["diagnostico_inicial"]
     titular.eliminar("P-004", "P-004")
     assert onboarding.ler("P-004") is None and diagnostico.ler("P-004") is None
+
+
+# --- LGPD e limite (ajustes de integração, 15/10/2026) ---
+
+def _recuar_cadastro(aluno: str, dias: int):
+    from tia.core.database import obter_conexao
+    conexao = obter_conexao()
+    with conexao:
+        conexao.execute("UPDATE planejador_onboarding SET criado_em = strftime('%Y-%m-%dT%H:%M:%S', 'now', ?), "
+                        "atualizado_em = strftime('%Y-%m-%dT%H:%M:%S', 'now', ?) WHERE aluno_id = ?",
+                        (f"-{dias} days", f"-{dias} days", aluno))
+    conexao.close()
+
+
+def test_retencao_apaga_cadastro_abandonado_e_o_objetivo_no_prazo_do_dialogo():
+    from tia.core.config import RETENCAO_DIALOGO_DIAS
+    from tia.seguranca import retencao
+    # P-010: abandonou o cadastro no meio da conversa (texto livre no histórico)
+    client.post("/aluno/P-010/onboarding/iniciar")
+    client.post("/aluno/P-010/onboarding/mensagem", json={"texto": "quero dev, sou da turma B"})
+    # P-011: concluiu, com objetivo em texto livre
+    client.post("/aluno/P-011/onboarding/iniciar")
+    for fala in ("dev", "3 horas por semana", "estágio numa empresa de software", "sim"):
+        client.post("/aluno/P-011/onboarding/mensagem", json={"texto": fala})
+    assert onboarding.ler("P-011").dados["objetivo"] == "estágio numa empresa de software"
+    # dentro do prazo, nada muda
+    retencao.executar(simular=False)
+    assert onboarding.ler("P-010").historico and "objetivo" in onboarding.ler("P-011").dados
+    for aluno in ("P-010", "P-011"):
+        _recuar_cadastro(aluno, RETENCAO_DIALOGO_DIAS + 1)
+    simulado = retencao.executar(simular=True)
+    afetadas = {o.descricao: o.linhas for o in simulado.operacoes if o.tabela == "planejador_onboarding"}
+    assert list(afetadas.values()) == [1, 1]
+    assert onboarding.ler("P-010") is not None  # a simulação não altera nada
+    retencao.executar(simular=False)
+    assert onboarding.ler("P-010") is None
+    concluido = onboarding.ler("P-011")
+    assert concluido.concluido and "objetivo" not in concluido.dados and concluido.dados["trilha"] == "dev"
+    # idempotente: rodar de novo não acha mais nada
+    assert all(o.linhas == 0 for o in retencao.executar(simular=True).operacoes if o.tabela == "planejador_onboarding")
+
+
+def test_limite_de_mensagens_e_de_chamadas_ao_llm(monkeypatch):
+    import tia.core.config as config
+    monkeypatch.setattr(config, "ONBOARDING_MAX_MENSAGENS", 3)
+    monkeypatch.setattr(onboarding, "ONBOARDING_USA_LLM", True)
+    chamadas = []
+
+    def llm(prompt, **kwargs):
+        chamadas.append(1)
+        return "{}"  # nada extraído: a pergunta se repete
+
+    monkeypatch.setattr(onboarding, "chamar_llm", llm)
+    client.post("/aluno/P-012/onboarding/iniciar")
+    for _ in range(3):
+        assert client.post("/aluno/P-012/onboarding/mensagem", json={"texto": "hum"}).status_code == 200
+    excedeu = client.post("/aluno/P-012/onboarding/mensagem", json={"texto": "hum"})
+    assert excedeu.status_code == 409 and "Limite de 3 mensagens" in excedeu.json()["detail"]
+    assert len(chamadas) == 3
+    # recomeçar libera novas mensagens, mas o LLM já gastou a cota deste aluno: segue por regras
+    client.post("/aluno/P-012/onboarding/iniciar")
+    resposta = client.post("/aluno/P-012/onboarding/mensagem", json={"texto": "dev"}).json()
+    assert resposta["origem"] == "regras" and resposta["dados"]["trilha"] == "dev"
+    assert len(chamadas) == 3

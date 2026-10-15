@@ -10,8 +10,11 @@ processamento falha, a reserva é desfeita e o evento pode ser reenviado.
     resposta:    repassa a resposta ao Tutor (tutor.responder; sessão pausada é
                  recusada). Se a sessão concluiu: sendo de reforço, retoma a
                  sessão original (sem zerar); senão, avalia R1 (conclusão). Se
-                 não concluiu, avalia R2 (queda). Só grava decisão quando algo
-                 acontece (não registra "nenhuma" a cada resposta);
+                 ela terminou sem domínio e com acerto abaixo de
+                 ORQ_ACERTO_MIN_AVANCO, não avança: reforço ou material
+                 (regra_sem_dominio; a decisão é gravada mesmo se for "nenhuma").
+                 Se não concluiu, avalia a lacuna e a R2 (queda). Só grava decisão
+                 quando algo acontece (não registra "nenhuma" a cada resposta);
     conclusao:   confere no banco e avalia R1; grava a decisão, mesmo "nenhuma";
     inatividade: avalia R3 só para este aluno (o mesmo que a verificação
                  agendada faz para todos); grava a decisão, mesmo "nenhuma".
@@ -54,14 +57,35 @@ def _avaliar_queda(aluno_id: str, competencia_id: str | None, sessao_id: str) ->
         prerequisito=regras.prerequisito_direto(competencia_id, carregar_ementa()) if competencia_id else None)
 
 
+def _ja_na_sessao(aluno_id: str, acao: str, sessao_id: str) -> bool:
+    """A sessão já provocou uma decisão com esta ação (reforço e material: uma vez por sessão)."""
+    return any(d["sessao_id"] == sessao_id for d in repositorio.listar_decisoes(aluno_id, acao))
+
+
 def _avaliar_lacuna(aluno_id: str, competencia_id: str | None, sessao_id: str) -> regras.Avaliacao:
-    reforcos = repositorio.listar_decisoes(aluno_id, "reforcar")
     ativo = repositorio.reforco_ativo(aluno_id)
     return regras.regra_lacuna(
         competencia_id, sessao_id,
         regras.prerequisito_direto(competencia_id, carregar_ementa()) if competencia_id else None,
         em_reforco=ativo is not None and ativo["sessao_reforco_id"] == sessao_id,
-        sessao_ja_reforcada=any(r["sessao_id"] == sessao_id for r in reforcos))
+        sessao_ja_reforcada=_ja_na_sessao(aluno_id, "reforcar", sessao_id),
+        sessao_ja_com_material=_ja_na_sessao(aluno_id, "revisar_material", sessao_id))
+
+
+def _avaliar_conclusao(aluno_id: str, competencia_id: str, sessao_id: str) -> tuple[regras.Avaliacao, bool]:
+    """R1 para a sessão que acabou de terminar: com domínio (ou sem domínio mas
+    com acerto suficiente) avança; sem domínio e abaixo do mínimo, regra_sem_dominio.
+    O bool diz se a decisão deve ser gravada mesmo sem disparar (sem domínio)."""
+    resultado = tutor.repositorio.resultado_sessao(sessao_id, aluno_id) or {}
+    taxa = resultado.get("taxa_acerto")
+    if resultado.get("com_ressalvas") and not regras.avanca_sem_dominio(taxa):
+        return regras.regra_sem_dominio(
+            competencia_id, sessao_id, taxa, regras.prerequisito_direto(competencia_id, carregar_ementa()),
+            sessao_ja_reforcada=_ja_na_sessao(aluno_id, "reforcar", sessao_id),
+            sessao_ja_com_material=_ja_na_sessao(aluno_id, "revisar_material", sessao_id)), True
+    return regras.regra_conclusao(competencia_id, tutor.repositorio.competencias_concluidas(aluno_id),
+                                  _ja_avancou(aluno_id, competencia_id),
+                                  taxa if resultado.get("com_ressalvas") else None), False
 
 
 def _competencia_da_sessao(aluno_id: str, sessao_id: str) -> str | None:
@@ -81,9 +105,9 @@ def _despachar(aluno_id: str, evento: EventoTutor, agora: datetime) -> Resultado
             if retomada is not None:
                 decisoes.append(retomada)
             else:
-                avaliacao = regras.regra_conclusao(competencia, tutor.repositorio.competencias_concluidas(aluno_id),
-                                                   _ja_avancou(aluno_id, competencia))
-                if avaliacao.dispara:
+                avaliacao, gravar_sempre = _avaliar_conclusao(aluno_id, competencia, evento.sessao_id)
+                # sem domínio, a decisão vai para a auditoria mesmo quando não dispara
+                if avaliacao.dispara or gravar_sempre:
                     decisoes.append(fluxo.aplicar(aluno_id, avaliacao, evento.evento_id, agora))
         else:
             # lacuna (1.2.5) tem prioridade; se ela não agiu, avalia a queda (R2)

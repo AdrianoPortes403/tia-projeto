@@ -41,6 +41,7 @@
     inatividade: "Inatividade",
     desempenho_em_queda: "Desempenho em queda",
     desempenho_baixo: "Desempenho baixo",
+    conclusao_sem_dominio: "Concluída com ressalvas",
   };
   const DIRECAO = {
     subindo: "↑ subindo",
@@ -51,6 +52,7 @@
   const ALERTA_TURMA = {
     inatividade: "Inatividade",
     desempenho_em_queda: "Desempenho em queda",
+    conclusao_sem_dominio: "Concluída com ressalvas (sem domínio)",
     competencia_com_erro_alto: "Competência com erro alto",
   };
   const SITUACAO = { a_revisar: "A revisar", aprovada: "Aprovada", vetada: "Vetada" };
@@ -288,7 +290,8 @@
     $("risco-criterios").textContent = "Critérios (PROVISÓRIOS): sem atividade há " + c.inatividade_dias +
       " dias ou mais (quem concluiu a trilha não entra); queda de " + Math.round(c.queda_pontos * 100) +
       " pontos ou mais no acerto recente; acerto abaixo de " + porcento(c.desempenho_baixo) + " com pelo menos " +
-      c.min_respostas + " respostas. Avaliados: " + r.alunos_avaliados + " alunos.";
+      c.min_respostas + " respostas; questões de uma competência terminadas sem domínio (avança só com acerto de " +
+      porcento(c.acerto_min_avanco) + " ou mais). Avaliados: " + r.alunos_avaliados + " alunos.";
     const filtro = $("filtro-motivo").value;
     const alunos = r.alunos.filter((a) => !filtro || a.motivos.some((m) => m.tipo === filtro));
     $("risco-lista").replaceChildren(alunos.length ? tabela("Alunos em risco",

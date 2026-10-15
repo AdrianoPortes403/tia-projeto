@@ -122,4 +122,5 @@ def responder(resposta: RespostaAluno, modo: str | None = None) -> Feedback:
     return Feedback(acertou=acertou, indice_correto=item["indice_correto"], veredito=resultado.veredito,
                     explicacao=resultado.explicacao, origem=resultado.origem, falha_llm=resultado.falha_llm,
                     fontes=resultado.fontes, nivel_atual=novo.nivel, concluida=novo.concluida, lacuna=novo.lacuna,
+                    com_ressalvas=novo.com_ressalvas,
                     proxima_pergunta=proxima, tempo_ms=tempo_ms, resposta_id=resposta_id)

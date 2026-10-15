@@ -22,7 +22,8 @@ from datetime import datetime
 
 from tia.agentes.planejador.modelos import Trilha
 from tia.agentes.planejador.repositorio import ler_trilha
-from tia.core import auditoria
+from tia.agentes.tutor.repositorio import CONCLUSAO_QUE_VALE
+from tia.core import auditoria, config
 from tia.core.database import obter_conexao
 
 
@@ -36,7 +37,9 @@ class DadosAluno:
     # item_id e sessao_id (None nas respostas gravadas antes dessas colunas) e
     # feedback_vetado (None sem texto gravado em tutor_feedbacks; o texto NÃO é lido)
     respostas: list[dict] = field(default_factory=list)
-    # cada sessão: competencia_id, nivel, concluida, criado_em, atualizado_em
+    # cada sessão: competencia_id, nivel, concluida, criado_em, atualizado_em, com_ressalvas
+    # (itens acabaram sem domínio), taxa_acerto (da sessão, ao concluir) e vale_conclusao
+    # (conta como conclusão da competência: tutor.repositorio.CONCLUSAO_QUE_VALE)
     sessoes: list[dict] = field(default_factory=list)
     # cada diálogo: competencia_id, origem, vetada, ts (sem texto)
     dialogos: list[dict] = field(default_factory=list)
@@ -79,8 +82,10 @@ def ler_dados_aluno(aluno_id: str) -> DadosAluno | None:
                ORDER BY h.timestamp, h.id""", (aluno_id,),
         ).fetchall()
         sessoes = conexao.execute(
-            """SELECT competencia_id, nivel, concluida, criado_em, atualizado_em FROM tutor_sessoes
-               WHERE aluno_id = ? ORDER BY atualizado_em, criado_em""", (aluno_id,),
+            f"""SELECT competencia_id, nivel, concluida, criado_em, atualizado_em, com_ressalvas, taxa_acerto,
+                       COALESCE({CONCLUSAO_QUE_VALE}, 0) AS vale_conclusao
+                FROM tutor_sessoes WHERE aluno_id = ? ORDER BY atualizado_em, criado_em""",
+            (config.ORQ_ACERTO_MIN_AVANCO, aluno_id),
         ).fetchall()
         dialogos = conexao.execute(
             """SELECT competencia_id, origem, vetada, ts FROM tutor_dialogo
@@ -99,7 +104,9 @@ def ler_dados_aluno(aluno_id: str) -> DadosAluno | None:
                     "feedback_vetado": None if r["feedback_vetado"] is None else bool(r["feedback_vetado"])}
                    for r in respostas],
         sessoes=[{"competencia_id": s["competencia_id"], "nivel": s["nivel"], "concluida": bool(s["concluida"]),
-                  "criado_em": s["criado_em"], "atualizado_em": s["atualizado_em"]} for s in sessoes],
+                  "criado_em": s["criado_em"], "atualizado_em": s["atualizado_em"],
+                  "com_ressalvas": bool(s["concluida"] and s["com_ressalvas"]), "taxa_acerto": s["taxa_acerto"],
+                  "vale_conclusao": bool(s["vale_conclusao"])} for s in sessoes],
         dialogos=[{"competencia_id": d["competencia_id"], "origem": d["origem"], "vetada": bool(d["vetada"]),
                    "ts": d["ts"]} for d in dialogos],
     )

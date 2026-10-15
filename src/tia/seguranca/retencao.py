@@ -5,7 +5,10 @@ jurídico/DEP), contados da data de cada registro:
 
     RETENCAO_FEEDBACK_TEXTO_DIAS  textos do feedback das questões apagados; resultado
                                   guardado dos eventos (que repete o feedback) apagado
-    RETENCAO_DIALOGO_DIAS         diálogo livre: textos apagados, linha desvinculada
+    RETENCAO_DIALOGO_DIAS         diálogo livre: textos apagados, linha desvinculada;
+                                  cadastro inicial (planejador_onboarding) não concluído
+                                  apagado (é onde fica a conversa de cadastro); objetivo
+                                  (texto livre) tirado do cadastro concluído
     RETENCAO_RESPOSTAS_DIAS       respostas, feedbacks, sessões, decisões e reforços
                                   desvinculados do aluno
     RETENCAO_AUDITORIA_DIAS       auditoria NÃO é apagada: só os códigos de aluno e de
@@ -14,7 +17,7 @@ jurídico/DEP), contados da data de cada registro:
                                   login (seguranca.limpeza, reaproveitada aqui)
     RETENCAO_COPIAS_DIAS          cópias do banco feitas antes de apagar dados
 
-Cadastro, matrícula e trilha não têm prazo por data: ficam enquanto o aluno
+Cadastro (exceto o objetivo), matrícula, trilha e diagnóstico inicial não têm prazo por data: ficam enquanto o aluno
 estuda e saem pela eliminação a pedido (seguranca.titular). O que conta como
 anonimizar: seguranca.anonimizacao.
 
@@ -41,6 +44,10 @@ from tia.core import auditoria
 from tia.core.database import criar_tabelas, obter_conexao
 from tia.seguranca import anonimizacao, limpeza
 from tia.seguranca.anonimizacao import TEM_TEXTO_DIALOGO, TEM_TEXTO_FEEDBACK, TEXTOS_DIALOGO, TEXTOS_FEEDBACK
+
+
+# o objetivo do aluno (texto livre, até 200 caracteres) fica no JSON do cadastro
+TEM_OBJETIVO = "json_extract(estado, '$.dados.objetivo') IS NOT NULL"
 
 
 @dataclass
@@ -82,6 +89,13 @@ def operacoes() -> list[Operacao]:
         Operacao("diálogo livre (pergunta, resposta e correção)", "tutor_dialogo", "anonimizar",
                  "RETENCAO_DIALOGO_DIAS", f"ts < ? AND ({desvincular} OR {TEM_TEXTO_DIALOGO})",
                  "aluno_id = NULL, " + TEXTOS_DIALOGO),
+        # conversa de cadastro abandonada: o histórico (texto livre do aluno) só some ao concluir
+        Operacao("cadastro inicial não concluído (conversa com texto livre)", "planejador_onboarding", "apagar",
+                 "RETENCAO_DIALOGO_DIAS", "NOT concluido AND COALESCE(atualizado_em, criado_em) < ?"),
+        Operacao("objetivo do aluno no cadastro concluído (texto livre)", "planejador_onboarding", "anonimizar",
+                 "RETENCAO_DIALOGO_DIAS",
+                 f"concluido AND COALESCE(atualizado_em, criado_em) < ? AND {TEM_OBJETIVO}",
+                 "estado = json_remove(estado, '$.dados.objetivo')"),
         Operacao("respostas do questionário", "historico_respostas", "anonimizar", "RETENCAO_RESPOSTAS_DIAS",
                  f"timestamp < ? AND {desvincular}", "aluno_id = NULL, sessao_id = NULL"),
         Operacao("feedback das questões (ligação com o aluno)", "tutor_feedbacks", "anonimizar",

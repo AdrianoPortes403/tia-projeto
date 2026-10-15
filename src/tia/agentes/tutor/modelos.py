@@ -74,6 +74,9 @@ class Feedback(BaseModel):
     concluida: bool
     # a resposta fechou uma sequência de erros no nível 1 (1.2.5): o orquestrador decide o reforço
     lacuna: bool = False
+    # concluída porque os itens acabaram, sem domínio (TUTOR_ACERTOS_CONCLUIR acertos
+    # seguidos no nível 3): o orquestrador decide se avança (ORQ_ACERTO_MIN_AVANCO)
+    com_ressalvas: bool = False
     # None quando a competência foi concluída
     proxima_pergunta: Pergunta | None = None
     tempo_ms: int

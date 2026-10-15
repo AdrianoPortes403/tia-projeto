@@ -529,7 +529,9 @@
       el("p", { classe: "origem" }, "Origem da explicação: " + f.origem + ". " + (ORIGEM_FEEDBACK[f.origem] || "") +
         (f.falha_llm ? " Motivo: " + (FALHA[f.falha_llm] || f.falha_llm) + "." : "") + tempo(f.tempo_ms)),
       blocoFontes(f.fontes),
-      el("p", { classe: "etapa__dados", texto: f.concluida ? "Competência concluída!" : "Nível atual: " + f.nivel_atual }),
+      el("p", { classe: "etapa__dados", texto: !f.concluida ? "Nível atual: " + f.nivel_atual :
+        f.com_ressalvas ? "As questões desta competência acabaram antes do domínio (concluída com ressalvas)." :
+        "Competência concluída!" }),
       continuar);
     $("estudo-conteudo").append(bloco);
     mostrarAvisos(resultado.avisos);
@@ -620,7 +622,8 @@
       pr.tem_trilha ? el("progress", { max: pr.etapas || 1, value: pr.concluidas,
         "aria-label": "Etapas concluídas" }) : null,
       el("ul", {}, pr.por_competencia.map((c) => el("li", { texto: c.nome + ": " +
-        (c.concluida ? "concluída" : c.nivel_atual ? "em andamento, nível " + c.nivel_atual : "não iniciada") }))));
+        (c.concluida ? "concluída" : c.nivel_atual ? "em andamento, nível " + c.nivel_atual : "não iniciada") +
+        (c.com_ressalvas ? " (com ressalvas: as questões acabaram sem domínio)" : "") }))));
 
     const desempenho = indicador("2. Desempenho",
       el("p", { texto: de.geral.respostas ? "Você acertou " + de.geral.acertos + " de " + de.geral.respostas +

@@ -68,6 +68,9 @@ PERFIS_PATH = os.getenv("PERFIS_PATH", "conteudo/perfis/perfis.json")
 # Primeiro acesso (onboarding conversacional + diagnóstico, contrato 1.3.2)
 ONBOARDING_USA_LLM = os.getenv("ONBOARDING_USA_LLM", "1").lower() in ("1", "true", "sim")
 ONBOARDING_TIMEOUT_LLM = int(os.getenv("ONBOARDING_TIMEOUT_LLM", "60"))
+# Máximo de mensagens do aluno numa conversa de cadastro (cada uma pode chamar o LLM).
+# Ao atingir o limite, o cadastro é recusado (409) até ser recomeçado. PROVISÓRIO.
+ONBOARDING_MAX_MENSAGENS = int(os.getenv("ONBOARDING_MAX_MENSAGENS", "12"))
 # Piloto (1.5.1): prazo da matrícula em dias (0 = sem prazo) e escopo da trilha.
 # No piloto de 27/10 a 04/11/2026: PILOTO_PRAZO_DIAS=8 e PILOTO_ESCOPO=piloto no .env.
 PILOTO_PRAZO_DIAS = int(os.getenv("PILOTO_PRAZO_DIAS", "0"))
@@ -155,6 +158,10 @@ ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS = int(os.getenv("ORQ_QUEDA_RESPOSTAS_ENTRE_RE
 # incentivo; a partir de ORQ_INATIVIDADE_REFAZER_DIAS, incentivo com a trilha refeita a partir de hoje.
 # Regime normal: 3 e 7 dias. No piloto de 8 dias (1.5.1): 2 e 4 dias, pelo .env.
 ORQ_INATIVIDADE_REFAZER_DIAS = int(os.getenv("ORQ_INATIVIDADE_REFAZER_DIAS", "7"))
+# Conclusão sem domínio (PROVISÓRIO, Pessoa 4): quando os itens de uma competência acabam sem
+# TUTOR_ACERTOS_CONCLUIR acertos seguidos no nível 3, a sessão termina "concluída com ressalvas".
+# A R1 só avança se a taxa de acerto da sessão for pelo menos esta; abaixo, reforço ou material.
+ORQ_ACERTO_MIN_AVANCO = float(os.getenv("ORQ_ACERTO_MIN_AVANCO", "0.6"))
 
 # --- Segurança: autenticação e papéis (EAP 1.4.6) ---
 # "desligada" = MODO DE DESENVOLVIMENTO: nenhuma rota pede login (testes e demos
@@ -278,7 +285,7 @@ if __name__ == "__main__":
                  "OLLAMA_KEEP_ALIVE", "DB_PATH",
                  "MATERIAIS_DIR", "CHROMA_DIR", "COLLECTION_NAME",
                  "CHUNK_SIZE", "CHUNK_OVERLAP", "EMENTA_PATH", "PERFIS_PATH", "ONBOARDING_USA_LLM",
-                 "ONBOARDING_TIMEOUT_LLM", "PILOTO_PRAZO_DIAS", "PILOTO_ESCOPO", "TUTOR_ACERTOS_SUBIR",
+                 "ONBOARDING_TIMEOUT_LLM", "ONBOARDING_MAX_MENSAGENS", "PILOTO_PRAZO_DIAS", "PILOTO_ESCOPO", "TUTOR_ACERTOS_SUBIR",
                  "TUTOR_ERROS_DESCER", "TUTOR_ACERTOS_CONCLUIR",
                  "PLANEJADOR_TIMEOUT_LLM", "BANCO_ITENS_PATH", "TUTOR_TIMEOUT_LLM", "TUTOR_MAX_TOKENS", "TUTOR_TEMPERATURA", "TUTOR_TOP_P", "TUTOR_SEED", "TUTOR_MODO_FEEDBACK",
                  "TUTOR_NUM_TRECHOS",
@@ -286,7 +293,7 @@ if __name__ == "__main__":
                  "INATIVIDADE_DIAS", "RELATORIO_MIN_GRUPO", "RELATORIO_TIMEOUT_LLM", "RELATORIO_MAX_TOKENS",
                  "RELATORIO_TEMPERATURA", "RELATORIO_SEED", "RELATORIO_TENDENCIA_JANELA",
                  "RELATORIO_TENDENCIA_MIN_RESPOSTAS", "RELATORIO_TENDENCIA_LIMIAR",
-                 "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_INATIVIDADE_REFAZER_DIAS",
+                 "ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "ORQ_INATIVIDADE_REFAZER_DIAS", "ORQ_ACERTO_MIN_AVANCO",
                  "PAINEL_DESEMPENHO_BAIXO", "PAINEL_MIN_RESPOSTAS", "TIA_AUTH", "AUTH_PROVEDOR",
                  "AUTH_SESSAO_INATIVIDADE_MINUTOS", "AUTH_SESSAO_MAXIMA_MINUTOS", "AUTH_COOKIE_SEGURO",
                  "AUTH_MAX_FALHAS_USUARIO", "AUTH_MAX_FALHAS_IP", "AUTH_JANELA_MINUTOS", "AUTH_ATRASO_SEGUNDOS",
