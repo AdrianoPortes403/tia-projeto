@@ -39,8 +39,12 @@
     etapas: [],          // EstadoAluno.etapas (nomes das competências)
     sessaoId: null,      // sessão do Tutor em andamento
     pergunta: null,      // pergunta em aberto
-    eventoPendente: null // evento que falhou: reenviado com o mesmo evento_id (idempotente)
+    eventoPendente: null, // evento que falhou: reenviado com o mesmo evento_id (idempotente)
+    nomes: {},           // tópico -> nome (GET /conteudo/ementa), para o diagnóstico antes da matrícula
+    diagnostico: null    // SituacaoDiagnostico em andamento no primeiro acesso
   };
+  const PERFIL = { iniciante: "Iniciante", intermediario: "Intermediário" };
+  const TRILHA = { dev: "Desenvolvimento de Software", defesa_cibernetica: "Defesa Cibernética" };
 
   // utilidades compartilhadas com o painel do docente (comum.js): el, chamar, erros
   const { $, el, tempo, porcento, ErroApi, chamar, mostrarErro, esconderErro } = window.TIA;
@@ -48,7 +52,7 @@
 
   function nomeCompetencia(id) {
     const etapa = estado.etapas.find((e) => e.competencia_id === id);
-    return etapa ? etapa.nome : id;
+    return etapa ? etapa.nome : (estado.nomes[id] || id);
   }
 
   function novoEventoId() {
@@ -186,8 +190,7 @@
         irPara("entrada");
         $("abas").hidden = true;
         $("form-entrada").hidden = estado.autenticado;
-        $("form-matricula").hidden = false;
-        $("campo-perfil").focus();
+        await mostrarPrimeiroAcesso();
       } else if (erro.status !== 401) {
         definirAluno(null);
         mostrarErro(erro);
@@ -195,27 +198,123 @@
     }
   }
 
-  async function matricular(evento) {
+  // --- a2) primeiro acesso: conversa (onboarding) -> diagnóstico -> trilha ---
+
+  function falaNaConversa(papel, texto) {
+    $("onboarding-conversa").append(el("li", { classe: "cartao" },
+      el("p", { classe: papel === "aluno" ? "conversa__pergunta" : "conversa__resposta", texto })));
+  }
+
+  async function carregarNomes() {
+    if (Object.keys(estado.nomes).length) return;
+    try {
+      for (const c of await chamar("GET", "/conteudo/ementa", null, "Carregando…")) estado.nomes[c.id] = c.nome;
+    } catch (erro) { if (erro.status !== 401 && erro.status !== 403) throw erro; }
+  }
+
+  async function mostrarPrimeiroAcesso() {
+    $("primeiro-acesso").hidden = false;
+    $("onboarding-conversa").replaceChildren();
+    $("diagnostico-conteudo").replaceChildren();
+    $("titulo-diagnostico").hidden = true;
+    $("diagnostico-progresso").hidden = true;
+    $("concluir-primeiro-acesso").hidden = true;
+    $("form-onboarding").hidden = true;
+    await carregarNomes();
+    const situacao = await chamar("GET", rota("/aluno/{id}/primeiro-acesso"), null, "Buscando seu cadastro…");
+    if (situacao.passo === "onboarding") {
+      const inicio = await chamar("POST", rota("/aluno/{id}/onboarding/iniciar"), null, "Abrindo a conversa…");
+      falaNaConversa("tutor", inicio.resposta);
+      $("form-onboarding").hidden = false;
+      $("campo-onboarding").focus();
+    } else {
+      falaNaConversa("tutor", "Seu cadastro já foi feito: trilha " + (TRILHA[situacao.onboarding.trilha] || "") +
+        ", " + situacao.onboarding.horas_semana + " h por semana.");
+      if (situacao.passo === "concluir") mostrarFimDoDiagnostico(null);
+      else await iniciarDiagnostico();
+    }
+  }
+
+  async function enviarOnboarding(evento) {
     evento.preventDefault();
-    const horas = Number($("campo-horas").value);
-    if (!(horas > 0 && horas <= 60)) {
-      mostrarErro(new ErroApi("Informe entre 1 e 60 horas por semana.", 0));
-      $("campo-horas").focus();
+    const campo = $("campo-onboarding");
+    const texto = campo.value.trim();
+    if (!texto) { campo.focus(); return; }
+    const resposta = await chamar("POST", rota("/aluno/{id}/onboarding/mensagem"), { texto }, "O tutor está lendo…");
+    falaNaConversa("aluno", texto);
+    falaNaConversa("tutor", resposta.resposta);
+    campo.value = "";
+    if (resposta.concluido) {
+      $("form-onboarding").hidden = true;
+      await iniciarDiagnostico();
+    } else {
+      campo.focus();
+    }
+  }
+
+  async function iniciarDiagnostico() {
+    $("titulo-diagnostico").hidden = false;
+    $("diagnostico-progresso").hidden = false;
+    const situacao = await chamar("POST", rota("/aluno/{id}/diagnostico/iniciar"), null, "Preparando o diagnóstico…");
+    if (situacao.concluido) mostrarFimDoDiagnostico(situacao); else mostrarQuestaoDiagnostico(situacao);
+  }
+
+  function mostrarQuestaoDiagnostico(situacao) {
+    estado.diagnostico = situacao;
+    const p = situacao.pergunta;
+    $("diagnostico-progresso").textContent = "Tópico " + situacao.topico_atual + " de " + situacao.total_topicos +
+      " · " + nomeCompetencia(p.competencia_id) + " · nível " + p.nivel +
+      (situacao.acertou === null ? "" : situacao.acertou ? " · você acertou a anterior" : "");
+    const grupo = el("fieldset", { classe: "alternativas" }, el("legend", { texto: "Escolha uma alternativa" }),
+      p.alternativas.map((texto, indice) => el("label", { classe: "alternativa" },
+        el("input", { type: "radio", name: "alternativa-diagnostico", value: indice, required: true }),
+        el("span", { texto }))));
+    const form = el("form", { classe: "cartao", novalidate: true, onsubmit: responderDiagnostico },
+      el("h4", { classe: "enunciado", id: "enunciado-diagnostico", texto: p.enunciado }),
+      grupo,
+      el("button", { type: "submit", classe: "botao acao", texto: "Responder", disabled: TIA.estaOcupado() }));
+    form.setAttribute("aria-labelledby", "enunciado-diagnostico");
+    $("diagnostico-conteudo").replaceChildren(form);
+    const primeira = form.querySelector("input");
+    if (primeira) primeira.focus();
+  }
+
+  async function responderDiagnostico(evento) {
+    evento.preventDefault();
+    const marcada = evento.currentTarget.querySelector("input[name=alternativa-diagnostico]:checked");
+    if (!marcada) {
+      mostrarErro(new ErroApi("Escolha uma alternativa antes de responder.", 0));
       return;
     }
-    try {
-      await chamar("POST", rota("/aluno/{id}/iniciar"),
-        { perfil_id: $("campo-perfil").value, horas_semanais: horas, diagnostico: {} },
-        "O Planejador está montando sua trilha…");
-      $("form-matricula").hidden = true;
-      $("abas").hidden = false;
-      irPara("trilha");
-    } catch (erro) { mostrarErro(erro); }
+    const situacao = await chamar("POST", rota("/aluno/{id}/diagnostico/responder"),
+      { item_id: estado.diagnostico.pergunta.item_id, indice_escolhido: Number(marcada.value) }, "Registrando…");
+    if (situacao.concluido) mostrarFimDoDiagnostico(situacao); else mostrarQuestaoDiagnostico(situacao);
+  }
+
+  function mostrarFimDoDiagnostico(situacao) {
+    estado.diagnostico = null;
+    $("titulo-diagnostico").hidden = false;
+    $("diagnostico-progresso").hidden = false;
+    $("diagnostico-progresso").textContent = "Diagnóstico concluído" +
+      (situacao ? " (" + situacao.total_topicos + " tópicos avaliados)." : ".");
+    $("diagnostico-conteudo").replaceChildren(el("p", { classe: "aviso",
+      texto: "Com o diagnóstico, o Planejador escolhe seu perfil e tira da trilha o que você já domina." }));
+    $("concluir-primeiro-acesso").hidden = false;
+    $("concluir-primeiro-acesso").focus();
+  }
+
+  async function concluirPrimeiroAcesso() {
+    await chamar("POST", rota("/aluno/{id}/primeiro-acesso/concluir"), null,
+      "O Planejador está montando sua trilha…");
+    $("primeiro-acesso").hidden = true;
+    $("abas").hidden = false;
+    irPara("trilha");
   }
 
   function sair() {
     definirAluno(null);
-    $("form-matricula").hidden = true;
+    estado.diagnostico = null;
+    $("primeiro-acesso").hidden = true;
     $("campo-aluno").value = "";
     irPara("entrada");
     $("campo-aluno").focus();
@@ -243,6 +342,21 @@
         nomeCompetencia(atual.reforco.competencia_original) + "\"."));
     }
     if (decisao && decisao.aviso) avisos.append(el("p", { classe: "aviso", texto: decisao.aviso }));
+    if (trilha) {
+      const partes = [];
+      if (trilha.trilha) partes.push("Trilha: " + (TRILHA[trilha.trilha] || trilha.trilha));
+      partes.push("perfil " + (PERFIL[trilha.perfil_id] || trilha.perfil_id) +
+        (trilha.pontuacao_enquadramento !== null && trilha.pontuacao_enquadramento !== undefined
+          ? " (pelo diagnóstico)" : ""));
+      if (trilha.prazo_dias) partes.push("prazo de " + trilha.prazo_dias + " dias");
+      avisos.append(el("p", { classe: "etapa__dados", texto: partes.join(" · ") + "." }));
+      if (trilha.cabe_no_prazo === false && trilha.opcoes_prazo) {
+        avisos.append(el("p", { classe: "aviso aviso--alerta", texto: "Com as horas atuais, a trilha não cabe no " +
+          "prazo. Para caber, seriam " + trilha.opcoes_prazo.horas_semanais_necessarias + " h por semana; ou dá " +
+          "para focar nas " + trilha.opcoes_prazo.recorte_que_cabe.length + " primeiras etapas. Fale com o docente." }));
+      }
+      for (const aviso of trilha.avisos || []) avisos.append(el("p", { classe: "aviso", texto: aviso }));
+    }
 
     const lista = $("trilha-etapas");
     lista.replaceChildren();
@@ -263,6 +377,10 @@
       el("div", { classe: "etapa__cabeca" }, el("h3", { texto: etapa.ordem + ". " + etapa.nome }), selo),
       dados,
       detalhe.justificativa ? el("p", { texto: detalhe.justificativa }) : null,
+      !etapa.concluida && detalhe.revisar_antes && detalhe.revisar_antes.length ? el("p", { classe: "etapa__dados",
+        texto: "Antes, revise: " + detalhe.revisar_antes.map(nomeCompetencia).join(", ") + "." }) : null,
+      !etapa.concluida && detalhe.desafio_pratico ? el("p", { classe: "etapa__dados",
+        texto: "Desafio prático opcional ao fim da etapa: " + detalhe.desafio_pratico }) : null,
       detalhe.justificativa && !etapa.concluida ? el("p", { classe: "origem" },
         "Origem: " + (ORIGEM_JUSTIFICATIVA[origem] || "não registrada")) : null));
     }
@@ -588,7 +706,8 @@
     TIA.ligarTrocaDeSenha(iniciar);
     $("sair").addEventListener("click", encerrarSessao);
     $("form-entrada").addEventListener("submit", entrar);
-    $("form-matricula").addEventListener("submit", matricular);
+    $("form-onboarding").addEventListener("submit", (e) => enviarOnboarding(e).catch(mostrarErro));
+    $("concluir-primeiro-acesso").addEventListener("click", () => concluirPrimeiroAcesso().catch(mostrarErro));
     $("cancelar-matricula").addEventListener("click", sair);
     $("trocar-aluno").addEventListener("click", sair);
     $("erro-fechar").addEventListener("click", esconderErro);

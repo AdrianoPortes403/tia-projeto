@@ -316,9 +316,10 @@ def test_r3_no_orquestrador_consistente_com_o_painel(turma):
     assert estado["concluido"] is True and estado["inativo"] is False and estado["dias_inativo"] >= 12
     assert estado["replanejamento_pendente"] is None
     assert "DEMO-P02" not in [a["aluno_id"] for a in client.get("/painel/alunos-em-risco").json()["alunos"]]
-    # quem não concluiu continua recebendo: DEMO-P04 (9 dias) e DEMO-P11 (5 dias)
-    for aluno in ("DEMO-P04", "DEMO-P11"):
-        assert "incentivar" in [d["acao"] for d in orquestrador.repositorio.listar_decisoes(aluno)]
+    # quem não concluiu continua recebendo: DEMO-P11 (5 dias) o incentivo e DEMO-P04 (9 dias, acima
+    # dos 7 de ORQ_INATIVIDADE_REFAZER_DIAS) a trilha refeita, que também traz incentivo
+    for aluno, acao in (("DEMO-P04", "refazer_trilha"), ("DEMO-P11", "incentivar")):
+        assert acao in [d["acao"] for d in orquestrador.repositorio.listar_decisoes(aluno)]
         assert client.get(f"/aluno/{aluno}/estado").json()["inativo"] is True
     # rodar a verificação de novo, mais tarde, continua sem incentivo para quem concluiu
     resultado = orquestrador.verificar_inatividade(datetime.now() + timedelta(days=30))

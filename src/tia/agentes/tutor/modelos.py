@@ -25,6 +25,8 @@ from tia.agentes.planejador.modelos import CodigoAluno
 class IniciarSessao(BaseModel):
     aluno_id: CodigoAluno
     competencia_id: str = Field(min_length=1, max_length=64, examples=["repeticao"])
+    # nível inicial vindo do diagnóstico (EtapaTrilha.nivel_inicial); None = nível 1
+    nivel_inicial: int | None = Field(default=None, ge=1, le=3)
 
 
 class Pergunta(BaseModel):
@@ -70,6 +72,8 @@ class Feedback(BaseModel):
     fontes: list[str] = []
     nivel_atual: int
     concluida: bool
+    # a resposta fechou uma sequência de erros no nível 1 (1.2.5): o orquestrador decide o reforço
+    lacuna: bool = False
     # None quando a competência foi concluída
     proxima_pergunta: Pergunta | None = None
     tempo_ms: int

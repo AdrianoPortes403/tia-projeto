@@ -47,8 +47,9 @@ from tia.orquestrador.modelos import Matricula
 from tia.web.dados_demo import mostrar_usuarios_demonstracao, sem_llm
 
 # PROVISÓRIO: diagnóstico fictício; no intermediário a trilha fica Funções -> Listas e strings -> Recursão
-DIAGNOSTICO_INTERMEDIARIO = {"variaveis_tipos": 0.9, "condicionais": 0.8, "repeticao": 0.9,
-                             "funcoes": 0.2, "listas_strings": 0.2, "recursao": 0.0}
+# notas na convenção do diagnóstico (1.2.5): 1 = dominado (sai da trilha), 1/3 = começa no nível 2
+DIAGNOSTICO_INTERMEDIARIO = {"variaveis_tipos": 1.0, "condicionais": 1.0, "repeticao": 1.0,
+                             "funcoes": 0.34, "listas_strings": 0.34, "recursao": 0.0}
 MATRICULAS = {
     "intermediario": Matricula(perfil_id="intermediario", horas_semanais=6, diagnostico=DIAGNOSTICO_INTERMEDIARIO),
     "iniciante": Matricula(perfil_id="iniciante", horas_semanais=8, diagnostico={}),

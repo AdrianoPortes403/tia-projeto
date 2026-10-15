@@ -27,16 +27,20 @@ def _texto(agora: datetime) -> str:
 # --- matrícula ---
 
 def salvar_matricula(aluno_id: str, perfil_id: str, horas_semanais: float, diagnostico: dict[str, float],
-                     agora: datetime) -> bool:
-    """Grava a matrícula; False se o aluno já está matriculado (nada muda)."""
+                     agora: datetime, trilha: str | None = None, prazo_dias: int | None = None,
+                     escopo: str = "completa") -> bool:
+    """Grava a matrícula; False se o aluno já está matriculado (nada muda).
+    perfil_id é o perfil em uso (o enquadrado pelo Planejador, se não informado)."""
     conexao = obter_conexao()
     try:
         with conexao:
             cursor = conexao.execute(
                 """INSERT OR IGNORE INTO orquestrador_matriculas
-                   (aluno_id, perfil_id, horas_semanais, diagnostico, criado_em, atualizado_em)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                (aluno_id, perfil_id, horas_semanais, json.dumps(diagnostico), _texto(agora), _texto(agora)))
+                   (aluno_id, perfil_id, horas_semanais, diagnostico, criado_em, atualizado_em,
+                    trilha, prazo_dias, escopo)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (aluno_id, perfil_id, horas_semanais, json.dumps(diagnostico), _texto(agora), _texto(agora),
+                 trilha, prazo_dias, escopo))
     finally:
         conexao.close()
     return cursor.rowcount == 1
@@ -51,7 +55,9 @@ def ler_matricula(aluno_id: str) -> dict | None:
     if linha is None:
         return None
     return {"aluno_id": aluno_id, "perfil_id": linha["perfil_id"], "horas_semanais": linha["horas_semanais"],
-            "diagnostico": json.loads(linha["diagnostico"] or "{}")}
+            "diagnostico": json.loads(linha["diagnostico"] or "{}"), "trilha": linha["trilha"],
+            "prazo_dias": linha["prazo_dias"], "escopo": linha["escopo"] or "completa",
+            "criado_em": linha["criado_em"]}
 
 
 def listar_matriculas() -> list[str]:

@@ -36,7 +36,8 @@ from tia.core.database import obter_conexao
 # (exportação ou eliminação dos dados de um aluno, seguranca.titular)
 TIPOS = ("resposta_item", "dialogo", "incentivo", "relatorio_aluno", "relatorio_turma", "decisao_orquestrador",
          "veto_docente", "consulta_painel", "login", "login_falha", "login_bloqueado", "logout", "acesso_negado",
-         "gestao_usuario", "resumo_anonimos", "limpeza_retencao", "retencao", "direito_titular")
+         "gestao_usuario", "resumo_anonimos", "limpeza_retencao", "retencao", "direito_titular",
+         "onboarding", "diagnostico")
 
 # Quem está agindo (1.4.6): (usuario_id, papel), definido por requisição pela
 # segurança (seguranca.acesso). Sem valor (comandos, agendador, testes de
@@ -91,6 +92,7 @@ AGENTE_POR_TIPO = {
     "login": "seguranca", "login_falha": "seguranca", "login_bloqueado": "seguranca", "logout": "seguranca",
     "acesso_negado": "seguranca", "gestao_usuario": "seguranca", "resumo_anonimos": "seguranca",
     "limpeza_retencao": "seguranca", "retencao": "seguranca", "direito_titular": "seguranca",
+    "onboarding": "planejador", "diagnostico": "planejador",
 }
 AGENTES = ("orquestrador", "planejador", "tutor", "relatorio", "painel", "seguranca")
 
@@ -101,7 +103,8 @@ def consultar(agente: str | None = None, aluno_id: str | None = None, desde: str
     desde/ate: datas "AAAA-MM-DD" (inclusivas). Devolve (total, página)."""
     condicoes, parametros = [], []
     if agente == "planejador":
-        condicoes.append("a.tipo = 'decisao_orquestrador' AND d.replanejou")
+        condicoes.append("((a.tipo = 'decisao_orquestrador' AND d.replanejou) "
+                         "OR a.tipo IN ('onboarding', 'diagnostico'))")
     elif agente is not None:
         tipos = [t for t, a in AGENTE_POR_TIPO.items() if a == agente]
         condicoes.append(f"a.tipo IN ({', '.join('?' * len(tipos))})")

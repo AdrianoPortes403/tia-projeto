@@ -40,10 +40,13 @@ def montar_prompt(trilha: Trilha, diagnostico: dict[str, float]) -> str:
     (as concluídas ficam de fora)."""
     linhas = []
     for numero, etapa in enumerate(_pendentes(trilha), 1):
-        nota = diagnostico.get(etapa.competencia_id, 0.0)
-        linhas.append(f"{numero}. {etapa.nome} (nota no diagnóstico: {nota:.2f}; {etapa.horas} h)")
+        if etapa.competencia_id in diagnostico:
+            detalhe = f"nota no diagnóstico: {diagnostico[etapa.competencia_id]:.2f}; "
+        else:
+            detalhe = "sem diagnóstico; "
+        linhas.append(f"{numero}. {etapa.nome} ({detalhe}{etapa.horas} h)")
     return (
-        "Você é o planejador de estudos de uma disciplina de programação introdutória.\n"
+        "Você é o planejador de estudos de alunos de Engenharia da Computação.\n"
         "Abaixo está a trilha de um aluno, já em ordem. Para CADA etapa, escreva UMA frase "
         "curta (no máximo 20 palavras), em português, dizendo ao aluno por que estudar aquilo "
         "naquele momento.\n"

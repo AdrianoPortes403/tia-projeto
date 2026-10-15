@@ -39,9 +39,16 @@ Ollama (`qwen3:*` para chat, `nomic-embed-text` para embeddings).
 
 ## Quem faz o quê no projeto real
 
-- Agentes (Pessoa 2) e conteúdo pedagógico (Pessoa 4) ainda não foram entregues.
-  Aqui, qualquer dado ou lógica deles é PROVISÓRIO: marcar com `# PROVISÓRIO`
-  e manter fácil de substituir.
+- Conteúdo pedagógico: desde 12/10/2026 (branch `agente1-tiago`, Tiago/A1) `conteudo/` é a **base
+  pedagógica alinhada à EAP**: trilhas `dev` e `defesa_cibernetica` sobre a base comum de Python (etapa 0),
+  48 tópicos, 120 itens com `uso` (diagnostico/tutoria). Perfil = nível (`iniciante`/`intermediario`),
+  enquadrado pelo diagnóstico; trilha = Dev ou Defesa Cibernética. No código, `competencia_id` = tópico
+  da EAP. A Pessoa 4 valida; limiares e regras ainda não validados continuam `# PROVISÓRIO`.
+- Agente 1 (1.3.2): Planejador com trilha, prazo/escopo do piloto e primeiro acesso
+  (`planejador/onboarding.py`, `planejador/diagnostico.py`, `api/rotas_primeiro_acesso.py`).
+  Resumo: `docs/relatorios/base_pedagogica_e_agente1.md`.
+- Demais lógicas dos agentes (Pessoa 2) ainda não entregues: o que for delas aqui é PROVISÓRIO,
+  marcado com `# PROVISÓRIO` e fácil de substituir.
 - Minha frente: LLM local, RAG, API, web standalone, dashboard, plug-in, segurança/LGPD.
 
 ## Padrão de código (seguir sempre)
@@ -78,7 +85,7 @@ Sempre ativar o venv da raiz: `source venv/bin/activate`.
   `TIA_AMBIENTE=producao` é o padrão: para `/docs` ou `TIA_AUTH=desligada` na máquina de desenvolvimento,
   use `TIA_AMBIENTE=desenvolvimento` no `.env`.
   Testes de rota rodam com `TIA_AUTH=desligada` (conftest); os de segurança ligam a autenticação.
-- Material real do curso depende da Pessoa 4.
+- Material real do curso depende da Pessoa 4 (tópicos do piloto: material PROVISÓRIO para a A4 revisar no 1.5.2; demais tópicos Dev/Cyber sem material e sem itens).
 - VM institucional ainda não disponível; testes feitos em notebook e em máquina com RTX 3050.
 
 ## Desempenho (decisão de 10/10)

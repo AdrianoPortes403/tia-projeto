@@ -1,26 +1,36 @@
 {
-  "_provisorio": true,
-  "_nota": "PROVISÓRIO: perfis de exemplo para a fatia vertical do Agente 1. Substituir pelos perfis definidos pela Pessoa 4. 'ritmo' multiplica horas_estimadas; 'competencias_dispensaveis' mapeia id da competência -> nota mínima do diagnóstico (0..1) para pular. Competência fora do mapa nunca é pulada.",
+  "_versao": "2.1 (12/10/2026): perfis base do pacote 1.2.3.",
+  "_nota": "Os IDs 'iniciante' e 'intermediario' correspondem aos perfis A e B da EAP. O perfil NÃO é escolhido pelo aluno: o Planejador o calcula a partir do diagnóstico (regras_enquadramento). 'ritmo' fica em 1,0: as horas semanais do aluno definem o ritmo, não o perfil (1.2.3).",
+  "regras_enquadramento": {
+    "pontuacao": "Para cada tópico diagnosticado da base comum (etapa 0) e da etapa 1 da trilha, a nota do diagnóstico (0, 1/3, 2/3 ou 1) vale 0 a 3 pontos (nota x 3). P = média dos pontos.",
+    "limiar_intermediario": 1.5,
+    "sem_diagnostico": "iniciante",
+    "dominado": "Nota 1,0 (acertou os 3 níveis): o tópico sai da trilha, em qualquer perfil."
+  },
   "perfis": [
     {
       "id": "iniciante",
+      "perfil_eap": "perfil_a",
       "nome": "Iniciante",
-      "ritmo": 1.25,
-      "competencias_dispensaveis": {
-        "variaveis_tipos": 0.9
-      }
+      "ritmo": 1.0,
+      "horas_semana_referencia": 3,
+      "descricao": "Aluno que ainda não domina os fundamentos da trilha escolhida e dispõe de poucas horas semanais.",
+      "diretriz_planejador": "Começar pela etapa 1, sem pular tópicos; no máximo 1 tópico novo por sessão; prever revisão do pré-requisito antes de cada tópico 'medio' ou 'dificil'.",
+      "diretriz_tutor": "Iniciar itens no nível 1; feedback detalhado com fonte; incentivo mais frequente.",
+      "revisar_prerequisitos": true,
+      "desafio_pratico": false
     },
     {
       "id": "intermediario",
+      "perfil_eap": "perfil_b",
       "nome": "Intermediário",
-      "ritmo": 0.8,
-      "competencias_dispensaveis": {
-        "variaveis_tipos": 0.7,
-        "condicionais": 0.7,
-        "repeticao": 0.75,
-        "funcoes": 0.8,
-        "listas_strings": 0.8
-      }
+      "ritmo": 1.0,
+      "horas_semana_referencia": 8,
+      "descricao": "Aluno que já domina parte dos fundamentos (em geral por já ter cursado as disciplinas do 3º ano) e dispõe de mais horas semanais.",
+      "diretriz_planejador": "Pular tópicos dominados no diagnóstico; permitir 2 tópicos em paralelo quando não houver dependência entre eles; oferecer desafio_pratico ao fim de cada etapa.",
+      "diretriz_tutor": "Iniciar itens no nível indicado pelo diagnóstico (em geral 2); feedback mais curto; foco em itens de nível 3.",
+      "revisar_prerequisitos": false,
+      "desafio_pratico": true
     }
   ]
 }

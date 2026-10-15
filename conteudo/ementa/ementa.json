@@ -1,95 +1,2154 @@
 {
-  "_provisorio": true,
-  "_nota": "PROVISÓRIO: ementa de exemplo criada pela frente de infraestrutura (A3) para a fatia vertical dos Agentes 1 e 2. Substituir pela ementa oficial da Pessoa 4. Materiais 'provisorio_*.txt' são textos curtos de exemplo, a trocar pelo material real do curso.",
+  "_versao": "2.1 (12/10/2026): base pedagógica alinhada à EAP (pacotes 1.2.1 a 1.2.4), convertida para o formato deste repositório.",
+  "_nota": "Cada item de 'competencias' é um TÓPICO da trilha (no vocabulário da EAP). 'trilha' indica se é da base comum (etapa 0, Python, vinda da ementa provisória da A3, com os IDs originais) ou das trilhas 'dev' e 'defesa_cibernetica' (etapas 1 a 6). Os tópicos Dev/Cyber ainda não têm material (dependem do 1.5.2) e suas 'palavras_chave' são PROVISÓRIAS (a revisar pela Pessoa 4).",
+  "trilhas": {
+    "base_comum": {
+      "nome": "Fundamentos de programação em Python (base comum às duas trilhas)",
+      "etapas": {
+        "0": "Base comum (Python)"
+      }
+    },
+    "dev": {
+      "nome": "Desenvolvimento de Software",
+      "etapas": {
+        "1": "Fundamentos e Algoritmos",
+        "2": "Arquitetura e Design",
+        "3": "Engenharia e Qualidade",
+        "4": "Sistemas de Persistência",
+        "5": "Sistemas Distribuídos e DevOps",
+        "6": "APIs e Integração"
+      }
+    },
+    "defesa_cibernetica": {
+      "nome": "Defesa Cibernética",
+      "etapas": {
+        "1": "Redes e Sistemas Operacionais",
+        "2": "Criptografia e Identidade",
+        "3": "Segurança de Aplicações (AppSec)",
+        "4": "Operações Ofensivas (Red Team)",
+        "5": "Operações Defensivas e Forense (Blue Team)",
+        "6": "Governança e Nuvem"
+      }
+    }
+  },
   "competencias": [
     {
       "id": "variaveis_tipos",
       "nome": "Variáveis, tipos e expressões",
       "descricao": "Declarar variáveis, usar tipos básicos (int, float, str, bool) e montar expressões aritméticas e lógicas.",
+      "trilha": "base_comum",
+      "etapa": 0,
       "horas_estimadas": 6,
       "prerequisitos": [],
-      "materiais": ["provisorio_variaveis_tipos.txt"],
+      "materiais": [
+        "provisorio_variaveis_tipos.txt"
+      ],
       "palavras_chave": [
-        ["variavel", "variable"],
-        ["inteiro", "int"],
-        ["decimal", "float", "real"],
-        ["texto", "string", "str"],
-        ["booleano", "bool", "logico"],
-        ["atribuicao", "atribuir"],
-        ["divisao", "dividir"]
-      ]
+        [
+          "variavel",
+          "variable"
+        ],
+        [
+          "inteiro",
+          "int"
+        ],
+        [
+          "decimal",
+          "float",
+          "real"
+        ],
+        [
+          "texto",
+          "string",
+          "str"
+        ],
+        [
+          "booleano",
+          "bool",
+          "logico"
+        ],
+        [
+          "atribuicao",
+          "atribuir"
+        ],
+        [
+          "divisao",
+          "dividir"
+        ]
+      ],
+      "dificuldade_base": "facil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Laboratório de Programação I"
+      ],
+      "desafio_pratico": null
     },
     {
       "id": "condicionais",
       "nome": "Estruturas condicionais",
       "descricao": "Controlar o fluxo do programa com if, elif e else a partir de condições lógicas.",
+      "trilha": "base_comum",
+      "etapa": 0,
       "horas_estimadas": 4,
-      "prerequisitos": ["variaveis_tipos"],
-      "materiais": ["provisorio_condicionais.txt"],
+      "prerequisitos": [
+        "variaveis_tipos"
+      ],
+      "materiais": [
+        "provisorio_condicionais.txt"
+      ],
       "palavras_chave": [
-        ["condicional", "condicao", "if"],
-        ["senao", "else"],
-        ["elif", "senao se"],
-        ["verdadeiro", "true"],
-        ["falso", "false"]
-      ]
+        [
+          "condicional",
+          "condicao",
+          "if"
+        ],
+        [
+          "senao",
+          "else"
+        ],
+        [
+          "elif",
+          "senao se"
+        ],
+        [
+          "verdadeiro",
+          "true"
+        ],
+        [
+          "falso",
+          "false"
+        ]
+      ],
+      "dificuldade_base": "facil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Laboratório de Programação I"
+      ],
+      "desafio_pratico": null
     },
     {
       "id": "repeticao",
       "nome": "Laços de repetição",
       "descricao": "Repetir instruções com for e while, incluindo contadores, acumuladores e condição de parada.",
+      "trilha": "base_comum",
+      "etapa": 0,
       "horas_estimadas": 6,
-      "prerequisitos": ["condicionais"],
-      "materiais": ["provisorio_repeticao.txt"],
+      "prerequisitos": [
+        "condicionais"
+      ],
+      "materiais": [
+        "provisorio_repeticao.txt"
+      ],
       "palavras_chave": [
-        ["laco", "loop", "repeticao", "repetir", "iteracao"],
-        ["break", "interromper", "sair"],
-        ["continue", "pular"],
-        ["while", "enquanto"],
-        ["for", "para cada", "percorrer"]
-      ]
+        [
+          "laco",
+          "loop",
+          "repeticao",
+          "repetir",
+          "iteracao"
+        ],
+        [
+          "break",
+          "interromper",
+          "sair"
+        ],
+        [
+          "continue",
+          "pular"
+        ],
+        [
+          "while",
+          "enquanto"
+        ],
+        [
+          "for",
+          "para cada",
+          "percorrer"
+        ]
+      ],
+      "dificuldade_base": "facil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Laboratório de Programação I"
+      ],
+      "desafio_pratico": null
     },
     {
       "id": "funcoes",
       "nome": "Funções e modularização",
       "descricao": "Definir funções com parâmetros e retorno, entender escopo e dividir o programa em partes reutilizáveis.",
+      "trilha": "base_comum",
+      "etapa": 0,
       "horas_estimadas": 6,
-      "prerequisitos": ["repeticao"],
-      "materiais": ["provisorio_funcoes.txt"],
+      "prerequisitos": [
+        "repeticao"
+      ],
+      "materiais": [
+        "provisorio_funcoes.txt"
+      ],
       "palavras_chave": [
-        ["funcao", "def"],
-        ["retorno", "return", "retornar", "devolver"],
-        ["parametro", "argumento"],
-        ["chamar", "chamada"]
-      ]
+        [
+          "funcao",
+          "def"
+        ],
+        [
+          "retorno",
+          "return",
+          "retornar",
+          "devolver"
+        ],
+        [
+          "parametro",
+          "argumento"
+        ],
+        [
+          "chamar",
+          "chamada"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Laboratório de Programação I",
+        "Laboratório de Programação II"
+      ],
+      "desafio_pratico": null
     },
     {
       "id": "listas_strings",
       "nome": "Listas e strings",
       "descricao": "Manipular sequências: indexação, fatiamento, percorrer com laços e métodos comuns de listas e strings.",
+      "trilha": "base_comum",
+      "etapa": 0,
       "horas_estimadas": 8,
-      "prerequisitos": ["repeticao"],
-      "materiais": ["provisorio_listas_strings.txt"],
+      "prerequisitos": [
+        "repeticao"
+      ],
+      "materiais": [
+        "provisorio_listas_strings.txt"
+      ],
       "palavras_chave": [
-        ["lista", "list", "vetor", "array"],
-        ["string", "str", "texto"],
-        ["fatiamento", "fatia", "fatiar", "slice"],
-        ["indice", "posicao"],
-        ["imutavel", "alterar", "modificar"]
-      ]
+        [
+          "lista",
+          "list",
+          "vetor",
+          "array"
+        ],
+        [
+          "string",
+          "str",
+          "texto"
+        ],
+        [
+          "fatiamento",
+          "fatia",
+          "fatiar",
+          "slice"
+        ],
+        [
+          "indice",
+          "posicao"
+        ],
+        [
+          "imutavel",
+          "alterar",
+          "modificar"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Laboratório de Programação II"
+      ],
+      "desafio_pratico": null
     },
     {
       "id": "recursao",
       "nome": "Recursão",
       "descricao": "Resolver problemas com funções que chamam a si mesmas, identificando caso base e caso recursivo.",
+      "trilha": "base_comum",
+      "etapa": 0,
       "horas_estimadas": 6,
-      "prerequisitos": ["funcoes"],
-      "materiais": ["exemplo_recursao.txt"],
+      "prerequisitos": [
+        "funcoes"
+      ],
+      "materiais": [
+        "exemplo_recursao.txt"
+      ],
       "palavras_chave": [
-        ["recursao", "recursiva", "recursivo"],
-        ["caso base", "parada", "parar"]
+        [
+          "recursao",
+          "recursiva",
+          "recursivo"
+        ],
+        [
+          "caso base",
+          "parada",
+          "parar"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Laboratório de Programação II",
+        "Estrutura de Dados"
+      ],
+      "desafio_pratico": null
+    },
+    {
+      "id": "dev_01",
+      "nome": "Análise de complexidade de tempo e espaço (notação Big-O)",
+      "descricao": "Análise de complexidade de tempo e espaço (notação Big-O) (trilha Desenvolvimento de Software, etapa 1: Fundamentos e Algoritmos).",
+      "trilha": "dev",
+      "etapa": 1,
+      "horas_estimadas": 1.5,
+      "prerequisitos": [
+        "repeticao"
+      ],
+      "materiais": [
+        "provisorio_dev_01_complexidade.txt"
+      ],
+      "palavras_chave": [
+        [
+          "complexidade",
+          "big-o",
+          "big o",
+          "notacao assintotica"
+        ],
+        [
+          "tempo",
+          "custo"
+        ],
+        [
+          "espaco",
+          "memoria"
+        ],
+        [
+          "linear",
+          "o(n)"
+        ],
+        [
+          "logaritmico",
+          "log n",
+          "o(log n)"
+        ],
+        [
+          "quadratico",
+          "o(n2)",
+          "n ao quadrado"
+        ]
+      ],
+      "dificuldade_base": "facil",
+      "no_piloto": true,
+      "disciplinas_ime": [
+        "Estrutura de Dados",
+        "Projeto e Análise de Algoritmos"
+      ],
+      "desafio_pratico": [
+        "Calcular e documentar formalmente a complexidade de tempo (O(1), O(log n), O(n), O(n log n), O(n²)) e espaço."
+      ]
+    },
+    {
+      "id": "dev_02",
+      "nome": "Estruturas lineares: lista encadeada, pilha e fila",
+      "descricao": "Estruturas lineares: lista encadeada, pilha e fila (trilha Desenvolvimento de Software, etapa 1: Fundamentos e Algoritmos).",
+      "trilha": "dev",
+      "etapa": 1,
+      "horas_estimadas": 1.5,
+      "prerequisitos": [
+        "dev_01",
+        "listas_strings"
+      ],
+      "materiais": [
+        "provisorio_dev_02_estruturas_lineares.txt"
+      ],
+      "palavras_chave": [
+        [
+          "lista encadeada",
+          "lista ligada",
+          "linked list"
+        ],
+        [
+          "pilha",
+          "stack",
+          "lifo"
+        ],
+        [
+          "fila",
+          "queue",
+          "fifo"
+        ],
+        [
+          "no",
+          "nodo",
+          "node"
+        ],
+        [
+          "ponteiro",
+          "referencia",
+          "proximo"
+        ],
+        [
+          "push",
+          "empilhar"
+        ],
+        [
+          "pop",
+          "desempilhar"
+        ]
+      ],
+      "dificuldade_base": "facil",
+      "no_piloto": true,
+      "disciplinas_ime": [
+        "Estrutura de Dados",
+        "Laboratório de Programação I"
+      ],
+      "desafio_pratico": null
+    },
+    {
+      "id": "dev_03",
+      "nome": "Tabelas hash e tratamento de colisões",
+      "descricao": "Tabelas hash e tratamento de colisões (trilha Desenvolvimento de Software, etapa 1: Fundamentos e Algoritmos).",
+      "trilha": "dev",
+      "etapa": 1,
+      "horas_estimadas": 2,
+      "prerequisitos": [
+        "dev_02"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "hash",
+          "tabela hash",
+          "dispersao"
+        ],
+        [
+          "colisao"
+        ],
+        [
+          "funcao hash",
+          "funcao de dispersao"
+        ],
+        [
+          "encadeamento",
+          "chaining"
+        ],
+        [
+          "enderecamento aberto",
+          "sondagem"
+        ],
+        [
+          "fator de carga"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Estrutura de Dados"
+      ],
+      "desafio_pratico": null
+    },
+    {
+      "id": "dev_04",
+      "nome": "Árvores balanceadas (AVL) e Trie",
+      "descricao": "Árvores balanceadas (AVL) e Trie (trilha Desenvolvimento de Software, etapa 1: Fundamentos e Algoritmos).",
+      "trilha": "dev",
+      "etapa": 1,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_03",
+        "recursao"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "arvore",
+          "tree"
+        ],
+        [
+          "avl",
+          "balanceada",
+          "balanceamento"
+        ],
+        [
+          "rotacao"
+        ],
+        [
+          "altura"
+        ],
+        [
+          "trie",
+          "arvore de prefixos"
+        ],
+        [
+          "prefixo"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Estrutura de Dados"
+      ],
+      "desafio_pratico": [
+        "Criar do zero (sem bibliotecas prontas) as estruturas de dados: Lista Encadeada, Fila, Pilha, Tabela Hash, Árvore AVL, Trie e Grafo."
+      ]
+    },
+    {
+      "id": "dev_05",
+      "nome": "Grafos: representação, BFS e DFS",
+      "descricao": "Grafos: representação, BFS e DFS (trilha Desenvolvimento de Software, etapa 1: Fundamentos e Algoritmos).",
+      "trilha": "dev",
+      "etapa": 1,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_02"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "grafo",
+          "graph"
+        ],
+        [
+          "vertice",
+          "no"
+        ],
+        [
+          "aresta",
+          "arco"
+        ],
+        [
+          "bfs",
+          "busca em largura"
+        ],
+        [
+          "dfs",
+          "busca em profundidade"
+        ],
+        [
+          "lista de adjacencia",
+          "matriz de adjacencia"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Estrutura de Dados",
+        "Projeto e Análise de Algoritmos"
+      ],
+      "desafio_pratico": null
+    },
+    {
+      "id": "dev_06",
+      "nome": "Padrões de resolução: busca binária, two pointers e sliding window",
+      "descricao": "Padrões de resolução: busca binária, two pointers e sliding window (trilha Desenvolvimento de Software, etapa 1: Fundamentos e Algoritmos).",
+      "trilha": "dev",
+      "etapa": 1,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_01"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "busca binaria"
+        ],
+        [
+          "dois ponteiros",
+          "two pointers"
+        ],
+        [
+          "janela deslizante",
+          "sliding window"
+        ],
+        [
+          "ordenado",
+          "ordenada"
+        ],
+        [
+          "intervalo",
+          "subvetor"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Projeto e Análise de Algoritmos"
+      ],
+      "desafio_pratico": null
+    },
+    {
+      "id": "dev_07",
+      "nome": "Programação dinâmica",
+      "descricao": "Programação dinâmica (trilha Desenvolvimento de Software, etapa 1: Fundamentos e Algoritmos).",
+      "trilha": "dev",
+      "etapa": 1,
+      "horas_estimadas": 4,
+      "prerequisitos": [
+        "dev_06",
+        "recursao"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "programacao dinamica",
+          "pd",
+          "dp"
+        ],
+        [
+          "memoizacao",
+          "memoization"
+        ],
+        [
+          "subproblema"
+        ],
+        [
+          "tabela",
+          "tabulacao"
+        ],
+        [
+          "recorrencia"
+        ],
+        [
+          "sobreposicao"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Projeto e Análise de Algoritmos"
+      ],
+      "desafio_pratico": [
+        "Resolver ao menos 100 exercícios cobrindo: BFS/DFS, Two Pointers, Sliding Window, Busca Binária e Programação Dinâmica."
+      ]
+    },
+    {
+      "id": "dev_08",
+      "nome": "Princípios SOLID",
+      "descricao": "Princípios SOLID (trilha Desenvolvimento de Software, etapa 2: Arquitetura e Design).",
+      "trilha": "dev",
+      "etapa": 2,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_02",
+        "funcoes"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "solid"
+        ],
+        [
+          "responsabilidade unica",
+          "srp"
+        ],
+        [
+          "aberto fechado",
+          "open closed"
+        ],
+        [
+          "substituicao de liskov",
+          "liskov"
+        ],
+        [
+          "segregacao de interface"
+        ],
+        [
+          "inversao de dependencia",
+          "injecao de dependencia"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Análise e Projeto de Sistemas I",
+        "Engenharia de Software"
+      ],
+      "desafio_pratico": [
+        "Refatorar um projeto monolítico aplicando individualmente os 5 princípios SOLID."
+      ]
+    },
+    {
+      "id": "dev_09",
+      "nome": "Padrões de projeto GoF (Strategy, Factory, Observer, Adapter, Decorator)",
+      "descricao": "Padrões de projeto GoF (Strategy, Factory, Observer, Adapter, Decorator) (trilha Desenvolvimento de Software, etapa 2: Arquitetura e Design).",
+      "trilha": "dev",
+      "etapa": 2,
+      "horas_estimadas": 4,
+      "prerequisitos": [
+        "dev_08"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "padrao de projeto",
+          "design pattern",
+          "gof"
+        ],
+        [
+          "strategy",
+          "estrategia"
+        ],
+        [
+          "factory",
+          "fabrica"
+        ],
+        [
+          "observer",
+          "observador"
+        ],
+        [
+          "adapter",
+          "adaptador"
+        ],
+        [
+          "decorator",
+          "decorador"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Análise e Projeto de Sistemas II"
+      ],
+      "desafio_pratico": [
+        "Implementar os principais padrões de projeto GoF (Strategy, Factory, Observer, Adapter, Decorator)."
+      ]
+    },
+    {
+      "id": "dev_10",
+      "nome": "Arquitetura hexagonal (Ports & Adapters) e modelo C4",
+      "descricao": "Arquitetura hexagonal (Ports & Adapters) e modelo C4 (trilha Desenvolvimento de Software, etapa 2: Arquitetura e Design).",
+      "trilha": "dev",
+      "etapa": 2,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_09"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "arquitetura hexagonal",
+          "ports and adapters",
+          "portas e adaptadores"
+        ],
+        [
+          "porta",
+          "port"
+        ],
+        [
+          "adaptador",
+          "adapter"
+        ],
+        [
+          "dominio",
+          "nucleo"
+        ],
+        [
+          "c4",
+          "modelo c4"
+        ],
+        [
+          "contexto",
+          "conteiner",
+          "componente"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Engenharia de Software"
+      ],
+      "desafio_pratico": [
+        "Construir uma aplicação completa utilizando a Arquitetura Hexagonal (Ports & Adapters).",
+        "Documentar a arquitetura de um sistema utilizando o Modelo C4 (Contexto, Contêiner, Componente)."
+      ]
+    },
+    {
+      "id": "dev_11",
+      "nome": "Testes unitários e TDD (Red-Green-Refactor)",
+      "descricao": "Testes unitários e TDD (Red-Green-Refactor) (trilha Desenvolvimento de Software, etapa 3: Engenharia e Qualidade).",
+      "trilha": "dev",
+      "etapa": 3,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_08"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "teste unitario",
+          "unit test"
+        ],
+        [
+          "tdd",
+          "desenvolvimento orientado a testes"
+        ],
+        [
+          "red green refactor",
+          "vermelho verde refatorar"
+        ],
+        [
+          "assert",
+          "asercao"
+        ],
+        [
+          "mock",
+          "dublê",
+          "stub"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Engenharia de Software"
+      ],
+      "desafio_pratico": [
+        "Desenvolver um módulo completo utilizando estritamente a metodologia TDD (Red-Green-Refactor)."
+      ]
+    },
+    {
+      "id": "dev_12",
+      "nome": "Testes de integração e ponta a ponta; cobertura de código",
+      "descricao": "Testes de integração e ponta a ponta; cobertura de código (trilha Desenvolvimento de Software, etapa 3: Engenharia e Qualidade).",
+      "trilha": "dev",
+      "etapa": 3,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_11"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "teste de integracao"
+        ],
+        [
+          "e2e",
+          "ponta a ponta",
+          "end to end"
+        ],
+        [
+          "cobertura",
+          "coverage"
+        ],
+        [
+          "piramide de testes"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Engenharia de Software"
+      ],
+      "desafio_pratico": [
+        "Configurar testes unitários, de integração e ponta a ponta (E2E), garantindo cobertura de código > 80%."
+      ]
+    },
+    {
+      "id": "dev_13",
+      "nome": "Integração e entrega contínuas (CI/CD) com GitHub Actions",
+      "descricao": "Integração e entrega contínuas (CI/CD) com GitHub Actions (trilha Desenvolvimento de Software, etapa 3: Engenharia e Qualidade).",
+      "trilha": "dev",
+      "etapa": 3,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_12"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "ci",
+          "integracao continua"
+        ],
+        [
+          "cd",
+          "entrega continua",
+          "deploy continuo"
+        ],
+        [
+          "pipeline",
+          "esteira"
+        ],
+        [
+          "github actions",
+          "workflow"
+        ],
+        [
+          "build"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Engenharia de Software"
+      ],
+      "desafio_pratico": [
+        "Criar uma pipeline automatizada de CI/CD via GitHub Actions ou GitLab CI."
+      ]
+    },
+    {
+      "id": "dev_14",
+      "nome": "Modelagem relacional e normalização até a 3FN",
+      "descricao": "Modelagem relacional e normalização até a 3FN (trilha Desenvolvimento de Software, etapa 4: Sistemas de Persistência).",
+      "trilha": "dev",
+      "etapa": 4,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_01"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "modelagem",
+          "modelo relacional"
+        ],
+        [
+          "normalizacao",
+          "forma normal",
+          "3fn",
+          "fn"
+        ],
+        [
+          "chave primaria",
+          "pk"
+        ],
+        [
+          "chave estrangeira",
+          "fk"
+        ],
+        [
+          "relacionamento",
+          "cardinalidade",
+          "n:m",
+          "1:n"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Banco de Dados I"
+      ],
+      "desafio_pratico": [
+        "Modelar um banco de dados relacional (3FN) contendo 10+ tabelas e relacionamentos 1:1, 1:N e N:M."
+      ]
+    },
+    {
+      "id": "dev_15",
+      "nome": "Índices e otimização de consultas (EXPLAIN ANALYZE)",
+      "descricao": "Índices e otimização de consultas (EXPLAIN ANALYZE) (trilha Desenvolvimento de Software, etapa 4: Sistemas de Persistência).",
+      "trilha": "dev",
+      "etapa": 4,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_14"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "indice",
+          "index"
+        ],
+        [
+          "explain",
+          "explain analyze",
+          "plano de execucao"
+        ],
+        [
+          "consulta",
+          "query"
+        ],
+        [
+          "otimizacao",
+          "desempenho"
+        ],
+        [
+          "varredura",
+          "scan"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Banco de Dados II"
+      ],
+      "desafio_pratico": [
+        "Identificar gargalos em consultas lentas com EXPLAIN ANALYZE e aplicar índices adequados."
+      ]
+    },
+    {
+      "id": "dev_16",
+      "nome": "Bancos NoSQL e caching com Redis",
+      "descricao": "Bancos NoSQL e caching com Redis (trilha Desenvolvimento de Software, etapa 4: Sistemas de Persistência).",
+      "trilha": "dev",
+      "etapa": 4,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_14"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "nosql"
+        ],
+        [
+          "cache",
+          "caching"
+        ],
+        [
+          "redis"
+        ],
+        [
+          "chave valor",
+          "key value"
+        ],
+        [
+          "documento",
+          "mongodb"
+        ],
+        [
+          "expiracao",
+          "ttl"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Banco de Dados II"
+      ],
+      "desafio_pratico": [
+        "Integrar um banco NoSQL e implementar estratégia funcional de caching com Redis."
+      ]
+    },
+    {
+      "id": "dev_17",
+      "nome": "Contêineres com Docker e Docker Compose",
+      "descricao": "Contêineres com Docker e Docker Compose (trilha Desenvolvimento de Software, etapa 5: Sistemas Distribuídos e DevOps).",
+      "trilha": "dev",
+      "etapa": 5,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_13"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "docker",
+          "conteiner",
+          "container"
+        ],
+        [
+          "imagem",
+          "image"
+        ],
+        [
+          "dockerfile"
+        ],
+        [
+          "docker compose",
+          "compose"
+        ],
+        [
+          "volume"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Sistemas Distribuídos",
+        "Sistemas Operacionais"
+      ],
+      "desafio_pratico": [
+        "Conteinerizar uma aplicação multi-serviços usando Dockerfile e orquestrá-la via Docker Compose."
+      ]
+    },
+    {
+      "id": "dev_18",
+      "nome": "Orquestração com Kubernetes (Deployments, Services, ConfigMaps, Ingress)",
+      "descricao": "Orquestração com Kubernetes (Deployments, Services, ConfigMaps, Ingress) (trilha Desenvolvimento de Software, etapa 5: Sistemas Distribuídos e DevOps).",
+      "trilha": "dev",
+      "etapa": 5,
+      "horas_estimadas": 4,
+      "prerequisitos": [
+        "dev_17"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "kubernetes",
+          "k8s"
+        ],
+        [
+          "pod"
+        ],
+        [
+          "deployment"
+        ],
+        [
+          "service",
+          "servico"
+        ],
+        [
+          "configmap"
+        ],
+        [
+          "ingress"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Sistemas Distribuídos"
+      ],
+      "desafio_pratico": [
+        "Implantar aplicação em cluster Kubernetes (Deployments, Services, ConfigMaps, Ingress)."
+      ]
+    },
+    {
+      "id": "dev_19",
+      "nome": "Mensageria assíncrona entre serviços (RabbitMQ ou Kafka)",
+      "descricao": "Mensageria assíncrona entre serviços (RabbitMQ ou Kafka) (trilha Desenvolvimento de Software, etapa 5: Sistemas Distribuídos e DevOps).",
+      "trilha": "dev",
+      "etapa": 5,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_17"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "mensageria",
+          "fila de mensagens"
+        ],
+        [
+          "rabbitmq"
+        ],
+        [
+          "kafka"
+        ],
+        [
+          "assincrono",
+          "assincrona"
+        ],
+        [
+          "produtor",
+          "consumidor"
+        ],
+        [
+          "topico",
+          "particao"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Sistemas Distribuídos"
+      ],
+      "desafio_pratico": [
+        "Implementar mensageria assíncrona entre microserviços utilizando RabbitMQ ou Apache Kafka."
+      ]
+    },
+    {
+      "id": "dev_20",
+      "nome": "Observabilidade: métricas, dashboards e tracing",
+      "descricao": "Observabilidade: métricas, dashboards e tracing (trilha Desenvolvimento de Software, etapa 5: Sistemas Distribuídos e DevOps).",
+      "trilha": "dev",
+      "etapa": 5,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_18"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "observabilidade"
+        ],
+        [
+          "metrica",
+          "prometheus"
+        ],
+        [
+          "dashboard",
+          "painel",
+          "grafana"
+        ],
+        [
+          "tracing",
+          "rastreamento",
+          "jaeger"
+        ],
+        [
+          "log",
+          "logs"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Sistemas Distribuídos",
+        "Simulação e Análise de Desempenho"
+      ],
+      "desafio_pratico": [
+        "Adicionar observabilidade com Prometheus (métricas), Grafana (dashboards) e Jaeger (tracing)."
+      ]
+    },
+    {
+      "id": "dev_21",
+      "nome": "APIs REST: maturidade de Richardson e documentação OpenAPI",
+      "descricao": "APIs REST: maturidade de Richardson e documentação OpenAPI (trilha Desenvolvimento de Software, etapa 6: APIs e Integração).",
+      "trilha": "dev",
+      "etapa": 6,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_09"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "rest",
+          "restful",
+          "api"
+        ],
+        [
+          "verbo http",
+          "get",
+          "post",
+          "put",
+          "delete"
+        ],
+        [
+          "richardson",
+          "maturidade"
+        ],
+        [
+          "hateoas"
+        ],
+        [
+          "openapi",
+          "swagger"
+        ],
+        [
+          "recurso",
+          "endpoint"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Engenharia de Software",
+        "Redes de Computadores I"
+      ],
+      "desafio_pratico": [
+        "Desenvolver API RESTful seguindo o Nível 3 da Maturidade de Richardson (HATEOAS) e Swagger."
+      ]
+    },
+    {
+      "id": "dev_22",
+      "nome": "Comunicação entre serviços com gRPC e Protocol Buffers",
+      "descricao": "Comunicação entre serviços com gRPC e Protocol Buffers (trilha Desenvolvimento de Software, etapa 6: APIs e Integração).",
+      "trilha": "dev",
+      "etapa": 6,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_21"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "grpc"
+        ],
+        [
+          "protocol buffers",
+          "protobuf"
+        ],
+        [
+          "rpc",
+          "chamada remota"
+        ],
+        [
+          "serializacao"
+        ],
+        [
+          "http/2",
+          "http2"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Sistemas Distribuídos"
+      ],
+      "desafio_pratico": [
+        "Criar comunicação de alta performance entre serviços utilizando gRPC e Protocol Buffers."
+      ]
+    },
+    {
+      "id": "dev_23",
+      "nome": "Segurança de APIs: OAuth 2.0/JWT, rate limiting e CORS",
+      "descricao": "Segurança de APIs: OAuth 2.0/JWT, rate limiting e CORS (trilha Desenvolvimento de Software, etapa 6: APIs e Integração).",
+      "trilha": "dev",
+      "etapa": 6,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "dev_21"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "oauth",
+          "oauth 2.0"
+        ],
+        [
+          "jwt",
+          "token"
+        ],
+        [
+          "rate limiting",
+          "limite de taxa"
+        ],
+        [
+          "cors"
+        ],
+        [
+          "autenticacao"
+        ],
+        [
+          "autorizacao"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Segurança da Informação e Defesa Cibernética"
+      ],
+      "desafio_pratico": [
+        "Proteger rotas da API com OAuth 2.0 / JWT, Rate Limiting e políticas CORS."
+      ]
+    },
+    {
+      "id": "cib_01",
+      "nome": "Modelo TCP/IP e captura de tráfego (Wireshark/tcpdump)",
+      "descricao": "Modelo TCP/IP e captura de tráfego (Wireshark/tcpdump) (trilha Defesa Cibernética, etapa 1: Redes e Sistemas Operacionais).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 1,
+      "horas_estimadas": 1.5,
+      "prerequisitos": [],
+      "materiais": [
+        "provisorio_cib_01_tcpip_captura.txt"
+      ],
+      "palavras_chave": [
+        [
+          "tcp/ip",
+          "modelo tcp/ip"
+        ],
+        [
+          "camada"
+        ],
+        [
+          "pacote",
+          "segmento"
+        ],
+        [
+          "wireshark"
+        ],
+        [
+          "tcpdump"
+        ],
+        [
+          "captura",
+          "sniffer"
+        ],
+        [
+          "handshake",
+          "syn",
+          "ack"
+        ]
+      ],
+      "dificuldade_base": "facil",
+      "no_piloto": true,
+      "disciplinas_ime": [
+        "Redes de Computadores I"
+      ],
+      "desafio_pratico": null
+    },
+    {
+      "id": "cib_02",
+      "nome": "Protocolos de aplicação na prática: DNS, HTTP e TLS",
+      "descricao": "Protocolos de aplicação na prática: DNS, HTTP e TLS (trilha Defesa Cibernética, etapa 1: Redes e Sistemas Operacionais).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 1,
+      "horas_estimadas": 1.5,
+      "prerequisitos": [
+        "cib_01"
+      ],
+      "materiais": [
+        "provisorio_cib_02_dns_http_tls.txt"
+      ],
+      "palavras_chave": [
+        [
+          "dns",
+          "resolucao de nomes"
+        ],
+        [
+          "http",
+          "https"
+        ],
+        [
+          "tls",
+          "ssl"
+        ],
+        [
+          "certificado"
+        ],
+        [
+          "registro a",
+          "aaaa",
+          "mx",
+          "cname"
+        ],
+        [
+          "codigo de status",
+          "status http"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": true,
+      "disciplinas_ime": [
+        "Redes de Computadores I",
+        "Redes de Computadores II"
+      ],
+      "desafio_pratico": [
+        "Realizar capturas de tráfego via Wireshark/tcpdump e reconstruir fluxos TCP, DNS, HTTP e TLS."
+      ]
+    },
+    {
+      "id": "cib_03",
+      "nome": "Processos, memória e chamadas de sistema (Linux /proc, Sysinternals)",
+      "descricao": "Processos, memória e chamadas de sistema (Linux /proc, Sysinternals) (trilha Defesa Cibernética, etapa 1: Redes e Sistemas Operacionais).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 1,
+      "horas_estimadas": 3,
+      "prerequisitos": [],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "processo"
+        ],
+        [
+          "memoria"
+        ],
+        [
+          "syscall",
+          "chamada de sistema"
+        ],
+        [
+          "/proc"
+        ],
+        [
+          "sysinternals"
+        ],
+        [
+          "permissao",
+          "privilegio"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Sistemas Operacionais"
+      ],
+      "desafio_pratico": [
+        "Mapear processos, syscalls e memória no Linux (/proc) e Windows (Sysinternals)."
+      ]
+    },
+    {
+      "id": "cib_04",
+      "nome": "Layout de memória e buffer overflow (laboratório controlado)",
+      "descricao": "Layout de memória e buffer overflow (laboratório controlado) (trilha Defesa Cibernética, etapa 1: Redes e Sistemas Operacionais).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 1,
+      "horas_estimadas": 4,
+      "prerequisitos": [
+        "cib_03"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "buffer overflow",
+          "estouro de buffer"
+        ],
+        [
+          "pilha",
+          "stack"
+        ],
+        [
+          "shellcode"
+        ],
+        [
+          "endereco de retorno"
+        ],
+        [
+          "exploit",
+          "exploracao"
+        ],
+        [
+          "aslr",
+          "dep",
+          "canario"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Organização de Computadores",
+        "Microprocessadores"
+      ],
+      "desafio_pratico": [
+        "Escrever em C/Assembly programa vulnerável a Buffer Overflow e desenvolver exploit para shellcode."
+      ]
+    },
+    {
+      "id": "cib_05",
+      "nome": "Fundamentos de criptografia: simétrica, assimétrica e hashing",
+      "descricao": "Fundamentos de criptografia: simétrica, assimétrica e hashing (trilha Defesa Cibernética, etapa 2: Criptografia e Identidade).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 2,
+      "horas_estimadas": 2,
+      "prerequisitos": [],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "criptografia"
+        ],
+        [
+          "simetrica",
+          "aes"
+        ],
+        [
+          "assimetrica",
+          "chave publica",
+          "chave privada"
+        ],
+        [
+          "hash",
+          "resumo"
+        ],
+        [
+          "integridade"
+        ],
+        [
+          "confidencialidade"
+        ]
+      ],
+      "dificuldade_base": "facil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Matemática Discreta",
+        "Segurança da Informação e Defesa Cibernética"
+      ],
+      "desafio_pratico": null
+    },
+    {
+      "id": "cib_06",
+      "nome": "RSA e SHA-256 implementados em código",
+      "descricao": "RSA e SHA-256 implementados em código (trilha Defesa Cibernética, etapa 2: Criptografia e Identidade).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 2,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "cib_05",
+        "funcoes"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "rsa"
+        ],
+        [
+          "sha-256",
+          "sha256"
+        ],
+        [
+          "exponenciacao modular",
+          "modulo"
+        ],
+        [
+          "primo",
+          "numeros primos"
+        ],
+        [
+          "chave"
+        ],
+        [
+          "assinatura"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Matemática Discreta"
+      ],
+      "desafio_pratico": [
+        "Escrever em código as funções matemáticas de RSA e hashing SHA-256."
+      ]
+    },
+    {
+      "id": "cib_07",
+      "nome": "Infraestrutura de chaves públicas (PKI) e certificados X.509",
+      "descricao": "Infraestrutura de chaves públicas (PKI) e certificados X.509 (trilha Defesa Cibernética, etapa 2: Criptografia e Identidade).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 2,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "cib_05",
+        "cib_02"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "pki",
+          "infraestrutura de chaves publicas"
+        ],
+        [
+          "autoridade certificadora",
+          "ac",
+          "ca"
+        ],
+        [
+          "certificado",
+          "x.509",
+          "x509"
+        ],
+        [
+          "cadeia de confianca"
+        ],
+        [
+          "revogacao",
+          "crl",
+          "ocsp"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Segurança da Informação e Defesa Cibernética"
+      ],
+      "desafio_pratico": [
+        "Montar PKI própria criando Autoridade Certificadora (CA) e emitindo certificados X.509 válidos."
+      ]
+    },
+    {
+      "id": "cib_08",
+      "nome": "Gestão de identidade e acesso: OAuth 2.0, SAML e RBAC",
+      "descricao": "Gestão de identidade e acesso: OAuth 2.0, SAML e RBAC (trilha Defesa Cibernética, etapa 2: Criptografia e Identidade).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 2,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "cib_07"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "identidade",
+          "iam"
+        ],
+        [
+          "oauth"
+        ],
+        [
+          "saml"
+        ],
+        [
+          "rbac",
+          "papeis",
+          "controle de acesso"
+        ],
+        [
+          "sso",
+          "login unico"
+        ],
+        [
+          "keycloak"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Segurança da Informação e Defesa Cibernética"
+      ],
+      "desafio_pratico": [
+        "Configurar provedor de identidade (Keycloak) integrado via OAuth 2.0 e SAML com RBAC."
+      ]
+    },
+    {
+      "id": "cib_09",
+      "nome": "OWASP Top 10: identificar, explorar em laboratório e corrigir",
+      "descricao": "OWASP Top 10: identificar, explorar em laboratório e corrigir (trilha Defesa Cibernética, etapa 3: Segurança de Aplicações (AppSec)).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 3,
+      "horas_estimadas": 4,
+      "prerequisitos": [
+        "cib_02"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "owasp",
+          "owasp top 10"
+        ],
+        [
+          "injecao",
+          "sql injection",
+          "injecao de sql"
+        ],
+        [
+          "xss",
+          "cross-site scripting"
+        ],
+        [
+          "controle de acesso quebrado"
+        ],
+        [
+          "vulnerabilidade",
+          "falha"
+        ],
+        [
+          "correcao",
+          "mitigacao"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Segurança da Informação e Defesa Cibernética",
+        "Banco de Dados I"
+      ],
+      "desafio_pratico": [
+        "Identificar, explorar e corrigir manualmente todas as falhas do OWASP Top 10 em laboratórios práticos."
+      ]
+    },
+    {
+      "id": "cib_10",
+      "nome": "SAST e DAST em esteira DevSecOps (Semgrep, OWASP ZAP)",
+      "descricao": "SAST e DAST em esteira DevSecOps (Semgrep, OWASP ZAP) (trilha Defesa Cibernética, etapa 3: Segurança de Aplicações (AppSec)).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 3,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "cib_09"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "sast",
+          "analise estatica"
+        ],
+        [
+          "dast",
+          "analise dinamica"
+        ],
+        [
+          "semgrep"
+        ],
+        [
+          "zap",
+          "owasp zap"
+        ],
+        [
+          "devsecops"
+        ],
+        [
+          "pipeline",
+          "esteira"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Engenharia de Software"
+      ],
+      "desafio_pratico": [
+        "Integrar ferramentas SAST (Semgrep) e DAST (OWASP ZAP) em esteira DevSecOps."
+      ]
+    },
+    {
+      "id": "cib_11",
+      "nome": "Modelagem de ameaças com STRIDE",
+      "descricao": "Modelagem de ameaças com STRIDE (trilha Defesa Cibernética, etapa 3: Segurança de Aplicações (AppSec)).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 3,
+      "horas_estimadas": 2,
+      "prerequisitos": [
+        "cib_09"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "modelagem de ameacas",
+          "threat modeling"
+        ],
+        [
+          "stride"
+        ],
+        [
+          "falsificacao",
+          "spoofing"
+        ],
+        [
+          "adulteracao",
+          "tampering"
+        ],
+        [
+          "repudio"
+        ],
+        [
+          "negacao de servico",
+          "dos"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Segurança da Informação e Defesa Cibernética"
+      ],
+      "desafio_pratico": [
+        "Conduzir Modelagem de Ameaças (Threat Modeling) utilizando a metodologia STRIDE."
+      ]
+    },
+    {
+      "id": "cib_12",
+      "nome": "Reconhecimento: OSINT e varredura de portas e serviços",
+      "descricao": "Reconhecimento: OSINT e varredura de portas e serviços (trilha Defesa Cibernética, etapa 4: Operações Ofensivas (Red Team)).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 4,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "cib_01"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "reconhecimento",
+          "recon"
+        ],
+        [
+          "osint",
+          "fontes abertas"
+        ],
+        [
+          "nmap",
+          "varredura de portas",
+          "port scan"
+        ],
+        [
+          "servico",
+          "porta aberta"
+        ],
+        [
+          "gobuster",
+          "enumeracao"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Redes de Computadores II"
+      ],
+      "desafio_pratico": [
+        "Executar reconhecimento ativo/passivo (OSINT, Nmap, Gobuster) documentando portas e serviços."
+      ]
+    },
+    {
+      "id": "cib_13",
+      "nome": "Automação ofensiva e fuzzing com Python",
+      "descricao": "Automação ofensiva e fuzzing com Python (trilha Defesa Cibernética, etapa 4: Operações Ofensivas (Red Team)).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 4,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "cib_12",
+        "funcoes",
+        "listas_strings"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "automacao"
+        ],
+        [
+          "python",
+          "script"
+        ],
+        [
+          "fuzzing",
+          "fuzzer"
+        ],
+        [
+          "requisicao",
+          "socket"
+        ],
+        [
+          "payload",
+          "carga"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Laboratório de Programação III"
+      ],
+      "desafio_pratico": [
+        "Desenvolver scripts autorais em Python para automação de tarefas ofensivas e fuzzing."
+      ]
+    },
+    {
+      "id": "cib_14",
+      "nome": "Laboratórios autorizados (Hack The Box/TryHackMe) com write-ups",
+      "descricao": "Laboratórios autorizados (Hack The Box/TryHackMe) com write-ups (trilha Defesa Cibernética, etapa 4: Operações Ofensivas (Red Team)).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 4,
+      "horas_estimadas": 4,
+      "prerequisitos": [
+        "cib_12"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "hack the box",
+          "htb"
+        ],
+        [
+          "tryhackme",
+          "thm"
+        ],
+        [
+          "laboratorio",
+          "maquina"
+        ],
+        [
+          "write-up",
+          "relatorio"
+        ],
+        [
+          "escalacao de privilegio",
+          "privesc"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Segurança da Informação e Defesa Cibernética"
+      ],
+      "desafio_pratico": [
+        "Comprometer e documentar via write-ups 20+ máquinas no Hack The Box ou TryHackMe."
+      ]
+    },
+    {
+      "id": "cib_15",
+      "nome": "Forense de memória com Volatility",
+      "descricao": "Forense de memória com Volatility (trilha Defesa Cibernética, etapa 5: Operações Defensivas e Forense (Blue Team)).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 5,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "cib_03"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "forense",
+          "forense de memoria"
+        ],
+        [
+          "volatility"
+        ],
+        [
+          "dump de memoria",
+          "imagem de memoria"
+        ],
+        [
+          "processo malicioso",
+          "malware"
+        ],
+        [
+          "artefato",
+          "evidencia"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Sistemas Operacionais"
+      ],
+      "desafio_pratico": [
+        "Analisar dump de memória RAM com Volatility para identificar processos maliciosos e extrair payload."
+      ]
+    },
+    {
+      "id": "cib_16",
+      "nome": "Regras de detecção: YARA (binários) e SIGMA (logs)",
+      "descricao": "Regras de detecção: YARA (binários) e SIGMA (logs) (trilha Defesa Cibernética, etapa 5: Operações Defensivas e Forense (Blue Team)).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 5,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "cib_03"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "yara"
+        ],
+        [
+          "sigma"
+        ],
+        [
+          "regra de deteccao",
+          "assinatura"
+        ],
+        [
+          "log",
+          "logs"
+        ],
+        [
+          "ioc",
+          "indicador de comprometimento"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Segurança da Informação e Defesa Cibernética"
+      ],
+      "desafio_pratico": [
+        "Desenvolver regras YARA para binários e regras SIGMA para logs de SIEM."
+      ]
+    },
+    {
+      "id": "cib_17",
+      "nome": "SIEM/EDR (Wazuh/ELK): coleta, correlação e alertas",
+      "descricao": "SIEM/EDR (Wazuh/ELK): coleta, correlação e alertas (trilha Defesa Cibernética, etapa 5: Operações Defensivas e Forense (Blue Team)).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 5,
+      "horas_estimadas": 4,
+      "prerequisitos": [
+        "cib_16"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "siem"
+        ],
+        [
+          "edr"
+        ],
+        [
+          "wazuh"
+        ],
+        [
+          "elk",
+          "elasticsearch",
+          "kibana"
+        ],
+        [
+          "correlacao"
+        ],
+        [
+          "alerta",
+          "incidente"
+        ]
+      ],
+      "dificuldade_base": "dificil",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Projeto de Infraestrutura de TI"
+      ],
+      "desafio_pratico": [
+        "Configurar ambiente SIEM/EDR (Wazuh/ELK) para coleta, correlação e alertas de incidentes."
+      ]
+    },
+    {
+      "id": "cib_18",
+      "nome": "Auditoria de nuvem com CIS Benchmark",
+      "descricao": "Auditoria de nuvem com CIS Benchmark (trilha Defesa Cibernética, etapa 6: Governança e Nuvem).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 6,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "cib_08"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "nuvem",
+          "cloud",
+          "aws",
+          "gcp"
+        ],
+        [
+          "cis benchmark",
+          "cis"
+        ],
+        [
+          "auditoria"
+        ],
+        [
+          "configuracao insegura",
+          "hardening"
+        ],
+        [
+          "conformidade"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Projeto de Infraestrutura de TI"
+      ],
+      "desafio_pratico": [
+        "Auditar infraestrutura em nuvem (AWS/GCP) aplicando recomendações do CIS Benchmark e corrigindo falhas."
+      ]
+    },
+    {
+      "id": "cib_19",
+      "nome": "IAM com privilégio mínimo e monitoramento de acessos (CloudTrail)",
+      "descricao": "IAM com privilégio mínimo e monitoramento de acessos (CloudTrail) (trilha Defesa Cibernética, etapa 6: Governança e Nuvem).",
+      "trilha": "defesa_cibernetica",
+      "etapa": 6,
+      "horas_estimadas": 3,
+      "prerequisitos": [
+        "cib_18"
+      ],
+      "materiais": [],
+      "palavras_chave": [
+        [
+          "iam",
+          "gestao de identidade"
+        ],
+        [
+          "privilegio minimo",
+          "menor privilegio"
+        ],
+        [
+          "politica",
+          "policy"
+        ],
+        [
+          "cloudtrail",
+          "trilha de auditoria"
+        ],
+        [
+          "monitoramento"
+        ]
+      ],
+      "dificuldade_base": "medio",
+      "no_piloto": false,
+      "disciplinas_ime": [
+        "Projeto de Infraestrutura de TI"
+      ],
+      "desafio_pratico": [
+        "Configurar políticas de privilégio mínimo no IAM e monitorar tentativas com CloudTrail."
       ]
     }
-  ],
-  "_nota_palavras_chave": "PROVISÓRIO (A3): 'palavras_chave' são grupos de sinônimos por competência, usados pelo portão de cobertura do diálogo do Tutor; a Pessoa 4 deve revisar."
+  ]
 }
