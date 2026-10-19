@@ -41,7 +41,7 @@
       "horas_estimadas": 6,
       "prerequisitos": [],
       "materiais": [
-        "provisorio_variaveis_tipos.txt"
+        "variaveis_tipos.txt"
       ],
       "palavras_chave": [
         [
@@ -94,7 +94,7 @@
         "variaveis_tipos"
       ],
       "materiais": [
-        "provisorio_condicionais.txt"
+        "condicionais.txt"
       ],
       "palavras_chave": [
         [
@@ -137,7 +137,7 @@
         "condicionais"
       ],
       "materiais": [
-        "provisorio_repeticao.txt"
+        "repeticao.txt"
       ],
       "palavras_chave": [
         [
@@ -184,7 +184,7 @@
         "repeticao"
       ],
       "materiais": [
-        "provisorio_funcoes.txt"
+        "funcoes.txt"
       ],
       "palavras_chave": [
         [
@@ -225,7 +225,7 @@
         "repeticao"
       ],
       "materiais": [
-        "provisorio_listas_strings.txt"
+        "listas_strings.txt"
       ],
       "palavras_chave": [
         [
@@ -306,7 +306,7 @@
         "repeticao"
       ],
       "materiais": [
-        "provisorio_dev_01_complexidade.txt"
+        "dev_01_complexidade.txt"
       ],
       "palavras_chave": [
         [
@@ -360,7 +360,7 @@
         "listas_strings"
       ],
       "materiais": [
-        "provisorio_dev_02_estruturas_lineares.txt"
+        "dev_02_estruturas_lineares.txt"
       ],
       "palavras_chave": [
         [
@@ -1333,7 +1333,7 @@
       "horas_estimadas": 1.5,
       "prerequisitos": [],
       "materiais": [
-        "provisorio_cib_01_tcpip_captura.txt"
+        "cib_01_tcpip_captura.txt"
       ],
       "palavras_chave": [
         [
@@ -1381,7 +1381,7 @@
         "cib_01"
       ],
       "materiais": [
-        "provisorio_cib_02_dns_http_tls.txt"
+        "cib_02_dns_http_tls.txt"
       ],
       "palavras_chave": [
         [

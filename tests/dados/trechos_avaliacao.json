@@ -40,19 +40,19 @@
     "cob_01": [
       {
         "texto": "Laços de repetição em Python\n\nLaços repetem um bloco de instruções várias vezes. Python tem dois tipos:\nfor e while. O for percorre uma sequência, executando o bloco uma vez para\ncada elemento. A função range gera sequências de números: range(5) produz\n0, 1, 2, 3 e 4 (começa em 0 e não inclui o 5); range(2, 6) produz 2, 3, 4\ne 5; range(0, 10, 2) produz os pares 0, 2, 4, 6 e 8.\n\nO while repete o bloco enquanto uma condição for verdadeira. A condição é\ntestada antes de cada repetição; se for falsa logo de início, o bloco não\nexecuta nenhuma vez. Dentro do laço, algo precisa mudar para que a\ncondição um dia fique falsa; caso contrário, o laço nunca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar z",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 0,
         "distancia": 336.7
       },
       {
         "texto": "nca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar zero.\n\nDois padrões aparecem o tempo todo. O contador é uma variável que começa\nem 0 e soma 1 a cada repetição, para contar quantas vezes algo aconteceu.\nO acumulador começa em um valor neutro (0 para somas, 1 para produtos) e\nvai incorporando cada novo valor: soma = soma + x. A inicialização deve\nficar ANTES do laço; se ficar dentro, o valor é zerado a cada volta.\n\nO comando break interrompe o laço imediatamente, e continue pula para a\npróxima repetição sem executar o resto do bloco. Erros comuns: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 1,
         "distancia": 296.5
       },
       {
         "texto": "s: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 2,
         "distancia": 259.6
       }
@@ -60,19 +60,19 @@
     "cob_02": [
       {
         "texto": "Laços de repetição em Python\n\nLaços repetem um bloco de instruções várias vezes. Python tem dois tipos:\nfor e while. O for percorre uma sequência, executando o bloco uma vez para\ncada elemento. A função range gera sequências de números: range(5) produz\n0, 1, 2, 3 e 4 (começa em 0 e não inclui o 5); range(2, 6) produz 2, 3, 4\ne 5; range(0, 10, 2) produz os pares 0, 2, 4, 6 e 8.\n\nO while repete o bloco enquanto uma condição for verdadeira. A condição é\ntestada antes de cada repetição; se for falsa logo de início, o bloco não\nexecuta nenhuma vez. Dentro do laço, algo precisa mudar para que a\ncondição um dia fique falsa; caso contrário, o laço nunca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar z",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 0,
         "distancia": 355.3
       },
       {
         "texto": "nca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar zero.\n\nDois padrões aparecem o tempo todo. O contador é uma variável que começa\nem 0 e soma 1 a cada repetição, para contar quantas vezes algo aconteceu.\nO acumulador começa em um valor neutro (0 para somas, 1 para produtos) e\nvai incorporando cada novo valor: soma = soma + x. A inicialização deve\nficar ANTES do laço; se ficar dentro, o valor é zerado a cada volta.\n\nO comando break interrompe o laço imediatamente, e continue pula para a\npróxima repetição sem executar o resto do bloco. Erros comuns: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 1,
         "distancia": 311.2
       },
       {
         "texto": "s: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 2,
         "distancia": 250.4
       }
@@ -80,13 +80,13 @@
     "cob_03": [
       {
         "texto": "nca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar zero.\n\nDois padrões aparecem o tempo todo. O contador é uma variável que começa\nem 0 e soma 1 a cada repetição, para contar quantas vezes algo aconteceu.\nO acumulador começa em um valor neutro (0 para somas, 1 para produtos) e\nvai incorporando cada novo valor: soma = soma + x. A inicialização deve\nficar ANTES do laço; se ficar dentro, o valor é zerado a cada volta.\n\nO comando break interrompe o laço imediatamente, e continue pula para a\npróxima repetição sem executar o resto do bloco. Erros comuns: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 1,
         "distancia": 398.7
       },
       {
         "texto": "s: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 2,
         "distancia": 382.0
       }
@@ -94,19 +94,19 @@
     "cob_04": [
       {
         "texto": "Laços de repetição em Python\n\nLaços repetem um bloco de instruções várias vezes. Python tem dois tipos:\nfor e while. O for percorre uma sequência, executando o bloco uma vez para\ncada elemento. A função range gera sequências de números: range(5) produz\n0, 1, 2, 3 e 4 (começa em 0 e não inclui o 5); range(2, 6) produz 2, 3, 4\ne 5; range(0, 10, 2) produz os pares 0, 2, 4, 6 e 8.\n\nO while repete o bloco enquanto uma condição for verdadeira. A condição é\ntestada antes de cada repetição; se for falsa logo de início, o bloco não\nexecuta nenhuma vez. Dentro do laço, algo precisa mudar para que a\ncondição um dia fique falsa; caso contrário, o laço nunca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar z",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 0,
         "distancia": 378.8
       },
       {
         "texto": "nca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar zero.\n\nDois padrões aparecem o tempo todo. O contador é uma variável que começa\nem 0 e soma 1 a cada repetição, para contar quantas vezes algo aconteceu.\nO acumulador começa em um valor neutro (0 para somas, 1 para produtos) e\nvai incorporando cada novo valor: soma = soma + x. A inicialização deve\nficar ANTES do laço; se ficar dentro, o valor é zerado a cada volta.\n\nO comando break interrompe o laço imediatamente, e continue pula para a\npróxima repetição sem executar o resto do bloco. Erros comuns: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 1,
         "distancia": 329.3
       },
       {
         "texto": "s: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 2,
         "distancia": 297.7
       }
@@ -114,13 +114,13 @@
     "cob_05": [
       {
         "texto": "Estruturas condicionais em Python\n\nUma estrutura condicional permite que o programa escolha entre caminhos\ndiferentes conforme uma condição seja verdadeira ou falsa. Em Python, a\nforma básica é o if: se a condição for True, o bloco indentado logo abaixo\né executado; se for False, o bloco é pulado. A linha do if termina com\ndois-pontos, e o bloco é definido pela indentação (em geral, 4 espaços).\n\nO else define o que fazer quando a condição do if é falsa. Exemplo:\n    if nota >= 5:\n        print(\"aprovado\")\n    else:\n        print(\"reprovado\")\nExatamente um dos dois blocos é executado, nunca os dois.\n\nQuando há mais de duas possibilidades, usa-se elif (abreviação de \"else\nif\"). As condições são testadas de cima para baixo, e apenas o bloco da\nPRIMEIRA condição verdadeira é executado; as dema",
-        "fonte": "provisorio_condicionais.txt",
+        "fonte": "condicionais.txt",
         "indice": 0,
         "distancia": 348.9
       },
       {
         "texto": "se elif (abreviação de \"else\nif\"). As condições são testadas de cima para baixo, e apenas o bloco da\nPRIMEIRA condição verdadeira é executado; as demais são ignoradas, mesmo\nque também sejam verdadeiras. Por isso a ordem importa: ao classificar\nnotas, teste primeiro nota >= 9, depois nota >= 7, e assim por diante.\n\nAs condições podem combinar comparações com and, or e not, por exemplo\nif idade >= 16 and idade < 18. Erros comuns: esquecer os dois-pontos,\nindentar errado e usar = no lugar de == na condição.",
-        "fonte": "provisorio_condicionais.txt",
+        "fonte": "condicionais.txt",
         "indice": 1,
         "distancia": 265.5
       }
@@ -128,13 +128,13 @@
     "cob_06": [
       {
         "texto": "Estruturas condicionais em Python\n\nUma estrutura condicional permite que o programa escolha entre caminhos\ndiferentes conforme uma condição seja verdadeira ou falsa. Em Python, a\nforma básica é o if: se a condição for True, o bloco indentado logo abaixo\né executado; se for False, o bloco é pulado. A linha do if termina com\ndois-pontos, e o bloco é definido pela indentação (em geral, 4 espaços).\n\nO else define o que fazer quando a condição do if é falsa. Exemplo:\n    if nota >= 5:\n        print(\"aprovado\")\n    else:\n        print(\"reprovado\")\nExatamente um dos dois blocos é executado, nunca os dois.\n\nQuando há mais de duas possibilidades, usa-se elif (abreviação de \"else\nif\"). As condições são testadas de cima para baixo, e apenas o bloco da\nPRIMEIRA condição verdadeira é executado; as dema",
-        "fonte": "provisorio_condicionais.txt",
+        "fonte": "condicionais.txt",
         "indice": 0,
         "distancia": 252.1
       },
       {
         "texto": "se elif (abreviação de \"else\nif\"). As condições são testadas de cima para baixo, e apenas o bloco da\nPRIMEIRA condição verdadeira é executado; as demais são ignoradas, mesmo\nque também sejam verdadeiras. Por isso a ordem importa: ao classificar\nnotas, teste primeiro nota >= 9, depois nota >= 7, e assim por diante.\n\nAs condições podem combinar comparações com and, or e not, por exemplo\nif idade >= 16 and idade < 18. Erros comuns: esquecer os dois-pontos,\nindentar errado e usar = no lugar de == na condição.",
-        "fonte": "provisorio_condicionais.txt",
+        "fonte": "condicionais.txt",
         "indice": 1,
         "distancia": 256.0
       }
@@ -142,13 +142,13 @@
     "cob_07": [
       {
         "texto": "Funções e modularização em Python\n\nUma função é um bloco de código com nome, que pode ser executado sempre\nque necessário. Em Python ela é definida com def, seguida do nome, dos\nparâmetros entre parênteses e de dois-pontos:\n    def area_retangulo(base, altura):\n        return base * altura\nDefinir a função não a executa; ela só roda quando é chamada, por exemplo\narea_retangulo(3, 4), que devolve 12.\n\nParâmetros são os nomes que aparecem na definição; argumentos são os\nvalores passados na chamada. Parâmetros podem ter valor padrão, como\ndef saudacao(texto=\"olá\"), usado quando o argumento é omitido.\n\nO return encerra a função e devolve um valor para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença e",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 0,
         "distancia": 374.8
       },
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 287.0
       }
@@ -156,13 +156,13 @@
     "cob_08": [
       {
         "texto": "Funções e modularização em Python\n\nUma função é um bloco de código com nome, que pode ser executado sempre\nque necessário. Em Python ela é definida com def, seguida do nome, dos\nparâmetros entre parênteses e de dois-pontos:\n    def area_retangulo(base, altura):\n        return base * altura\nDefinir a função não a executa; ela só roda quando é chamada, por exemplo\narea_retangulo(3, 4), que devolve 12.\n\nParâmetros são os nomes que aparecem na definição; argumentos são os\nvalores passados na chamada. Parâmetros podem ter valor padrão, como\ndef saudacao(texto=\"olá\"), usado quando o argumento é omitido.\n\nO return encerra a função e devolve um valor para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença e",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 0,
         "distancia": 343.8
       },
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 204.1
       }
@@ -170,19 +170,19 @@
     "cob_09": [
       {
         "texto": "Variáveis, tipos e expressões em Python\n\nUma variável é um nome que guarda um valor na memória do computador. Em\nPython, a variável é criada no momento da atribuição, com o sinal de igual:\nidade = 18 guarda o número 18 no nome idade. O sinal = não significa\nigualdade matemática, e sim \"guarde o valor da direita no nome da esquerda\".\nPor isso x = x + 1 é válido: calcula x + 1 e guarda o resultado em x.\n\nTodo valor tem um tipo. Os tipos básicos são: int (números inteiros, como\n7 e -3), float (números com parte decimal, como 3.14 e 2.0), str (textos,\nescritos entre aspas, como \"olá\") e bool (valores lógicos True e False).\nA função type(valor) mostra o tipo de um valor. Para converter entre tipos,\nusam-se int(), float() e str(): int(\"42\") vale 42 e str(7) vale \"7\".\nAtenção: \"2\" + \"3\" junta tex",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 0,
         "distancia": 312.7
       },
       {
         "texto": "stra o tipo de um valor. Para converter entre tipos,\nusam-se int(), float() e str(): int(\"42\") vale 42 e str(7) vale \"7\".\nAtenção: \"2\" + \"3\" junta textos e resulta em \"23\", enquanto 2 + 3 resulta 5.\n\nExpressões aritméticas usam + - * /, além de // (divisão inteira), %\n(resto da divisão) e ** (potência). A divisão / sempre produz float:\n7 / 2 vale 3.5, mas 7 // 2 vale 3 e 7 % 2 vale 1. A precedência segue a\nmatemática: ** antes de * e /, que vêm antes de + e -. Parênteses mudam a\nordem: 2 + 3 * 4 vale 14, e (2 + 3) * 4 vale 20.\n\nExpressões lógicas produzem True ou False. Os operadores de comparação são\n==, !=, <, >, <= e >=. Os operadores lógicos são and (verdadeiro só se os\ndois lados forem verdadeiros), or (verdadeiro se pelo menos um lado for) e\nnot (inverte o valor). Não confunda = (atr",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 1,
         "distancia": 306.3
       },
       {
         "texto": "cos são and (verdadeiro só se os\ndois lados forem verdadeiros), or (verdadeiro se pelo menos um lado for) e\nnot (inverte o valor). Não confunda = (atribuição) com == (comparação).",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 2,
         "distancia": 357.6
       }
@@ -190,19 +190,19 @@
     "cob_10": [
       {
         "texto": "Listas e strings em Python\n\nListas e strings são sequências: guardam vários elementos em ordem. Uma\nlista é escrita entre colchetes, como notas = [7, 5, 9], e pode guardar\nvalores de qualquer tipo. Uma string é uma sequência de caracteres, como\nnome = \"Python\". A função len devolve o tamanho: len(notas) vale 3.\n\nOs elementos são acessados por índice, que começa em 0: notas[0] vale 7 e\nnotas[2] vale 9. Índices negativos contam do fim: notas[-1] é o último\nelemento. Acessar um índice que não existe, como notas[3], gera IndexError.\nO fatiamento seq[inicio:fim] devolve os elementos do índice inicio até\nfim - 1: \"Python\"[0:2] vale \"Py\". Omitir o início ou o fim significa ir\ndesde o começo ou até o final da sequência.\n\nA diferença principal é que listas são mutáveis e strings são imutáveis.\nNuma",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 0,
         "distancia": 238.3
       },
       {
         "texto": "nício ou o fim significa ir\ndesde o começo ou até o final da sequência.\n\nA diferença principal é que listas são mutáveis e strings são imutáveis.\nNuma lista, pode-se trocar um elemento (notas[0] = 10), acrescentar ao fim\ncom append (notas.append(8)) e remover com remove ou pop. Numa string,\ns[0] = \"J\" gera erro; para \"mudar\" um texto, cria-se uma string nova, por\nexemplo com s.upper(), s.replace(\"a\", \"o\") ou concatenação com +.\n\nPara percorrer uma sequência, usa-se for: for nota in notas visita cada\nelemento. Quando também se precisa do índice, usa-se for i in\nrange(len(notas)). O operador in testa se um elemento pertence à\nsequência: 9 in notas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 1,
         "distancia": 241.7
       },
       {
         "texto": "tas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 2,
         "distancia": 274.4
       }
@@ -210,19 +210,19 @@
     "cob_11": [
       {
         "texto": "Listas e strings em Python\n\nListas e strings são sequências: guardam vários elementos em ordem. Uma\nlista é escrita entre colchetes, como notas = [7, 5, 9], e pode guardar\nvalores de qualquer tipo. Uma string é uma sequência de caracteres, como\nnome = \"Python\". A função len devolve o tamanho: len(notas) vale 3.\n\nOs elementos são acessados por índice, que começa em 0: notas[0] vale 7 e\nnotas[2] vale 9. Índices negativos contam do fim: notas[-1] é o último\nelemento. Acessar um índice que não existe, como notas[3], gera IndexError.\nO fatiamento seq[inicio:fim] devolve os elementos do índice inicio até\nfim - 1: \"Python\"[0:2] vale \"Py\". Omitir o início ou o fim significa ir\ndesde o começo ou até o final da sequência.\n\nA diferença principal é que listas são mutáveis e strings são imutáveis.\nNuma",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 0,
         "distancia": 340.5
       },
       {
         "texto": "nício ou o fim significa ir\ndesde o começo ou até o final da sequência.\n\nA diferença principal é que listas são mutáveis e strings são imutáveis.\nNuma lista, pode-se trocar um elemento (notas[0] = 10), acrescentar ao fim\ncom append (notas.append(8)) e remover com remove ou pop. Numa string,\ns[0] = \"J\" gera erro; para \"mudar\" um texto, cria-se uma string nova, por\nexemplo com s.upper(), s.replace(\"a\", \"o\") ou concatenação com +.\n\nPara percorrer uma sequência, usa-se for: for nota in notas visita cada\nelemento. Quando também se precisa do índice, usa-se for i in\nrange(len(notas)). O operador in testa se um elemento pertence à\nsequência: 9 in notas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 1,
         "distancia": 293.1
       },
       {
         "texto": "tas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 2,
         "distancia": 273.4
       }
@@ -244,19 +244,19 @@
       },
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 310.7
       },
       {
         "texto": "tas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 2,
         "distancia": 339.9
       },
       {
         "texto": "nca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar zero.\n\nDois padrões aparecem o tempo todo. O contador é uma variável que começa\nem 0 e soma 1 a cada repetição, para contar quantas vezes algo aconteceu.\nO acumulador começa em um valor neutro (0 para somas, 1 para produtos) e\nvai incorporando cada novo valor: soma = soma + x. A inicialização deve\nficar ANTES do laço; se ficar dentro, o valor é zerado a cada volta.\n\nO comando break interrompe o laço imediatamente, e continue pula para a\npróxima repetição sem executar o resto do bloco. Erros comuns: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 1,
         "distancia": 318.2
       }
@@ -270,19 +270,19 @@
       },
       {
         "texto": "Funções e modularização em Python\n\nUma função é um bloco de código com nome, que pode ser executado sempre\nque necessário. Em Python ela é definida com def, seguida do nome, dos\nparâmetros entre parênteses e de dois-pontos:\n    def area_retangulo(base, altura):\n        return base * altura\nDefinir a função não a executa; ela só roda quando é chamada, por exemplo\narea_retangulo(3, 4), que devolve 12.\n\nParâmetros são os nomes que aparecem na definição; argumentos são os\nvalores passados na chamada. Parâmetros podem ter valor padrão, como\ndef saudacao(texto=\"olá\"), usado quando o argumento é omitido.\n\nO return encerra a função e devolve um valor para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença e",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 0,
         "distancia": 306.5
       },
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 307.5
       },
       {
         "texto": "nício ou o fim significa ir\ndesde o começo ou até o final da sequência.\n\nA diferença principal é que listas são mutáveis e strings são imutáveis.\nNuma lista, pode-se trocar um elemento (notas[0] = 10), acrescentar ao fim\ncom append (notas.append(8)) e remover com remove ou pop. Numa string,\ns[0] = \"J\" gera erro; para \"mudar\" um texto, cria-se uma string nova, por\nexemplo com s.upper(), s.replace(\"a\", \"o\") ou concatenação com +.\n\nPara percorrer uma sequência, usa-se for: for nota in notas visita cada\nelemento. Quando também se precisa do índice, usa-se for i in\nrange(len(notas)). O operador in testa se um elemento pertence à\nsequência: 9 in notas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 1,
         "distancia": 319.4
       }
@@ -290,25 +290,25 @@
     "fora_01": [
       {
         "texto": "Estruturas condicionais em Python\n\nUma estrutura condicional permite que o programa escolha entre caminhos\ndiferentes conforme uma condição seja verdadeira ou falsa. Em Python, a\nforma básica é o if: se a condição for True, o bloco indentado logo abaixo\né executado; se for False, o bloco é pulado. A linha do if termina com\ndois-pontos, e o bloco é definido pela indentação (em geral, 4 espaços).\n\nO else define o que fazer quando a condição do if é falsa. Exemplo:\n    if nota >= 5:\n        print(\"aprovado\")\n    else:\n        print(\"reprovado\")\nExatamente um dos dois blocos é executado, nunca os dois.\n\nQuando há mais de duas possibilidades, usa-se elif (abreviação de \"else\nif\"). As condições são testadas de cima para baixo, e apenas o bloco da\nPRIMEIRA condição verdadeira é executado; as dema",
-        "fonte": "provisorio_condicionais.txt",
+        "fonte": "condicionais.txt",
         "indice": 0,
         "distancia": 275.5
       },
       {
         "texto": "Funções e modularização em Python\n\nUma função é um bloco de código com nome, que pode ser executado sempre\nque necessário. Em Python ela é definida com def, seguida do nome, dos\nparâmetros entre parênteses e de dois-pontos:\n    def area_retangulo(base, altura):\n        return base * altura\nDefinir a função não a executa; ela só roda quando é chamada, por exemplo\narea_retangulo(3, 4), que devolve 12.\n\nParâmetros são os nomes que aparecem na definição; argumentos são os\nvalores passados na chamada. Parâmetros podem ter valor padrão, como\ndef saudacao(texto=\"olá\"), usado quando o argumento é omitido.\n\nO return encerra a função e devolve um valor para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença e",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 0,
         "distancia": 280.8
       },
       {
         "texto": "Laços de repetição em Python\n\nLaços repetem um bloco de instruções várias vezes. Python tem dois tipos:\nfor e while. O for percorre uma sequência, executando o bloco uma vez para\ncada elemento. A função range gera sequências de números: range(5) produz\n0, 1, 2, 3 e 4 (começa em 0 e não inclui o 5); range(2, 6) produz 2, 3, 4\ne 5; range(0, 10, 2) produz os pares 0, 2, 4, 6 e 8.\n\nO while repete o bloco enquanto uma condição for verdadeira. A condição é\ntestada antes de cada repetição; se for falsa logo de início, o bloco não\nexecuta nenhuma vez. Dentro do laço, algo precisa mudar para que a\ncondição um dia fique falsa; caso contrário, o laço nunca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar z",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 0,
         "distancia": 287.9
       },
       {
         "texto": "Variáveis, tipos e expressões em Python\n\nUma variável é um nome que guarda um valor na memória do computador. Em\nPython, a variável é criada no momento da atribuição, com o sinal de igual:\nidade = 18 guarda o número 18 no nome idade. O sinal = não significa\nigualdade matemática, e sim \"guarde o valor da direita no nome da esquerda\".\nPor isso x = x + 1 é válido: calcula x + 1 e guarda o resultado em x.\n\nTodo valor tem um tipo. Os tipos básicos são: int (números inteiros, como\n7 e -3), float (números com parte decimal, como 3.14 e 2.0), str (textos,\nescritos entre aspas, como \"olá\") e bool (valores lógicos True e False).\nA função type(valor) mostra o tipo de um valor. Para converter entre tipos,\nusam-se int(), float() e str(): int(\"42\") vale 42 e str(7) vale \"7\".\nAtenção: \"2\" + \"3\" junta tex",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 0,
         "distancia": 279.1
       }
@@ -316,25 +316,25 @@
     "fora_02": [
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 372.1
       },
       {
         "texto": "Listas e strings em Python\n\nListas e strings são sequências: guardam vários elementos em ordem. Uma\nlista é escrita entre colchetes, como notas = [7, 5, 9], e pode guardar\nvalores de qualquer tipo. Uma string é uma sequência de caracteres, como\nnome = \"Python\". A função len devolve o tamanho: len(notas) vale 3.\n\nOs elementos são acessados por índice, que começa em 0: notas[0] vale 7 e\nnotas[2] vale 9. Índices negativos contam do fim: notas[-1] é o último\nelemento. Acessar um índice que não existe, como notas[3], gera IndexError.\nO fatiamento seq[inicio:fim] devolve os elementos do índice inicio até\nfim - 1: \"Python\"[0:2] vale \"Py\". Omitir o início ou o fim significa ir\ndesde o começo ou até o final da sequência.\n\nA diferença principal é que listas são mutáveis e strings são imutáveis.\nNuma",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 0,
         "distancia": 381.0
       },
       {
         "texto": "tas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 2,
         "distancia": 373.0
       },
       {
         "texto": "cos são and (verdadeiro só se os\ndois lados forem verdadeiros), or (verdadeiro se pelo menos um lado for) e\nnot (inverte o valor). Não confunda = (atribuição) com == (comparação).",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 2,
         "distancia": 358.7
       }
@@ -342,25 +342,25 @@
     "fora_03": [
       {
         "texto": "Estruturas condicionais em Python\n\nUma estrutura condicional permite que o programa escolha entre caminhos\ndiferentes conforme uma condição seja verdadeira ou falsa. Em Python, a\nforma básica é o if: se a condição for True, o bloco indentado logo abaixo\né executado; se for False, o bloco é pulado. A linha do if termina com\ndois-pontos, e o bloco é definido pela indentação (em geral, 4 espaços).\n\nO else define o que fazer quando a condição do if é falsa. Exemplo:\n    if nota >= 5:\n        print(\"aprovado\")\n    else:\n        print(\"reprovado\")\nExatamente um dos dois blocos é executado, nunca os dois.\n\nQuando há mais de duas possibilidades, usa-se elif (abreviação de \"else\nif\"). As condições são testadas de cima para baixo, e apenas o bloco da\nPRIMEIRA condição verdadeira é executado; as dema",
-        "fonte": "provisorio_condicionais.txt",
+        "fonte": "condicionais.txt",
         "indice": 0,
         "distancia": 281.7
       },
       {
         "texto": "Funções e modularização em Python\n\nUma função é um bloco de código com nome, que pode ser executado sempre\nque necessário. Em Python ela é definida com def, seguida do nome, dos\nparâmetros entre parênteses e de dois-pontos:\n    def area_retangulo(base, altura):\n        return base * altura\nDefinir a função não a executa; ela só roda quando é chamada, por exemplo\narea_retangulo(3, 4), que devolve 12.\n\nParâmetros são os nomes que aparecem na definição; argumentos são os\nvalores passados na chamada. Parâmetros podem ter valor padrão, como\ndef saudacao(texto=\"olá\"), usado quando o argumento é omitido.\n\nO return encerra a função e devolve um valor para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença e",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 0,
         "distancia": 275.2
       },
       {
         "texto": "Listas e strings em Python\n\nListas e strings são sequências: guardam vários elementos em ordem. Uma\nlista é escrita entre colchetes, como notas = [7, 5, 9], e pode guardar\nvalores de qualquer tipo. Uma string é uma sequência de caracteres, como\nnome = \"Python\". A função len devolve o tamanho: len(notas) vale 3.\n\nOs elementos são acessados por índice, que começa em 0: notas[0] vale 7 e\nnotas[2] vale 9. Índices negativos contam do fim: notas[-1] é o último\nelemento. Acessar um índice que não existe, como notas[3], gera IndexError.\nO fatiamento seq[inicio:fim] devolve os elementos do índice inicio até\nfim - 1: \"Python\"[0:2] vale \"Py\". Omitir o início ou o fim significa ir\ndesde o começo ou até o final da sequência.\n\nA diferença principal é que listas são mutáveis e strings são imutáveis.\nNuma",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 0,
         "distancia": 289.6
       },
       {
         "texto": "Variáveis, tipos e expressões em Python\n\nUma variável é um nome que guarda um valor na memória do computador. Em\nPython, a variável é criada no momento da atribuição, com o sinal de igual:\nidade = 18 guarda o número 18 no nome idade. O sinal = não significa\nigualdade matemática, e sim \"guarde o valor da direita no nome da esquerda\".\nPor isso x = x + 1 é válido: calcula x + 1 e guarda o resultado em x.\n\nTodo valor tem um tipo. Os tipos básicos são: int (números inteiros, como\n7 e -3), float (números com parte decimal, como 3.14 e 2.0), str (textos,\nescritos entre aspas, como \"olá\") e bool (valores lógicos True e False).\nA função type(valor) mostra o tipo de um valor. Para converter entre tipos,\nusam-se int(), float() e str(): int(\"42\") vale 42 e str(7) vale \"7\".\nAtenção: \"2\" + \"3\" junta tex",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 0,
         "distancia": 279.3
       }
@@ -368,25 +368,25 @@
     "fora_04": [
       {
         "texto": "Estruturas condicionais em Python\n\nUma estrutura condicional permite que o programa escolha entre caminhos\ndiferentes conforme uma condição seja verdadeira ou falsa. Em Python, a\nforma básica é o if: se a condição for True, o bloco indentado logo abaixo\né executado; se for False, o bloco é pulado. A linha do if termina com\ndois-pontos, e o bloco é definido pela indentação (em geral, 4 espaços).\n\nO else define o que fazer quando a condição do if é falsa. Exemplo:\n    if nota >= 5:\n        print(\"aprovado\")\n    else:\n        print(\"reprovado\")\nExatamente um dos dois blocos é executado, nunca os dois.\n\nQuando há mais de duas possibilidades, usa-se elif (abreviação de \"else\nif\"). As condições são testadas de cima para baixo, e apenas o bloco da\nPRIMEIRA condição verdadeira é executado; as dema",
-        "fonte": "provisorio_condicionais.txt",
+        "fonte": "condicionais.txt",
         "indice": 0,
         "distancia": 226.4
       },
       {
         "texto": "Funções e modularização em Python\n\nUma função é um bloco de código com nome, que pode ser executado sempre\nque necessário. Em Python ela é definida com def, seguida do nome, dos\nparâmetros entre parênteses e de dois-pontos:\n    def area_retangulo(base, altura):\n        return base * altura\nDefinir a função não a executa; ela só roda quando é chamada, por exemplo\narea_retangulo(3, 4), que devolve 12.\n\nParâmetros são os nomes que aparecem na definição; argumentos são os\nvalores passados na chamada. Parâmetros podem ter valor padrão, como\ndef saudacao(texto=\"olá\"), usado quando o argumento é omitido.\n\nO return encerra a função e devolve um valor para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença e",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 0,
         "distancia": 257.1
       },
       {
         "texto": "Laços de repetição em Python\n\nLaços repetem um bloco de instruções várias vezes. Python tem dois tipos:\nfor e while. O for percorre uma sequência, executando o bloco uma vez para\ncada elemento. A função range gera sequências de números: range(5) produz\n0, 1, 2, 3 e 4 (começa em 0 e não inclui o 5); range(2, 6) produz 2, 3, 4\ne 5; range(0, 10, 2) produz os pares 0, 2, 4, 6 e 8.\n\nO while repete o bloco enquanto uma condição for verdadeira. A condição é\ntestada antes de cada repetição; se for falsa logo de início, o bloco não\nexecuta nenhuma vez. Dentro do laço, algo precisa mudar para que a\ncondição um dia fique falsa; caso contrário, o laço nunca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar z",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 0,
         "distancia": 253.1
       },
       {
         "texto": "Variáveis, tipos e expressões em Python\n\nUma variável é um nome que guarda um valor na memória do computador. Em\nPython, a variável é criada no momento da atribuição, com o sinal de igual:\nidade = 18 guarda o número 18 no nome idade. O sinal = não significa\nigualdade matemática, e sim \"guarde o valor da direita no nome da esquerda\".\nPor isso x = x + 1 é válido: calcula x + 1 e guarda o resultado em x.\n\nTodo valor tem um tipo. Os tipos básicos são: int (números inteiros, como\n7 e -3), float (números com parte decimal, como 3.14 e 2.0), str (textos,\nescritos entre aspas, como \"olá\") e bool (valores lógicos True e False).\nA função type(valor) mostra o tipo de um valor. Para converter entre tipos,\nusam-se int(), float() e str(): int(\"42\") vale 42 e str(7) vale \"7\".\nAtenção: \"2\" + \"3\" junta tex",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 0,
         "distancia": 253.4
       }
@@ -394,25 +394,25 @@
     "fora_05": [
       {
         "texto": "nício ou o fim significa ir\ndesde o começo ou até o final da sequência.\n\nA diferença principal é que listas são mutáveis e strings são imutáveis.\nNuma lista, pode-se trocar um elemento (notas[0] = 10), acrescentar ao fim\ncom append (notas.append(8)) e remover com remove ou pop. Numa string,\ns[0] = \"J\" gera erro; para \"mudar\" um texto, cria-se uma string nova, por\nexemplo com s.upper(), s.replace(\"a\", \"o\") ou concatenação com +.\n\nPara percorrer uma sequência, usa-se for: for nota in notas visita cada\nelemento. Quando também se precisa do índice, usa-se for i in\nrange(len(notas)). O operador in testa se um elemento pertence à\nsequência: 9 in notas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 1,
         "distancia": 338.2
       },
       {
         "texto": "nca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar zero.\n\nDois padrões aparecem o tempo todo. O contador é uma variável que começa\nem 0 e soma 1 a cada repetição, para contar quantas vezes algo aconteceu.\nO acumulador começa em um valor neutro (0 para somas, 1 para produtos) e\nvai incorporando cada novo valor: soma = soma + x. A inicialização deve\nficar ANTES do laço; se ficar dentro, o valor é zerado a cada volta.\n\nO comando break interrompe o laço imediatamente, e continue pula para a\npróxima repetição sem executar o resto do bloco. Erros comuns: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 1,
         "distancia": 326.4
       },
       {
         "texto": "s: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 2,
         "distancia": 336.6
       },
       {
         "texto": "cos são and (verdadeiro só se os\ndois lados forem verdadeiros), or (verdadeiro se pelo menos um lado for) e\nnot (inverte o valor). Não confunda = (atribuição) com == (comparação).",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 2,
         "distancia": 322.5
       }
@@ -420,19 +420,19 @@
     "fora_06": [
       {
         "texto": "nca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar zero.\n\nDois padrões aparecem o tempo todo. O contador é uma variável que começa\nem 0 e soma 1 a cada repetição, para contar quantas vezes algo aconteceu.\nO acumulador começa em um valor neutro (0 para somas, 1 para produtos) e\nvai incorporando cada novo valor: soma = soma + x. A inicialização deve\nficar ANTES do laço; se ficar dentro, o valor é zerado a cada volta.\n\nO comando break interrompe o laço imediatamente, e continue pula para a\npróxima repetição sem executar o resto do bloco. Erros comuns: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 1,
         "distancia": 384.1
       },
       {
         "texto": "s: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 2,
         "distancia": 395.3
       },
       {
         "texto": "cos são and (verdadeiro só se os\ndois lados forem verdadeiros), or (verdadeiro se pelo menos um lado for) e\nnot (inverte o valor). Não confunda = (atribuição) com == (comparação).",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 2,
         "distancia": 385.1
       }
@@ -440,13 +440,13 @@
     "fora_07": [
       {
         "texto": "Variáveis, tipos e expressões em Python\n\nUma variável é um nome que guarda um valor na memória do computador. Em\nPython, a variável é criada no momento da atribuição, com o sinal de igual:\nidade = 18 guarda o número 18 no nome idade. O sinal = não significa\nigualdade matemática, e sim \"guarde o valor da direita no nome da esquerda\".\nPor isso x = x + 1 é válido: calcula x + 1 e guarda o resultado em x.\n\nTodo valor tem um tipo. Os tipos básicos são: int (números inteiros, como\n7 e -3), float (números com parte decimal, como 3.14 e 2.0), str (textos,\nescritos entre aspas, como \"olá\") e bool (valores lógicos True e False).\nA função type(valor) mostra o tipo de um valor. Para converter entre tipos,\nusam-se int(), float() e str(): int(\"42\") vale 42 e str(7) vale \"7\".\nAtenção: \"2\" + \"3\" junta tex",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 0,
         "distancia": 395.1
       },
       {
         "texto": "cos são and (verdadeiro só se os\ndois lados forem verdadeiros), or (verdadeiro se pelo menos um lado for) e\nnot (inverte o valor). Não confunda = (atribuição) com == (comparação).",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 2,
         "distancia": 356.9
       }
@@ -454,13 +454,13 @@
     "fora_08": [
       {
         "texto": "Funções e modularização em Python\n\nUma função é um bloco de código com nome, que pode ser executado sempre\nque necessário. Em Python ela é definida com def, seguida do nome, dos\nparâmetros entre parênteses e de dois-pontos:\n    def area_retangulo(base, altura):\n        return base * altura\nDefinir a função não a executa; ela só roda quando é chamada, por exemplo\narea_retangulo(3, 4), que devolve 12.\n\nParâmetros são os nomes que aparecem na definição; argumentos são os\nvalores passados na chamada. Parâmetros podem ter valor padrão, como\ndef saudacao(texto=\"olá\"), usado quando o argumento é omitido.\n\nO return encerra a função e devolve um valor para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença e",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 0,
         "distancia": 336.7
       },
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 322.5
       }
@@ -468,19 +468,19 @@
     "fora_09": [
       {
         "texto": "Listas e strings em Python\n\nListas e strings são sequências: guardam vários elementos em ordem. Uma\nlista é escrita entre colchetes, como notas = [7, 5, 9], e pode guardar\nvalores de qualquer tipo. Uma string é uma sequência de caracteres, como\nnome = \"Python\". A função len devolve o tamanho: len(notas) vale 3.\n\nOs elementos são acessados por índice, que começa em 0: notas[0] vale 7 e\nnotas[2] vale 9. Índices negativos contam do fim: notas[-1] é o último\nelemento. Acessar um índice que não existe, como notas[3], gera IndexError.\nO fatiamento seq[inicio:fim] devolve os elementos do índice inicio até\nfim - 1: \"Python\"[0:2] vale \"Py\". Omitir o início ou o fim significa ir\ndesde o começo ou até o final da sequência.\n\nA diferença principal é que listas são mutáveis e strings são imutáveis.\nNuma",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 0,
         "distancia": 349.4
       },
       {
         "texto": "nício ou o fim significa ir\ndesde o começo ou até o final da sequência.\n\nA diferença principal é que listas são mutáveis e strings são imutáveis.\nNuma lista, pode-se trocar um elemento (notas[0] = 10), acrescentar ao fim\ncom append (notas.append(8)) e remover com remove ou pop. Numa string,\ns[0] = \"J\" gera erro; para \"mudar\" um texto, cria-se uma string nova, por\nexemplo com s.upper(), s.replace(\"a\", \"o\") ou concatenação com +.\n\nPara percorrer uma sequência, usa-se for: for nota in notas visita cada\nelemento. Quando também se precisa do índice, usa-se for i in\nrange(len(notas)). O operador in testa se um elemento pertence à\nsequência: 9 in notas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 1,
         "distancia": 320.4
       },
       {
         "texto": "tas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 2,
         "distancia": 348.3
       }
@@ -488,25 +488,25 @@
     "fora_10": [
       {
         "texto": "Estruturas condicionais em Python\n\nUma estrutura condicional permite que o programa escolha entre caminhos\ndiferentes conforme uma condição seja verdadeira ou falsa. Em Python, a\nforma básica é o if: se a condição for True, o bloco indentado logo abaixo\né executado; se for False, o bloco é pulado. A linha do if termina com\ndois-pontos, e o bloco é definido pela indentação (em geral, 4 espaços).\n\nO else define o que fazer quando a condição do if é falsa. Exemplo:\n    if nota >= 5:\n        print(\"aprovado\")\n    else:\n        print(\"reprovado\")\nExatamente um dos dois blocos é executado, nunca os dois.\n\nQuando há mais de duas possibilidades, usa-se elif (abreviação de \"else\nif\"). As condições são testadas de cima para baixo, e apenas o bloco da\nPRIMEIRA condição verdadeira é executado; as dema",
-        "fonte": "provisorio_condicionais.txt",
+        "fonte": "condicionais.txt",
         "indice": 0,
         "distancia": 299.6
       },
       {
         "texto": "se elif (abreviação de \"else\nif\"). As condições são testadas de cima para baixo, e apenas o bloco da\nPRIMEIRA condição verdadeira é executado; as demais são ignoradas, mesmo\nque também sejam verdadeiras. Por isso a ordem importa: ao classificar\nnotas, teste primeiro nota >= 9, depois nota >= 7, e assim por diante.\n\nAs condições podem combinar comparações com and, or e not, por exemplo\nif idade >= 16 and idade < 18. Erros comuns: esquecer os dois-pontos,\nindentar errado e usar = no lugar de == na condição.",
-        "fonte": "provisorio_condicionais.txt",
+        "fonte": "condicionais.txt",
         "indice": 1,
         "distancia": 261.0
       },
       {
         "texto": "s: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 2,
         "distancia": 297.7
       },
       {
         "texto": "cos são and (verdadeiro só se os\ndois lados forem verdadeiros), or (verdadeiro se pelo menos um lado for) e\nnot (inverte o valor). Não confunda = (atribuição) com == (comparação).",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 2,
         "distancia": 312.9
       }
@@ -514,13 +514,13 @@
     "fora_11": [
       {
         "texto": "Funções e modularização em Python\n\nUma função é um bloco de código com nome, que pode ser executado sempre\nque necessário. Em Python ela é definida com def, seguida do nome, dos\nparâmetros entre parênteses e de dois-pontos:\n    def area_retangulo(base, altura):\n        return base * altura\nDefinir a função não a executa; ela só roda quando é chamada, por exemplo\narea_retangulo(3, 4), que devolve 12.\n\nParâmetros são os nomes que aparecem na definição; argumentos são os\nvalores passados na chamada. Parâmetros podem ter valor padrão, como\ndef saudacao(texto=\"olá\"), usado quando o argumento é omitido.\n\nO return encerra a função e devolve um valor para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença e",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 0,
         "distancia": 320.2
       },
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 284.6
       }
@@ -528,25 +528,25 @@
     "fora_12": [
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 315.8
       },
       {
         "texto": "tas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 2,
         "distancia": 323.2
       },
       {
         "texto": "nca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar zero.\n\nDois padrões aparecem o tempo todo. O contador é uma variável que começa\nem 0 e soma 1 a cada repetição, para contar quantas vezes algo aconteceu.\nO acumulador começa em um valor neutro (0 para somas, 1 para produtos) e\nvai incorporando cada novo valor: soma = soma + x. A inicialização deve\nficar ANTES do laço; se ficar dentro, o valor é zerado a cada volta.\n\nO comando break interrompe o laço imediatamente, e continue pula para a\npróxima repetição sem executar o resto do bloco. Erros comuns: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 1,
         "distancia": 319.8
       },
       {
         "texto": "cos são and (verdadeiro só se os\ndois lados forem verdadeiros), or (verdadeiro se pelo menos um lado for) e\nnot (inverte o valor). Não confunda = (atribuição) com == (comparação).",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 2,
         "distancia": 325.8
       }
@@ -554,19 +554,19 @@
     "fora_13": [
       {
         "texto": "Laços de repetição em Python\n\nLaços repetem um bloco de instruções várias vezes. Python tem dois tipos:\nfor e while. O for percorre uma sequência, executando o bloco uma vez para\ncada elemento. A função range gera sequências de números: range(5) produz\n0, 1, 2, 3 e 4 (começa em 0 e não inclui o 5); range(2, 6) produz 2, 3, 4\ne 5; range(0, 10, 2) produz os pares 0, 2, 4, 6 e 8.\n\nO while repete o bloco enquanto uma condição for verdadeira. A condição é\ntestada antes de cada repetição; se for falsa logo de início, o bloco não\nexecuta nenhuma vez. Dentro do laço, algo precisa mudar para que a\ncondição um dia fique falsa; caso contrário, o laço nunca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar z",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 0,
         "distancia": 346.6
       },
       {
         "texto": "nca termina (laço\ninfinito). Use while quando não se sabe de antemão quantas repetições\nserão necessárias, como ao ler valores até o usuário digitar zero.\n\nDois padrões aparecem o tempo todo. O contador é uma variável que começa\nem 0 e soma 1 a cada repetição, para contar quantas vezes algo aconteceu.\nO acumulador começa em um valor neutro (0 para somas, 1 para produtos) e\nvai incorporando cada novo valor: soma = soma + x. A inicialização deve\nficar ANTES do laço; se ficar dentro, o valor é zerado a cada volta.\n\nO comando break interrompe o laço imediatamente, e continue pula para a\npróxima repetição sem executar o resto do bloco. Erros comuns: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 1,
         "distancia": 318.2
       },
       {
         "texto": "s: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 2,
         "distancia": 332.7
       }
@@ -574,25 +574,25 @@
     "fora_14": [
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 373.0
       },
       {
         "texto": "tas vale True. Outros métodos úteis: split, que quebra\numa string em uma lista de palavras, e join, que faz o caminho inverso.",
-        "fonte": "provisorio_listas_strings.txt",
+        "fonte": "listas_strings.txt",
         "indice": 2,
         "distancia": 371.4
       },
       {
         "texto": "s: esquecer de\natualizar a variável da condição do while e errar o limite do range,\nque nunca inclui o valor final.",
-        "fonte": "provisorio_repeticao.txt",
+        "fonte": "repeticao.txt",
         "indice": 2,
         "distancia": 370.1
       },
       {
         "texto": "cos são and (verdadeiro só se os\ndois lados forem verdadeiros), or (verdadeiro se pelo menos um lado for) e\nnot (inverte o valor). Não confunda = (atribuição) com == (comparação).",
-        "fonte": "provisorio_variaveis_tipos.txt",
+        "fonte": "variaveis_tipos.txt",
         "indice": 2,
         "distancia": 343.5
       }
@@ -600,13 +600,13 @@
     "fora_15": [
       {
         "texto": "Funções e modularização em Python\n\nUma função é um bloco de código com nome, que pode ser executado sempre\nque necessário. Em Python ela é definida com def, seguida do nome, dos\nparâmetros entre parênteses e de dois-pontos:\n    def area_retangulo(base, altura):\n        return base * altura\nDefinir a função não a executa; ela só roda quando é chamada, por exemplo\narea_retangulo(3, 4), que devolve 12.\n\nParâmetros são os nomes que aparecem na definição; argumentos são os\nvalores passados na chamada. Parâmetros podem ter valor padrão, como\ndef saudacao(texto=\"olá\"), usado quando o argumento é omitido.\n\nO return encerra a função e devolve um valor para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença e",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 0,
         "distancia": 314.8
       },
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 292.4
       }
@@ -620,19 +620,19 @@
       },
       {
         "texto": "se elif (abreviação de \"else\nif\"). As condições são testadas de cima para baixo, e apenas o bloco da\nPRIMEIRA condição verdadeira é executado; as demais são ignoradas, mesmo\nque também sejam verdadeiras. Por isso a ordem importa: ao classificar\nnotas, teste primeiro nota >= 9, depois nota >= 7, e assim por diante.\n\nAs condições podem combinar comparações com and, or e not, por exemplo\nif idade >= 16 and idade < 18. Erros comuns: esquecer os dois-pontos,\nindentar errado e usar = no lugar de == na condição.",
-        "fonte": "provisorio_condicionais.txt",
+        "fonte": "condicionais.txt",
         "indice": 1,
         "distancia": 324.9
       },
       {
         "texto": "Funções e modularização em Python\n\nUma função é um bloco de código com nome, que pode ser executado sempre\nque necessário. Em Python ela é definida com def, seguida do nome, dos\nparâmetros entre parênteses e de dois-pontos:\n    def area_retangulo(base, altura):\n        return base * altura\nDefinir a função não a executa; ela só roda quando é chamada, por exemplo\narea_retangulo(3, 4), que devolve 12.\n\nParâmetros são os nomes que aparecem na definição; argumentos são os\nvalores passados na chamada. Parâmetros podem ter valor padrão, como\ndef saudacao(texto=\"olá\"), usado quando o argumento é omitido.\n\nO return encerra a função e devolve um valor para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença e",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 0,
         "distancia": 326.2
       },
       {
         "texto": "para quem a chamou. Depois do\nreturn, nenhuma linha da função é executada. Uma função sem return devolve\no valor especial None. Atenção à diferença entre print e return: print\napenas mostra um texto na tela, enquanto return entrega o valor para ser\nguardado numa variável ou usado em outra expressão.\n\nEscopo é a região do programa onde um nome existe. Variáveis criadas\ndentro de uma função são locais: existem só durante a execução da função e\nnão são vistas fora dela. Por isso funções devem receber dados por\nparâmetros e devolver resultados com return. Dividir o programa em funções\npequenas, cada uma com uma tarefa, é a modularização.",
-        "fonte": "provisorio_funcoes.txt",
+        "fonte": "funcoes.txt",
         "indice": 1,
         "distancia": 302.2
       }

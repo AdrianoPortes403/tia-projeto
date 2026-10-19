@@ -94,24 +94,24 @@ ALUNOS = [
 # (pergunta, resposta, fonte, origem). Textos de EXEMPLO para a tela de revisão.
 DIALOGOS = [
     ("Para que serve o return?", "[demonstração] O return encerra a função e devolve um valor para quem a chamou.",
-     "provisorio_funcoes.txt", "LLM"),
+     "funcoes.txt", "LLM"),
     ("Como pego o último elemento de uma lista?",
-     "[demonstração] Use o índice -1: lista[-1] devolve o último elemento.", "provisorio_listas_strings.txt", "LLM"),
+     "[demonstração] Use o índice -1: lista[-1] devolve o último elemento.", "listas_strings.txt", "LLM"),
     ("Uma função pode chamar outra?",
      "[demonstração] Sim. Trecho do material: \"uma função pode chamar outras funções\".",
-     "provisorio_funcoes.txt", "guarda"),
+     "funcoes.txt", "guarda"),
     ("Qual a diferença entre parâmetro e argumento?",
-     "[demonstração] Parâmetro e argumento são a mesma coisa em Python.", "provisorio_funcoes.txt", "LLM"),
+     "[demonstração] Parâmetro e argumento são a mesma coisa em Python.", "funcoes.txt", "LLM"),
     ("O que é caso base?", "[demonstração] É a condição em que a função recursiva para de chamar a si mesma.",
      "exemplo_recursao.txt", "LLM"),
     ("Como inverto uma string?", "[demonstração] O material não cobre esta pergunta. Procure o professor.",
      None, "fallback"),
     ("Variável local existe fora da função?",
      "[demonstração] Sim, a variável local continua existindo depois que a função termina.",
-     "provisorio_funcoes.txt", "LLM"),
+     "funcoes.txt", "LLM"),
     ("Quando uso elif?", "[demonstração] Use elif para testar outra condição quando a anterior for falsa.",
-     "provisorio_condicionais.txt", "LLM"),
-    ("O que faz o range(3)?", "[demonstração] range(3) gera os números 0, 1 e 2.", "provisorio_repeticao.txt", "LLM"),
+     "condicionais.txt", "LLM"),
+    ("O que faz o range(3)?", "[demonstração] range(3) gera os números 0, 1 e 2.", "repeticao.txt", "LLM"),
 ]
 # respostas de exemplo propositalmente erradas: a 6 já sai vetada (pela função do veto, R12);
 # a 3 fica para o docente vetar na demonstração
