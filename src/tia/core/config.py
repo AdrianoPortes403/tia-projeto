@@ -14,6 +14,7 @@ Pré-requisitos:
 """
 
 import os
+import re
 
 from dotenv import load_dotenv
 
@@ -195,6 +196,13 @@ AUTH_SENHAS_COMUNS_EXTRA = os.getenv("AUTH_SENHAS_COMUNS_EXTRA", "")
 # Retenção (dias) das tentativas de login e dos pedidos sem login, que guardam o
 # IP (só para os limites; o IP nunca vai para a auditoria). PROVISÓRIO (C1).
 AUTH_RETENCAO_IP_DIAS = int(os.getenv("AUTH_RETENCAO_IP_DIAS", "30"))
+# --- Plug-in EBAULA (EAP 1.4.3) ---
+# Origens que podem embutir o TIA em iframe (CSP frame-ancestors), separadas por espaço ou vírgula,
+# por exemplo: https://ebaula.exemplo.eb.mil.br. Vazio = ninguém ('none'). Só vale para /app.
+# Aceita https://host[:porta], https://*.dominio e http://localhost (desenvolvimento); o resto é
+# ignorado e aparece em avisos_de_configuracao(). O cookie é SameSite=Strict: o iframe só mantém
+# a sessão se o TIA estiver no mesmo site do EBAULA (docs/seguranca/implantacao.md, alternativa A).
+FRAME_ANCESTORS = os.getenv("TIA_FRAME_ANCESTORS", "")
 # Limpeza periódica feita pela própria API (sessões vencidas, tentativas e
 # pedidos sem login fora da retenção), a cada tantos minutos; 0 = só pelo comando
 # python -m tia.seguranca.limpeza
@@ -246,6 +254,26 @@ PAINEL_DESEMPENHO_BAIXO = float(os.getenv("PAINEL_DESEMPENHO_BAIXO", "0.5"))
 PAINEL_MIN_RESPOSTAS = int(os.getenv("PAINEL_MIN_RESPOSTAS", "5"))
 
 
+_ORIGEM_IFRAME = re.compile(
+    r"^(https://(\*\.)?[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{1,5})?"
+    r"|http://(localhost|127\.0\.0\.1)(:[0-9]{1,5})?)$", re.IGNORECASE)
+
+
+def origens_iframe(valor: str) -> tuple[list[str], list[str]]:
+    """Separa FRAME_ANCESTORS em (origens válidas, itens recusados). Recusa curinga solto, caminho,
+    ';' e aspas, para que o valor nunca altere outra diretiva da CSP."""
+    validas, recusadas = [], []
+    for item in re.split(r"[\s,]+", valor or ""):
+        if not item:
+            continue
+        if _ORIGEM_IFRAME.match(item):
+            if item.lower() not in validas:
+                validas.append(item.lower())
+        else:
+            recusadas.append(item)
+    return validas, recusadas
+
+
 def problemas_de_configuracao() -> list[str]:
     """Configurações inseguras para produção (a API recusa subir com elas
     quando TIA_AMBIENTE=producao; tia.api.main)."""
@@ -276,6 +304,9 @@ def avisos_de_configuracao() -> list[str]:
         avisos.append(f"API_URL_LOCAL ({API_URL_LOCAL}) não é a própria máquina: o teste de fumaça iria pela rede")
     if MODELO_PADRAO not in MODELOS_LLM:
         avisos.append(f"MODELO_PADRAO ({MODELO_PADRAO}) não está em MODELOS_LLM: não é baixado nem medido")
+    recusadas = origens_iframe(FRAME_ANCESTORS)[1]
+    if recusadas:
+        avisos.append("TIA_FRAME_ANCESTORS: ignorado(s) por não ser(em) origem https válida: " + ", ".join(recusadas))
     return avisos
 
 
@@ -297,7 +328,7 @@ if __name__ == "__main__":
                  "PAINEL_DESEMPENHO_BAIXO", "PAINEL_MIN_RESPOSTAS", "TIA_AUTH", "AUTH_PROVEDOR",
                  "AUTH_SESSAO_INATIVIDADE_MINUTOS", "AUTH_SESSAO_MAXIMA_MINUTOS", "AUTH_COOKIE_SEGURO",
                  "AUTH_MAX_FALHAS_USUARIO", "AUTH_MAX_FALHAS_IP", "AUTH_JANELA_MINUTOS", "AUTH_ATRASO_SEGUNDOS",
-                 "AUTH_SENHA_MINIMA", "AUTH_SENHA_BLOQUEAR_COMUNS", "AUTH_SENHAS_COMUNS_EXTRA",
+                 "AUTH_SENHA_MINIMA", "AUTH_SENHA_BLOQUEAR_COMUNS", "AUTH_SENHAS_COMUNS_EXTRA", "FRAME_ANCESTORS",
                  "AUTH_RETENCAO_IP_DIAS", "AUTH_LIMPEZA_MINUTOS", "AUTH_ANONIMOS_JANELA_MINUTOS",
                  "AUTH_ANONIMOS_MAX_ORIGENS", "RETENCAO_RESPOSTAS_DIAS", "RETENCAO_DIALOGO_DIAS",
                  "RETENCAO_FEEDBACK_TEXTO_DIAS", "RETENCAO_AUDITORIA_DIAS", "RETENCAO_COPIAS_DIAS", "COPIAS_DIR",

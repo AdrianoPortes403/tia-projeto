@@ -63,7 +63,7 @@ src/tia/       core, rag, agentes (planejador, tutor, relatório), orquestrador,
                web (aplicação do aluno em /app e painel do docente em /app/painel),
                painel (consultas somente de leitura do painel)
 dashboard/     vazia: o painel institucional fica em src/tia/web/static/painel
-plugin-ebaula/ plug-in para o EBAULA (por último)
+plugin-ebaula/ documentação, demo e teste do plug-in do EBAULA (o código está em src/tia/web/static/plugin/)
 infra/         scripts de ambiente
 tests/         testes automatizados
 ```

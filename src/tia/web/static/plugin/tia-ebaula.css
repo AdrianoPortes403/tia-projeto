@@ -1,0 +1,127 @@
+/*
+ * Estilo do plug-in do TIA para o EBAULA (EAP 1.4.3). Todas as regras começam por .tia-ebaula,
+ * para não mexer no resto da página do EBAULA. Para combinar com o tema do EBAULA, basta
+ * redefinir as variáveis abaixo (por exemplo, no CSS do tema: .tia-ebaula { --tia-cor-primaria: ... }).
+ * Contraste dos textos sobre as cores padrão: pelo menos 4.5:1 (WCAG AA).
+ */
+.tia-ebaula {
+  --tia-cor-primaria: #1f5fa8;
+  --tia-cor-primaria-escura: #174a84;
+  --tia-cor-sobre-primaria: #ffffff;
+  --tia-cor-superficie: #ffffff;
+  --tia-cor-texto: #1c2430;
+  --tia-cor-texto-suave: #4a5565;
+  --tia-cor-borda: #c9d0da;
+  --tia-cor-foco: #f2a900;
+  --tia-fonte: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --tia-raio: 10px;
+  --tia-sombra: 0 6px 24px rgba(20, 30, 45, 0.28);
+  --tia-z: 1100;
+  --tia-margem: 1rem;
+
+  position: fixed;
+  bottom: var(--tia-margem);
+  z-index: var(--tia-z);
+  font-family: var(--tia-fonte);
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--tia-cor-texto);
+}
+.tia-ebaula *, .tia-ebaula *::before, .tia-ebaula *::after { box-sizing: border-box; }
+.tia-ebaula--direita { right: var(--tia-margem); }
+.tia-ebaula--esquerda { left: var(--tia-margem); }
+
+.tia-ebaula__botao {
+  display: block;
+  margin: 0;
+  padding: 0.7rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tia-cor-primaria);
+  color: var(--tia-cor-sobre-primaria);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--tia-sombra);
+}
+.tia-ebaula__botao:hover { background: var(--tia-cor-primaria-escura); }
+.tia-ebaula--direita .tia-ebaula__botao { margin-left: auto; }
+.tia-ebaula--aberto .tia-ebaula__botao { margin-top: 0.5rem; }
+
+.tia-ebaula__painel {
+  display: flex;
+  flex-direction: column;
+  width: 26rem;
+  max-width: calc(100vw - 2 * var(--tia-margem));
+  height: min(40rem, calc(100vh - 6rem));
+  background: var(--tia-cor-superficie);
+  border: 1px solid var(--tia-cor-borda);
+  border-radius: var(--tia-raio);
+  box-shadow: var(--tia-sombra);
+  overflow: hidden;
+}
+.tia-ebaula__painel[hidden] { display: none; }
+.tia-ebaula--ampliado .tia-ebaula__painel {
+  width: min(60rem, calc(100vw - 2 * var(--tia-margem)));
+  height: calc(100vh - 5rem);
+}
+
+.tia-ebaula__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--tia-cor-primaria);
+  color: var(--tia-cor-sobre-primaria);
+}
+.tia-ebaula__titulo { margin: 0; font-size: 1rem; font-weight: 700; color: inherit; }
+.tia-ebaula__acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+.tia-ebaula__acao {
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tia-cor-sobre-primaria);
+  font: inherit;
+  font-size: 0.875rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+.tia-ebaula__acao:hover { background: rgba(255, 255, 255, 0.18); }
+
+.tia-ebaula__corpo { position: relative; flex: 1 1 auto; min-height: 0; background: var(--tia-cor-superficie); }
+.tia-ebaula__iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--tia-cor-superficie); }
+.tia-ebaula__estado {
+  position: absolute;
+  inset: 0 0 auto 0;
+  margin: 0;
+  padding: 1rem;
+  color: var(--tia-cor-texto-suave);
+  background: var(--tia-cor-superficie);
+  z-index: 1;
+}
+.tia-ebaula__estado[hidden] { display: none; }
+
+.tia-ebaula__botao:focus-visible,
+.tia-ebaula__acao:focus-visible,
+.tia-ebaula__painel:focus-visible {
+  outline: 3px solid var(--tia-cor-foco);
+  outline-offset: 2px;
+}
+.tia-ebaula__painel:focus { outline: none; }
+
+/* telas pequenas: o painel ocupa a tela toda */
+@media (max-width: 40rem) {
+  .tia-ebaula--aberto { inset: 0; bottom: 0; }
+  .tia-ebaula--aberto.tia-ebaula--direita, .tia-ebaula--aberto.tia-ebaula--esquerda { left: 0; right: 0; }
+  .tia-ebaula--aberto .tia-ebaula__painel,
+  .tia-ebaula--ampliado .tia-ebaula__painel { width: 100vw; max-width: none; height: calc(100vh - 3.5rem); border-radius: 0; border-width: 0; }
+  .tia-ebaula--aberto .tia-ebaula__botao { position: absolute; left: var(--tia-margem); bottom: var(--tia-margem); margin: 0; }
+}
+
+@media (prefers-contrast: more) {
+  .tia-ebaula__painel { border-width: 2px; border-color: currentColor; }
+}

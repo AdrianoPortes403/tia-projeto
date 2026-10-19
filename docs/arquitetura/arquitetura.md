@@ -16,7 +16,7 @@ flowchart LR
     subgraph Clientes
         WEB["Web standalone 1.4.4<br/>/app (src/tia/web)"]
         DASH["Painel do docente 1.4.5<br/>/app/painel (src/tia/web)"]
-        EBA["Plug-in EBAULA<br/>(não existe)"]:::futuro
+        EBA["Plug-in EBAULA 1.4.3<br/>plugin-ebaula/ (iframe)"]
         CLI["Demonstrações<br/>python -m tia..."]
     end
 
@@ -95,7 +95,7 @@ flowchart LR
 | Segurança e LGPD (1.4.6) | **Real**: login local, sessão no servidor (inatividade e limite absoluto), anti-CSRF, papéis aluno/docente/admin, auditoria com o usuário, política e troca obrigatória de senha, recusas agregadas, retenção (PROVISÓRIA), direitos do titular, cabeçalhos em todas as respostas, importação em lote. Login único do EBAULA pendente |
 | Web standalone (1.4.4, `src/tia/web/`, em `/app`) | **Real**, com login e com visual PROVISÓRIO (ver "Web standalone" abaixo) |
 | Painel do docente/instituição (1.4.5, `src/tia/web/static/painel/`, em `/app/painel`) | **Real**, com login (só docente) e com visual PROVISÓRIO (ver "Painel do docente" abaixo). A pasta `dashboard/` da raiz ficou vazia |
-| Plug-in EBAULA (`plugin-ebaula/`) | **Não existe** |
+| Plug-in EBAULA (1.4.3, `src/tia/web/static/plugin/`, doc em `plugin-ebaula/`) | **Real, mas só testado em navegador simulado**: botão + painel com iframe do TIA, ou nova aba. Não foi testado no EBAULA de verdade (sem acesso). Exige `TIA_FRAME_ANCESTORS` no servidor |
 | VM institucional (medição do R09) | **Não disponível**. Os tempos foram medidos em notebook (CPU) |
 
 ## Fluxo de dados do aluno (orquestrado)
@@ -287,8 +287,9 @@ o código do aluno fica só no `sessionStorage` da aba (para sobreviver a recarr
   pelo código só existe no modo de desenvolvimento (`TIA_AUTH=desligada`).
 - **Visual do EBAULA:** cores, fontes, logotipo e componentes. Basta trocar `tema.css` (e, se preciso,
   ajustar `estilo.css`); a estrutura HTML usa classes neutras.
-- **Plug-in EBAULA (1.4.3):** a mesma aplicação deve poder rodar dentro do EBAULA; a CSP atual proíbe ser
-  embutida em iframe (`frame-ancestors 'none'`) e terá de liberar o domínio do EBAULA.
+- **Plug-in EBAULA (1.4.3):** feito (`plugin-ebaula/README.md`). A CSP continua `frame-ancestors 'none'`
+  em toda a API; só as páginas `/app` liberam as origens listadas em `TIA_FRAME_ANCESTORS` (vazio = ninguém).
+  Falta validar no EBAULA real (cookies `SameSite=Strict` só funcionam se TIA e EBAULA forem do mesmo site).
 - **Diagnóstico na matrícula:** a tela não pergunta o diagnóstico (todas as notas 0). Depende de quem
   aplica o diagnóstico (Pessoa 2/4).
 - **Nomes de competência fora da trilha:** o reforço de um pré-requisito dispensado aparece pelo código

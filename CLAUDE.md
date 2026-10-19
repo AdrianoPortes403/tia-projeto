@@ -32,7 +32,7 @@ Ollama (`qwen3:*` para chat, `nomic-embed-text` para embeddings).
 - `conteudo/`: dados pedagógicos em JSON (ementa, perfis, trilha, banco_itens, materiais)
 - `src/tia/web/`: aplicação web standalone do aluno (`/app`) e painel do docente/instituição
   (`/app/painel`), em HTML/CSS/JS puros servidos pelo FastAPI. As pastas `web/` e `dashboard/` da raiz
-  ficaram vazias. `src/tia/painel/`: consultas somente de leitura do painel. `plugin-ebaula/`: por último.
+  ficaram vazias. `src/tia/painel/`: consultas somente de leitura do painel. `plugin-ebaula/` + `src/tia/web/static/plugin/`: plug-in do EBAULA (iframe/aba), testado só em jsdom.
 - `docs/`: referência, arquitetura, seguranca (LGPD e implantação), evidencias. `infra/`: scripts de ambiente.
 - `deploy/`: pacote de implantação na VM (instalar, modelos, backup, restaurar, verificar, systemd, nginx);
   a lógica testável fica em `src/tia/implantacao/`. Passo a passo: `docs/implantacao_vm.md`.
