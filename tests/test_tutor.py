@@ -557,22 +557,44 @@ def test_banco_de_itens_e_consistente():
     assert sorted(por_dominio) == ["cib_01", "cib_02", "dev_01", "dev_02"]
 
 
-# Itens revisados pela Pessoa 4 (1.5.2). Enquanto ela não revisar, fica vazio e nenhum item gerado
-# por LLM pode estar como "validado". Quando a revisão chegar: listar aqui os ids aprovados (com a
-# referência da revisão no commit) e só então trocar o status no itens.json.
-VALIDADOS_PELA_PESSOA_4: set[str] = set()
+# Itens revisados pela Pessoa 4 (1.2.5 e 1.5.2). Revisão concluída em 19/10/2026: os 120 itens do banco
+# (84 gerados por LLM local e 36 da base comum) foram validados. Item novo ou alterado só entra na lista
+# depois de revisado, e o status no itens.json só vira "validado" para ids desta lista.
+VALIDADOS_PELA_PESSOA_4: set[str] = {
+    "cib_01_n1_001", "cib_01_n1_002", "cib_01_n1_003", "cib_01_n1_004", "cib_01_n1_005", "cib_01_n1_006",
+    "cib_01_n1_007", "cib_01_n2_001", "cib_01_n2_002", "cib_01_n2_003", "cib_01_n2_004", "cib_01_n2_005",
+    "cib_01_n2_006", "cib_01_n2_007", "cib_01_n3_001", "cib_01_n3_002", "cib_01_n3_003", "cib_01_n3_004",
+    "cib_01_n3_005", "cib_01_n3_006", "cib_01_n3_007", "cib_02_n1_001", "cib_02_n1_002", "cib_02_n1_003",
+    "cib_02_n1_004", "cib_02_n1_005", "cib_02_n1_006", "cib_02_n1_007", "cib_02_n2_001", "cib_02_n2_002",
+    "cib_02_n2_003", "cib_02_n2_004", "cib_02_n2_005", "cib_02_n2_006", "cib_02_n2_007", "cib_02_n3_001",
+    "cib_02_n3_002", "cib_02_n3_003", "cib_02_n3_004", "cib_02_n3_005", "cib_02_n3_006", "cib_02_n3_007",
+    "condicionais_n1a", "condicionais_n1b", "condicionais_n2a", "condicionais_n2b", "condicionais_n3a",
+    "condicionais_n3b", "dev_01_n1_001", "dev_01_n1_002", "dev_01_n1_003", "dev_01_n1_004", "dev_01_n1_005",
+    "dev_01_n1_006", "dev_01_n1_007", "dev_01_n2_001", "dev_01_n2_002", "dev_01_n2_003", "dev_01_n2_004",
+    "dev_01_n2_005", "dev_01_n2_006", "dev_01_n2_007", "dev_01_n3_001", "dev_01_n3_002", "dev_01_n3_003",
+    "dev_01_n3_004", "dev_01_n3_005", "dev_01_n3_006", "dev_01_n3_007", "dev_02_n1_001", "dev_02_n1_002",
+    "dev_02_n1_003", "dev_02_n1_004", "dev_02_n1_005", "dev_02_n1_006", "dev_02_n1_007", "dev_02_n2_001",
+    "dev_02_n2_002", "dev_02_n2_003", "dev_02_n2_004", "dev_02_n2_005", "dev_02_n2_006", "dev_02_n2_007",
+    "dev_02_n3_001", "dev_02_n3_002", "dev_02_n3_003", "dev_02_n3_004", "dev_02_n3_005", "dev_02_n3_006",
+    "dev_02_n3_007", "funcoes_n1a", "funcoes_n1b", "funcoes_n2a", "funcoes_n2b", "funcoes_n3a",
+    "funcoes_n3b", "listas_strings_n1a", "listas_strings_n1b", "listas_strings_n2a", "listas_strings_n2b",
+    "listas_strings_n3a", "listas_strings_n3b", "recursao_n1a", "recursao_n1b", "recursao_n2a",
+    "recursao_n2b", "recursao_n3a", "recursao_n3b", "repeticao_n1a", "repeticao_n1b", "repeticao_n2a",
+    "repeticao_n2b", "repeticao_n3a", "repeticao_n3b", "variaveis_tipos_n1a", "variaveis_tipos_n1b",
+    "variaveis_tipos_n2a", "variaveis_tipos_n2b", "variaveis_tipos_n3a", "variaveis_tipos_n3b",
+}
 
 
-def test_itens_gerados_por_llm_continuam_provisorios():
+def test_status_validado_so_para_itens_revisados_pela_pessoa_4():
     itens = carregar_itens()
-    gerados = [i for i in itens if i.get("origem") == "llm" or i.get("status") == "rascunho_llm"]
-    assert len(gerados) == 84  # dev_01, dev_02, cib_01, cib_02 (branch agente1-tiago)
-    for i in gerados:
-        if i["id"] not in VALIDADOS_PELA_PESSOA_4:
-            assert i["status"] != "validado", f"{i['id']}: marcado como validado sem a revisão da Pessoa 4"
-            assert i["status"].startswith("rascunho"), i["id"]
-    # nenhum item do banco está validado enquanto a lista acima estiver vazia
-    assert all(i["status"] != "validado" for i in itens if i["id"] not in VALIDADOS_PELA_PESSOA_4)
+    gerados = [i for i in itens if i.get("origem") == "llm"]
+    assert len(gerados) == 84  # dev_01, dev_02, cib_01, cib_02
+    assert VALIDADOS_PELA_PESSOA_4 <= {i["id"] for i in itens}
+    for i in itens:
+        if i["id"] in VALIDADOS_PELA_PESSOA_4:
+            assert i["status"] == "validado", i["id"]
+        else:
+            assert i["status"].startswith("rascunho"), f"{i['id']}: item fora da lista da Pessoa 4 deve ser rascunho"
 
 
 # --- banco ---

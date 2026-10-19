@@ -34,7 +34,7 @@ Sem commit. Detalhes de arquitetura, regras e limitações em `docs/arquitetura/
 - `relatorio/indicadores.py`: limiares da tendência lidos da config.
 - `api/main.py`: registro das rotas.
 
-## Regras de replanejamento e limiares (PROVISÓRIOS)
+## Regras de replanejamento e limiares (validados pela Pessoa 4)
 
 | Regra | Gatilho | Ação | Limiares |
 |---|---|---|---|

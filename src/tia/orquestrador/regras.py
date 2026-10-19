@@ -1,11 +1,10 @@
 """
 Regras da Orquestração: TODAS aqui, como funções puras. Limiares em
 core/config.py. Decisões e quem as tomou em docs/arquitetura/arquitetura.md,
-seção "Decisões de orquestração". As marcadas PROVISÓRIO dependem de validação
-pedagógica da Pessoa 4.
+seção "Decisões de orquestração". Regras validadas pela Pessoa 4 em 19/10/2026.
 
 Detecção (reaproveita o Agente 3, sem duplicar cálculo):
-    R1 conclusão (PROVISÓRIO): a sessão do Tutor na competência foi concluída e a
+    R1 conclusão: a sessão do Tutor na competência foi concluída e a
         conclusão ainda não foi tratada -> "avancar": replaneja só o que falta
         (Planejador incremental) e avisa o aluno. Se a sessão terminou SEM
         domínio (os itens acabaram: "concluída com ressalvas"), só avança com
@@ -13,17 +12,17 @@ Detecção (reaproveita o Agente 3, sem duplicar cálculo):
         -> "reforcar" o pré-requisito direto (sem pausa: a sessão já terminou) ou
         "revisar_material", cada um no máximo uma vez por sessão, e o aluno
         recomeça a competência numa sessão nova;
-    R2 queda (PROVISÓRIO): a tendência do Relatório está "caindo"
+    R2 queda: a tendência do Relatório está "caindo"
         (RELATORIO_TENDENCIA_*), a sessão não é de reforço, ainda não causou
         reforço e houve ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS respostas desde o
         último -> "reforcar": pausa a sessão e abre reforço do pré-requisito
         DIRETO, no nível 1; sem pré-requisito, não reforça;
-    lacuna (PROVISÓRIO): o Tutor sinalizou erros seguidos no nível 1 -> "reforcar"
+    lacuna: o Tutor sinalizou erros seguidos no nível 1 -> "reforcar"
         (uma vez por sessão) ou "revisar_material" (também uma vez por sessão);
     fim do reforço: a sessão de reforço foi concluída -> "retomar_original": a
         sessão pausada volta no nível em que parou (se a original já tinha
         terminado sem domínio, o aluno recomeça a competência numa sessão nova);
-    R3 inatividade (PROVISÓRIO): avaliada pela verificação agendada. Não vale
+    R3 inatividade: avaliada pela verificação agendada. Não vale
         para quem concluiu a trilha (sem reforço em curso).
         A partir de INATIVIDADE_DIAS -> "incentivar" (só incentivo, sem refazer a
         trilha), uma vez por período sem atividade; a partir de
@@ -47,7 +46,7 @@ from tia.core.config import (INATIVIDADE_DIAS, ORQ_ACERTO_MIN_AVANCO, ORQ_INATIV
                              ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS, RELATORIO_TENDENCIA_LIMIAR)
 from tia.orquestrador.modelos import EstadoAluno, ProximaAcao
 
-# PROVISÓRIO: textos dos avisos ao aluno, até a revisão pedagógica (Pessoa 4).
+# Textos dos avisos ao aluno (validados pela Pessoa 4).
 AVISO_CONCLUSAO = "Parabéns! Você concluiu \"{concluida}\". {seguinte}"
 AVISO_SEGUINTE = "Próxima etapa: \"{proxima}\"."
 AVISO_FIM_DA_TRILHA = "Você concluiu todas as etapas da sua trilha."
@@ -113,7 +112,7 @@ def avanca_sem_dominio(taxa_acerto: float | None, minimo: float = ORQ_ACERTO_MIN
 def regra_sem_dominio(competencia_id: str, sessao_id: str | None, taxa_acerto: float | None,
                       prerequisito: str | None, sessao_ja_reforcada: bool = False,
                       sessao_ja_com_material: bool = False, minimo: float = ORQ_ACERTO_MIN_AVANCO) -> Avaliacao:
-    """R1 sem domínio (PROVISÓRIO): os itens acabaram e o acerto da sessão ficou
+    """R1 sem domínio: os itens acabaram e o acerto da sessão ficou
     abaixo do mínimo, então a competência NÃO avança. Reforço do pré-requisito
     direto (sem pausa: a sessão já terminou) ou o material-base, cada um no
     máximo uma vez por sessão; se os dois já foram usados nesta sessão, não

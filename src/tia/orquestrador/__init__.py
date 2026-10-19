@@ -16,7 +16,7 @@ atual ou o reforço); /tutor/sessao continua para uso standalone.
 
 Módulos:
     modelos.py     contratos Pydantic (EstadoAluno, EventoTutor, DecisaoReplanejamento...)
-    regras.py      TODAS as regras de replanejamento (limiares em core/config.py; PROVISÓRIO)
+    regras.py      TODAS as regras de replanejamento (limiares em core/config.py)
     fluxo.py       iniciar, estado, próxima ação, abrir sessão, aplicar decisão, verificar inatividade
     eventos.py     eventos do Tutor, com idempotência por evento_id
     repositorio.py matrícula, eventos, decisões (+ auditoria, R11)

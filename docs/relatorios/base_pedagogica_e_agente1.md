@@ -114,15 +114,14 @@ replaneja são as regras do orquestrador). Só o próprio aluno escreve; a leitu
 `PILOTO_ESCOPO=completa` (piloto: `piloto`), `TUTOR_ACERTOS_SUBIR=3`, `TUTOR_ERROS_DESCER=2`,
 `TUTOR_ACERTOS_CONCLUIR=3`, `ORQ_INATIVIDADE_REFAZER_DIAS=7`.
 
-## Decisões a validar com o time (PROVISÓRIAS)
+## Decisões validadas com o time (19/10/2026)
 
-| Decisão | Quem valida |
+| Decisão | Validada por |
 |---|---|
 | Limiares 3/2/3 da avaliação adaptativa | A4 (conteúdo) |
 | Inatividade: refazer a trilha com 7 dias (2/4 no piloto) | A4 e A2 |
 | Ritmo 1,0 nos dois perfis | A4 |
 | Limiar de enquadramento P ≥ 1,5 | A4 |
-| `palavras_chave` dos tópicos Dev/Cyber (usadas pela guarda de cobertura do RAG) | A4 |
 | Lacuna sem pré-requisito → material-base em vez de reforço | A4 e A2 |
 
 ## Limitações conhecidas
@@ -132,5 +131,6 @@ replaneja são as regras do orquestrador). Só o próprio aluno escreve; a leitu
 - Material do RAG: os 4 tópicos do piloto têm material PROVISÓRIO (`conteudo/materiais/provisorio_dev_01_…`,
   `…dev_02…`, `…cib_01…`, `…cib_02…`), escrito a partir das 21 questões de cada tópico e conferido contra elas
   (palavras-chave, números e nomes de código). A A4 revisa no 1.5.2. Os demais tópicos Dev/Cyber ainda não têm material.
+- Os tópicos Dev/Cyber ainda **não têm `palavras_chave`** na ementa; a guarda de cobertura do RAG precisa delas.
 - A base comum tem só 2 itens por nível; o questionário pode cair no nível vizinho quando eles acabam.
 - O onboarding por regras entende frases simples; frases livres dependem do LLM local.

@@ -1,5 +1,5 @@
 """
-Agente 3 (Relatório), EAP 1.3.4: relatórios com 5 indicadores PROVISÓRIOS.
+Agente 3 (Relatório), EAP 1.3.4: relatórios com 5 indicadores.
 
 Pontos de entrada (usados pela API e pela demonstração):
     gerar_relatorio_aluno(aluno_id, agora=None, com_narrativa=True) -> RelatorioAluno | None
