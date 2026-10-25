@@ -91,7 +91,7 @@ def test_lacuna_sem_pre_requisito_indica_o_material_base():
     segunda = responder("L-002", sessao_id, primeira["feedback"]["proxima_pergunta"], False)
     (decisao,) = segunda["decisoes"]
     assert (decisao["regra"], decisao["acao"]) == ("lacuna", "revisar_material")
-    assert "provisorio_variaveis_tipos.txt" in decisao["aviso"]
+    assert "variaveis_tipos.txt" in decisao["aviso"]
     assert client.get("/aluno/L-002/proximo").json()["acao"] == "continuar_sessao"  # a sessão segue
 
 

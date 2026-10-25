@@ -26,7 +26,7 @@ client = TestClient(app)
 
 ALUNO = "A2026-011"
 TRECHO = {"texto": "No for ou no while, o break interrompe o laço imediatamente; o continue pula para a "
-                   "próxima repetição.", "fonte": "provisorio_repeticao.txt", "indice": 2, "distancia": 210.0}
+                   "próxima repetição.", "fonte": "repeticao.txt", "indice": 2, "distancia": 210.0}
 PERGUNTA = "Para que serve o break dentro de um for?"
 DO_MATERIAL = "Do material: " + TRECHO["texto"]
 
@@ -79,9 +79,9 @@ def test_pergunta_com_trecho_responde_com_fonte_dos_metadados_e_grava(monkeypatc
     resposta = perguntar(competencia_id="repeticao")
     assert resposta.status_code == 200
     r = resposta.json()
-    assert r["origem"] == "LLM" and r["fontes"] == ["provisorio_repeticao.txt"]
+    assert r["origem"] == "LLM" and r["fontes"] == ["repeticao.txt"]
     assert r["resposta"] == "O break encerra o laço na hora."  # frase sem ponto final descartada
-    assert buscas[0][1] == ["provisorio_repeticao.txt"]  # busca restrita à competência
+    assert buscas[0][1] == ["repeticao.txt"]  # busca restrita à competência
 
     prompt, kwargs = prompts[0]
     assert TRECHO["texto"] in prompt and PERGUNTA in prompt and ALUNO not in prompt
@@ -92,7 +92,7 @@ def test_pergunta_com_trecho_responde_com_fonte_dos_metadados_e_grava(monkeypatc
     (linha,) = linhas_dialogo()
     assert (linha["aluno_id"], linha["pergunta"], linha["resposta"], linha["origem"]) == (
         ALUNO, PERGUNTA, r["resposta"], "LLM")
-    assert json.loads(linha["fontes"]) == ["provisorio_repeticao.txt"]
+    assert json.loads(linha["fontes"]) == ["repeticao.txt"]
     assert (linha["vetada"], linha["correcao_docente"]) == (0, None) and linha["ts"]
     assert r["dialogo_id"] == linha["id"]
 
@@ -117,7 +117,7 @@ def test_pergunta_sem_trecho_resposta_fixa_sem_chamar_llm(monkeypatch, trechos):
 
 
 def test_trecho_de_outra_competencia_e_ignorado(monkeypatch):
-    _, prompts = mockar(monkeypatch, [{**TRECHO, "fonte": "provisorio_funcoes.txt"}])
+    _, prompts = mockar(monkeypatch, [{**TRECHO, "fonte": "funcoes.txt"}])
     r = perguntar(competencia_id="repeticao").json()
     assert (r["origem"], r["fontes"]) == ("fallback", []) and prompts == []
 
@@ -145,10 +145,10 @@ def test_guarda_aplicada_no_dialogo_devolve_trecho_transcrito(monkeypatch, respo
     mockar(monkeypatch, [TRECHO], resposta_llm)
     resultado = dialogo.gerar_resposta(PERGUNTA, None)
     assert (resultado.resposta, resultado.fontes, resultado.origem) == (
-        DO_MATERIAL, ["provisorio_repeticao.txt"], "guarda")
+        DO_MATERIAL, ["repeticao.txt"], "guarda")
     assert motivo in resultado.motivo_descarte
     r = perguntar().json()
-    assert (r["resposta"], r["fontes"], r["origem"]) == (DO_MATERIAL, ["provisorio_repeticao.txt"], "guarda")
+    assert (r["resposta"], r["fontes"], r["origem"]) == (DO_MATERIAL, ["repeticao.txt"], "guarda")
 
 
 @pytest.mark.parametrize("texto, esperado", [
@@ -245,7 +245,7 @@ def test_auditoria_do_dialogo_sem_texto_livre(monkeypatch):
 
     registros = auditoria()
     assert [(r["tipo"], r["referencia_id"], r["origem"], r["fontes"]) for r in registros] == [
-        ("dialogo", str(dialogo_id), "LLM", ["provisorio_repeticao.txt"]),
+        ("dialogo", str(dialogo_id), "LLM", ["repeticao.txt"]),
         ("dialogo", str(dialogo_id + 1), "fallback", []),
     ]
     assert all(r["ts"] for r in registros)
@@ -269,7 +269,7 @@ def test_auditoria_da_resposta_de_item(monkeypatch):
     historico_id = conexao.execute("SELECT id FROM historico_respostas").fetchone()["id"]
     conexao.close()
     assert (registro["tipo"], registro["referencia_id"], registro["origem"], registro["fontes"]) == (
-        "resposta_item", str(historico_id), "LLM", ["provisorio_repeticao.txt"])
+        "resposta_item", str(historico_id), "LLM", ["repeticao.txt"])
 
 
 def test_auditoria_valida_codigo_do_aluno():
@@ -317,7 +317,7 @@ def test_retirar_veto_volta_a_resposta_original(monkeypatch):
     assert resposta.status_code == 200
     (d,) = historico()
     assert (d["resposta"], d["origem"], d["vetada"]) == ("O break encerra o laço na hora.", "LLM", False)
-    assert d["fontes"] == ["provisorio_repeticao.txt"]
+    assert d["fontes"] == ["repeticao.txt"]
     assert linhas_dialogo()[0]["correcao_docente"] == "Correção."  # nada apagado
 
 

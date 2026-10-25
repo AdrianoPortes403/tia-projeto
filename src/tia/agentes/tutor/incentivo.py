@@ -27,7 +27,7 @@ from tia.agentes.tutor import repositorio
 from tia.agentes.tutor.modelos import Incentivo
 from tia.core.config import INATIVIDADE_DIAS
 
-# PROVISÓRIO: textos dos templates, até a revisão pedagógica (Pessoa 4).
+# Textos dos templates (validados pela Pessoa 4).
 MENSAGEM_SEM_TRILHA = ("Você ainda não tem uma trilha de estudo. Que tal gerar a sua agora? "
                        "Ela mostra por onde começar.")
 MENSAGEM_TRILHA_CONCLUIDA = ("Você concluiu todas as etapas da sua trilha. Que tal revisar algum "

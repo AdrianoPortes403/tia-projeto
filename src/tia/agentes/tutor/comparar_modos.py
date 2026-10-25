@@ -136,8 +136,7 @@ def formatar_relatorio(resultados: list[dict], hoje: date) -> str:
         "Evidência para a revisão pedagógica (Pessoa 4). Gerado por "
         f"`python -m tia.agentes.tutor.comparar_modos --modos {' '.join(modos)}`.",
         "",
-        "**PROVISÓRIO:** banco de itens e material de apoio são provisórios (A3), "
-        "até a entrega do conteúdo real.",
+        "Banco de itens e material de apoio validados pela Pessoa 4 (19/10/2026).",
         "",
         f"- Modelo: `{CHAT_MODEL}` (local, via Ollama). Limite: {TUTOR_MAX_TOKENS} tokens, "
         f"até {TUTOR_NUM_TRECHOS} trechos do RAG.",

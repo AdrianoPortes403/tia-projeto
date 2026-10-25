@@ -57,7 +57,7 @@ class AlunoEmRisco(BaseModel):
 class ConsultaRisco(BaseModel):
     gerado_em: str
     perfil_id: str | None
-    criterios: dict[str, int | float]  # limiares usados (todos PROVISÓRIOS, em core/config.py)
+    criterios: dict[str, int | float]  # limiares usados (em core/config.py)
     alunos_avaliados: int
     alunos: list[AlunoEmRisco]
     auditoria_id: int  # registro desta consulta na auditoria (R11)

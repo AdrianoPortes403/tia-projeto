@@ -1,6 +1,6 @@
 {
-  "_versao": "0.3 — 84 itens gerados por LLM (29 e 30/09) + 36 itens da base comum vindos do protótipo da A3 (12/10); todos pendentes de revisão docente",
-  "_nota": "Banco de itens da base pedagógica (1.2.5). 'uso': 'diagnostico' (aplicado uma vez, no diagnóstico inicial) ou 'tutoria'. Status 'rascunho_*': ainda sem revisão docente (protocolo em Base Pedagógica - alinhada EAP/1.2.5_criterios_e_protocolo_itens.md). Os itens da base comum mantêm os IDs da versão provisória da A3.",
+  "_versao": "0.3 — 84 itens gerados por LLM (29 e 30/09) + 36 itens da base comum vindos do protótipo da A3 (12/10); todos validados pela Pessoa 4 (19/10/2026)",
+  "_nota": "Banco de itens da base pedagógica (1.2.5). 'uso': 'diagnostico' (aplicado uma vez, no diagnóstico inicial) ou 'tutoria'. Status 'validado': revisado pela Pessoa 4 em 19/10/2026; 'rascunho_*': ainda sem revisão docente (protocolo em Base Pedagógica - alinhada EAP/1.2.5_criterios_e_protocolo_itens.md). Os itens da base comum mantêm os IDs da versão provisória da A3.",
   "itens": [
     {
       "id": "dev_01_n1_001",
@@ -19,7 +19,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n1_002",
@@ -38,7 +38,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n1_003",
@@ -57,7 +57,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n1_004",
@@ -76,7 +76,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n2_001",
@@ -95,7 +95,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n2_002",
@@ -114,7 +114,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n2_003",
@@ -133,7 +133,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n2_004",
@@ -152,7 +152,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n3_001",
@@ -171,7 +171,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n3_002",
@@ -190,7 +190,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n3_003",
@@ -209,7 +209,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n3_004",
@@ -228,7 +228,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 75,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n1_001",
@@ -247,7 +247,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n1_002",
@@ -266,7 +266,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n1_003",
@@ -285,7 +285,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n1_004",
@@ -304,7 +304,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n2_001",
@@ -323,7 +323,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n2_002",
@@ -342,7 +342,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n2_003",
@@ -361,7 +361,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n2_004",
@@ -380,7 +380,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n3_001",
@@ -399,7 +399,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n3_002",
@@ -418,7 +418,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 75,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n3_003",
@@ -437,7 +437,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 75,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n3_004",
@@ -456,7 +456,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n1_001",
@@ -475,7 +475,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n1_002",
@@ -494,7 +494,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n1_003",
@@ -513,7 +513,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n1_004",
@@ -532,7 +532,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n2_001",
@@ -551,7 +551,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n2_002",
@@ -570,7 +570,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n2_003",
@@ -589,7 +589,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n2_004",
@@ -608,7 +608,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n3_001",
@@ -627,7 +627,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n3_002",
@@ -646,7 +646,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n3_003",
@@ -665,7 +665,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n3_004",
@@ -684,7 +684,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 75,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n1_001",
@@ -703,7 +703,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n1_002",
@@ -722,7 +722,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n1_003",
@@ -741,7 +741,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n1_004",
@@ -760,7 +760,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n2_001",
@@ -779,7 +779,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n2_002",
@@ -798,7 +798,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n2_003",
@@ -817,7 +817,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n2_004",
@@ -836,7 +836,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n3_001",
@@ -855,7 +855,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n3_002",
@@ -874,7 +874,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n3_003",
@@ -893,7 +893,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n3_004",
@@ -912,7 +912,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n1_005",
@@ -931,7 +931,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n1_006",
@@ -950,7 +950,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n1_007",
@@ -969,7 +969,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n2_005",
@@ -988,7 +988,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n2_006",
@@ -1007,7 +1007,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n2_007",
@@ -1026,7 +1026,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n3_005",
@@ -1045,7 +1045,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n3_006",
@@ -1064,7 +1064,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_01_n3_007",
@@ -1083,7 +1083,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, caps. 2–3 (análise assintótica) e 17 (análise amortizada)",
       "tempo_esperado_s": 75,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n1_005",
@@ -1102,7 +1102,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n1_006",
@@ -1121,7 +1121,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n1_007",
@@ -1140,7 +1140,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n2_005",
@@ -1159,7 +1159,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n2_006",
@@ -1178,7 +1178,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n2_007",
@@ -1197,7 +1197,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n3_005",
@@ -1216,7 +1216,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n3_006",
@@ -1235,7 +1235,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "dev_02_n3_007",
@@ -1254,7 +1254,7 @@
       "fonte": "Cormen et al., Algoritmos: Teoria e Prática, cap. 10 (estruturas de dados elementares)",
       "tempo_esperado_s": 75,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n1_005",
@@ -1273,7 +1273,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n1_006",
@@ -1292,7 +1292,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n1_007",
@@ -1311,7 +1311,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n2_005",
@@ -1330,7 +1330,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n2_006",
@@ -1349,7 +1349,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n2_007",
@@ -1368,7 +1368,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n3_005",
@@ -1387,7 +1387,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n3_006",
@@ -1406,7 +1406,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_01_n3_007",
@@ -1425,7 +1425,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 3 (camada de transporte); documentação do Wireshark",
       "tempo_esperado_s": 75,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n1_005",
@@ -1444,7 +1444,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n1_006",
@@ -1463,7 +1463,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n1_007",
@@ -1482,7 +1482,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 30,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n2_005",
@@ -1501,7 +1501,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n2_006",
@@ -1520,7 +1520,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n2_007",
@@ -1539,7 +1539,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 45,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n3_005",
@@ -1558,7 +1558,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n3_006",
@@ -1577,7 +1577,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 60,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "cib_02_n3_007",
@@ -1596,7 +1596,7 @@
       "fonte": "Kurose & Ross, Redes de Computadores e a Internet, cap. 2 (camada de aplicação); RFC 8446 (TLS 1.3); RFC 6797 (HSTS)",
       "tempo_esperado_s": 75,
       "origem": "llm",
-      "status": "rascunho_llm"
+      "status": "validado"
     },
     {
       "id": "variaveis_tipos_n1a",
@@ -1612,10 +1612,10 @@
       "indice_correto": 1,
       "explicacao": "Números com parte decimal são do tipo float; int guarda apenas inteiros.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "fonte": "Material de apoio (A3): variaveis_tipos.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "variaveis_tipos_n1b",
@@ -1631,10 +1631,10 @@
       "indice_correto": 2,
       "explicacao": "O sinal = é atribuição: guarda o valor da direita no nome da esquerda, e a variável é criada nesse momento.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "fonte": "Material de apoio (A3): variaveis_tipos.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "variaveis_tipos_n2a",
@@ -1650,10 +1650,10 @@
       "indice_correto": 0,
       "explicacao": "O operador // faz a divisão inteira e descarta a parte decimal; 7 / 2 é que valeria 3.5.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "fonte": "Material de apoio (A3): variaveis_tipos.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "variaveis_tipos_n2b",
@@ -1669,10 +1669,10 @@
       "indice_correto": 1,
       "explicacao": "Entre aspas, os valores são textos (str), e + junta textos: o resultado é \"23\".",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "fonte": "Material de apoio (A3): variaveis_tipos.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "variaveis_tipos_n3a",
@@ -1688,10 +1688,10 @@
       "indice_correto": 2,
       "explicacao": "A potência vem primeiro (4 ** 2 = 16), depois a multiplicação (3 * 16 = 48) e por fim a soma (2 + 48 = 50).",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "fonte": "Material de apoio (A3): variaveis_tipos.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "variaveis_tipos_n3b",
@@ -1707,10 +1707,10 @@
       "indice_correto": 0,
       "explicacao": "x > 3 and x < 5 é False, pois 5 não é menor que 5; not inverte para True, e True or qualquer coisa é True.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_variaveis_tipos.txt",
+      "fonte": "Material de apoio (A3): variaveis_tipos.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "condicionais_n1a",
@@ -1726,10 +1726,10 @@
       "indice_correto": 3,
       "explicacao": "O bloco do if só executa quando a condição é verdadeira (True); se for False, ele é pulado.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "fonte": "Material de apoio (A3): condicionais.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "condicionais_n1b",
@@ -1745,10 +1745,10 @@
       "indice_correto": 0,
       "explicacao": "A linha do if termina com dois-pontos, e o bloco é definido pela indentação.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "fonte": "Material de apoio (A3): condicionais.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "condicionais_n2a",
@@ -1764,10 +1764,10 @@
       "indice_correto": 1,
       "explicacao": "Como 4 >= 5 é falso, o bloco do else é executado; exatamente um dos dois blocos roda.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "fonte": "Material de apoio (A3): condicionais.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "condicionais_n2b",
@@ -1783,10 +1783,10 @@
       "indice_correto": 2,
       "explicacao": "O and exige que as duas comparações sejam verdadeiras; com or, quase qualquer idade passaria, e = é atribuição, não comparação.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "fonte": "Material de apoio (A3): condicionais.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "condicionais_n3a",
@@ -1802,10 +1802,10 @@
       "indice_correto": 3,
       "explicacao": "Só o bloco da primeira condição verdadeira executa: nota >= 7 já é True, então o elif é ignorado (as condições estão na ordem errada).",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "fonte": "Material de apoio (A3): condicionais.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "condicionais_n3b",
@@ -1821,10 +1821,10 @@
       "indice_correto": 0,
       "explicacao": "x > 5 é verdadeiro, então entra no primeiro bloco; lá, x > 20 é falso e o else interno imprime B.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_condicionais.txt",
+      "fonte": "Material de apoio (A3): condicionais.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "repeticao_n1a",
@@ -1840,10 +1840,10 @@
       "indice_correto": 2,
       "explicacao": "range(4) começa em 0 e não inclui o valor final 4.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "fonte": "Material de apoio (A3): repeticao.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "repeticao_n1b",
@@ -1859,10 +1859,10 @@
       "indice_correto": 3,
       "explicacao": "O while repete enquanto a condição for verdadeira e para assim que ela fica falsa.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "fonte": "Material de apoio (A3): repeticao.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "repeticao_n2a",
@@ -1878,10 +1878,10 @@
       "indice_correto": 0,
       "explicacao": "range(1, 5) produz 1, 2, 3 e 4, e o acumulador soma todos eles: 1 + 2 + 3 + 4 = 10.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "fonte": "Material de apoio (A3): repeticao.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "repeticao_n2b",
@@ -1897,10 +1897,10 @@
       "indice_correto": 2,
       "explicacao": "break interrompe o laço na hora; quem pula para a próxima repetição é o continue.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "fonte": "Material de apoio (A3): repeticao.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "repeticao_n3a",
@@ -1916,10 +1916,10 @@
       "indice_correto": 2,
       "explicacao": "Como total = 0 está dentro do laço, o acumulador é zerado a cada volta e só guarda o último i, que é 4.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "fonte": "Material de apoio (A3): repeticao.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "repeticao_n3b",
@@ -1935,10 +1935,10 @@
       "indice_correto": 1,
       "explicacao": "A condição é testada antes de cada volta: com i = 9 ainda entra e i vira 12; aí 12 < 10 é falso e o laço termina.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_repeticao.txt",
+      "fonte": "Material de apoio (A3): repeticao.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "funcoes_n1a",
@@ -1954,10 +1954,10 @@
       "indice_correto": 3,
       "explicacao": "Funções são definidas com def, seguido do nome, dos parâmetros entre parênteses e de dois-pontos.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "fonte": "Material de apoio (A3): funcoes.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "funcoes_n1b",
@@ -1973,10 +1973,10 @@
       "indice_correto": 1,
       "explicacao": "Definir a função não a executa; ela só roda quando é chamada, por exemplo dobro(5).",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "fonte": "Material de apoio (A3): funcoes.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "funcoes_n2a",
@@ -1992,10 +1992,10 @@
       "indice_correto": 2,
       "explicacao": "print apenas mostra um texto na tela; return entrega o valor para ser guardado ou usado em outra expressão.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "fonte": "Material de apoio (A3): funcoes.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "funcoes_n2b",
@@ -2011,10 +2011,10 @@
       "indice_correto": 0,
       "explicacao": "A função calcula x * 2 mas não tem return, e toda função sem return devolve None.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "fonte": "Material de apoio (A3): funcoes.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "funcoes_n3a",
@@ -2030,10 +2030,10 @@
       "indice_correto": 3,
       "explicacao": "resultado é uma variável local: existe só durante a execução de soma e não é vista fora dela.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "fonte": "Material de apoio (A3): funcoes.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "funcoes_n3b",
@@ -2049,10 +2049,10 @@
       "indice_correto": 1,
       "explicacao": "O return encerra a função na hora: como 3 > 0, devolve \"positivo\" e as linhas seguintes não executam.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_funcoes.txt",
+      "fonte": "Material de apoio (A3): funcoes.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "listas_strings_n1a",
@@ -2068,10 +2068,10 @@
       "indice_correto": 0,
       "explicacao": "Os índices começam em 0, então notas[0] é o primeiro elemento, 7.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "fonte": "Material de apoio (A3): listas_strings.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "listas_strings_n1b",
@@ -2087,10 +2087,10 @@
       "indice_correto": 3,
       "explicacao": "len devolve a quantidade de elementos da sequência, e \"Python\" tem 6 caracteres.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "fonte": "Material de apoio (A3): listas_strings.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "listas_strings_n2a",
@@ -2106,10 +2106,10 @@
       "indice_correto": 2,
       "explicacao": "Índices negativos contam do fim: notas[-1] é o último elemento, 9.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "fonte": "Material de apoio (A3): listas_strings.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "listas_strings_n2b",
@@ -2125,10 +2125,10 @@
       "indice_correto": 1,
       "explicacao": "O fatiamento [1:4] pega do índice 1 até o 3 (o fim não entra): y, t, h.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "fonte": "Material de apoio (A3): listas_strings.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "listas_strings_n3a",
@@ -2144,10 +2144,10 @@
       "indice_correto": 0,
       "explicacao": "Strings não podem ser alteradas no lugar; para \"mudar\" um texto, é preciso criar uma string nova.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "fonte": "Material de apoio (A3): listas_strings.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "listas_strings_n3b",
@@ -2163,10 +2163,10 @@
       "indice_correto": 2,
       "explicacao": "split quebra o texto em uma lista de 4 palavras, e append acrescenta mais um elemento: 5.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: provisorio_listas_strings.txt",
+      "fonte": "Material de apoio (A3): listas_strings.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "recursao_n1a",
@@ -2182,10 +2182,10 @@
       "indice_correto": 2,
       "explicacao": "Recursão é quando uma função chama a si mesma para resolver versões menores do mesmo problema.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "fonte": "Material de apoio (A3): exemplo_recursao.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "recursao_n1b",
@@ -2201,10 +2201,10 @@
       "indice_correto": 1,
       "explicacao": "O caso base é a condição de parada: sem ele, a função continuaria chamando a si mesma indefinidamente.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "fonte": "Material de apoio (A3): exemplo_recursao.txt",
       "tempo_esperado_s": 30,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "recursao_n2a",
@@ -2220,10 +2220,10 @@
       "indice_correto": 3,
       "explicacao": "Sem caso base, as chamadas não param até esgotar a memória, o erro de estouro de pilha (stack overflow).",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "fonte": "Material de apoio (A3): exemplo_recursao.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "recursao_n2b",
@@ -2239,10 +2239,10 @@
       "indice_correto": 0,
       "explicacao": "fatorial(0) = 1 é o caso base; fatorial(n) = n * fatorial(n - 1) é o caso recursivo.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "fonte": "Material de apoio (A3): exemplo_recursao.txt",
       "tempo_esperado_s": 45,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "recursao_n3a",
@@ -2258,10 +2258,10 @@
       "indice_correto": 2,
       "explicacao": "Cada chamada soma n ao resultado de f(n - 1) até o caso base f(0) = 0: 4 + 3 + 2 + 1 + 0 = 10.",
       "uso": "diagnostico",
-      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "fonte": "Material de apoio (A3): exemplo_recursao.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     },
     {
       "id": "recursao_n3b",
@@ -2277,10 +2277,10 @@
       "indice_correto": 3,
       "explicacao": "O caso recursivo vai de 3 para 1 e depois para -1, pulando o caso base n == 0, então as chamadas nunca param.",
       "uso": "tutoria",
-      "fonte": "Material provisório da A3: exemplo_recursao.txt",
+      "fonte": "Material de apoio (A3): exemplo_recursao.txt",
       "tempo_esperado_s": 60,
       "origem": "a3_prototipo",
-      "status": "rascunho_a3"
+      "status": "validado"
     }
   ]
 }

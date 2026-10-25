@@ -43,7 +43,7 @@
 4. **"Vetar com motivo":** o modelo `Veto` só tem `correcao_docente`, e é ela que o aluno vê. O campo da
    tela pede "a correção que o aluno vai ver (explique o motivo do veto)". Um motivo interno separado exige
    mudar o modelo (pendência).
-5. **Alunos em risco** (`PROVISÓRIO`): inatividade e queda reutilizam as regras do Agente 3 e do
+5. **Alunos em risco**: inatividade e queda reutilizam as regras do Agente 3 e do
    orquestrador (`INATIVIDADE_DIAS`, `RELATORIO_TENDENCIA_*`). Desempenho baixo é acerto abaixo de
    `PAINEL_DESEMPENHO_BAIXO=0.5` com pelo menos `PAINEL_MIN_RESPOSTAS=5` respostas. Quem concluiu a trilha
    não entra por inatividade.

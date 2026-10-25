@@ -17,7 +17,7 @@ Não é executável sozinho; usado pela API e pela demonstração:
 
 Pré-requisitos:
     - tabelas criadas/migradas: python -m tia.core.database
-    - conteudo/banco_itens/itens.json (BANCO_ITENS_PATH; PROVISÓRIO até a entrega da Pessoa 4)
+    - conteudo/banco_itens/itens.json (BANCO_ITENS_PATH; banco validado pela Pessoa 4)
 """
 
 import json

@@ -114,7 +114,7 @@ Com o LLM real (qwen3:1.7b, CPU do notebook), o roteiro levou **2 min 23 s**:
 
 | Chamada | Origem | Tempo no servidor |
 |---|---|---|
-| Feedback de uma resposta | LLM, fonte `provisorio_listas_strings.txt` | 33,2 s |
+| Feedback de uma resposta | LLM, fonte `listas_strings.txt` | 33,2 s |
 | Pergunta livre "O que é uma lista?" | LLM, 2 fontes | 36,1 s |
 | Matrícula (justificativas do Planejador) | LLM | 43,8 s |
 | Narrativa do relatório | LLM, aprovada pela guarda | (não medido em separado) |

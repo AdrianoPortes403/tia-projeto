@@ -1,7 +1,7 @@
 # Protocolo da avaliação amostral das respostas do tutor
 
-> Frente A3, 11/10/2026. **PROVISÓRIO:** os critérios de adequação abaixo são uma proposta da A3 e precisam
-> ser validados pela Pessoa 4 (conteúdo pedagógico) antes do piloto. Comando: `python -m tia.painel.amostra`.
+> Frente A3, 11/10/2026. Os critérios de adequação abaixo, propostos pela A3, foram validados pela
+> Pessoa 4 (conteúdo pedagógico) em 19/10/2026. Comando: `python -m tia.painel.amostra`.
 
 ## Para que serve
 
@@ -63,7 +63,7 @@ dado pessoal. Por isso o arquivo é de uso interno da avaliação: não sai da i
 vai para e-mail nem para nuvem pública, e é apagado depois que o relatório de qualidade for aceito. Se uma
 pergunta tiver dado pessoal, o avaliador marca isso na observação e a linha é anonimizada antes do relatório.
 
-## 4. Critérios de adequação (PROVISÓRIOS: validar com a Pessoa 4)
+## 4. Critérios de adequação (validados com a Pessoa 4)
 
 Um texto é **adequado ("S")** se atende a **todos** os critérios abaixo; basta falhar em um para ser "N".
 

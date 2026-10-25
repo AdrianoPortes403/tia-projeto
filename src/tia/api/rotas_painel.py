@@ -49,13 +49,13 @@ Data = Annotated[str | None, Query(pattern=r"^\d{4}-\d{2}-\d{2}$", examples=["20
 
 @router_conteudo.get("/ementa", response_model=list[CompetenciaEmenta])
 def listar_ementa() -> list[CompetenciaEmenta]:
-    """Competências da ementa (PROVISÓRIA, Pessoa 4)."""
+    """Competências da ementa (validada pela Pessoa 4)."""
     return consultas.ementa()
 
 
 @router_conteudo.get("/perfis", response_model=list[PerfilResumo])
 def listar_perfis() -> list[PerfilResumo]:
-    """Perfis de aluno (PROVISÓRIOS, Pessoa 4)."""
+    """Perfis de aluno (validados pela Pessoa 4)."""
     return consultas.perfis()
 
 

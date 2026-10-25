@@ -113,7 +113,7 @@ TUTOR_NUM_TRECHOS = int(os.getenv("TUTOR_NUM_TRECHOS", "4"))
 # Distância máxima (Chroma, L2 ao quadrado com nomic-embed-text) para um trecho
 # contar como relevante; medido no material de exemplo: relevantes ~200-330,
 # sem relação ~440+. Rever se trocar o modelo de embedding.
-# PROVISÓRIO: calibrado com o material PROVISÓRIO (conteudo/materiais/provisorio_*.txt).
+# Calibrado com o material validado dos 4 tópicos do piloto (conteudo/materiais/).
 # Recalibrar quando o material real do curso (Pessoa 4) chegar: medir as
 # distâncias de trechos relevantes e sem relação e ajustar este valor.
 TUTOR_DISTANCIA_MAXIMA = float(os.getenv("TUTOR_DISTANCIA_MAXIMA", "400"))
@@ -124,7 +124,7 @@ TUTOR_DISTANCIA_MAXIMA = float(os.getenv("TUTOR_DISTANCIA_MAXIMA", "400"))
 # separa pergunta coberta de pergunta fora do material (medido em 10/10).
 # Ajustar só com o conjunto de ajuste: python -m tia.agentes.tutor.avaliar_dialogo
 # 0.42: meio do intervalo ótimo no ajuste (0.35 a 0.50: nenhuma pergunta "fora"
-# passa e as 9 cobertas passam), medido em 10/10 com o material PROVISÓRIO.
+# passa e as 9 cobertas passam), medido em 10/10 com o material do piloto (validado em 19/10).
 TUTOR_COBERTURA_MIN = float(os.getenv("TUTOR_COBERTURA_MIN", "0.42"))
 # Regra adicional do portão: o termo de conteúdo mais raro da pergunta no índice
 # (maior IDF, contando sinônimos) precisa estar nos trechos recuperados.
@@ -142,7 +142,7 @@ RELATORIO_TIMEOUT_LLM = int(os.getenv("RELATORIO_TIMEOUT_LLM", "120"))
 RELATORIO_MAX_TOKENS = int(os.getenv("RELATORIO_MAX_TOKENS", "250"))
 RELATORIO_TEMPERATURA = float(os.getenv("RELATORIO_TEMPERATURA", "0.2"))
 RELATORIO_SEED = int(os.getenv("RELATORIO_SEED", "42"))
-# Tendência do acerto (indicador 2 e regra de queda do orquestrador). PROVISÓRIO.
+# Tendência do acerto (indicador 2 e regra de queda do orquestrador).
 # Sem sessao_id: últimas RELATORIO_TENDENCIA_JANELA respostas x anteriores.
 RELATORIO_TENDENCIA_JANELA = int(os.getenv("RELATORIO_TENDENCIA_JANELA", "5"))
 # Mínimo de respostas em cada lado da comparação para haver tendência.
@@ -151,14 +151,14 @@ RELATORIO_TENDENCIA_MIN_RESPOSTAS = int(os.getenv("RELATORIO_TENDENCIA_MIN_RESPO
 RELATORIO_TENDENCIA_LIMIAR = float(os.getenv("RELATORIO_TENDENCIA_LIMIAR", "0.15"))
 
 # --- Orquestração (EAP 1.3.5): regras (docs/arquitetura/arquitetura.md, "Decisões de orquestração") ---
-# Queda (R2, PROVISÓRIO): depois de um reforço por queda, só reforça de novo após
+# Queda (R2): depois de um reforço por queda, só reforça de novo após
 # pelo menos estas respostas novas (além de no máximo um reforço por sessão).
 ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS = int(os.getenv("ORQ_QUEDA_RESPOSTAS_ENTRE_REPLANOS", "5"))
 # Inatividade (R3; base pedagógica 1.2.5, seção 3.4): a partir de INATIVIDADE_DIAS (acima), só
 # incentivo; a partir de ORQ_INATIVIDADE_REFAZER_DIAS, incentivo com a trilha refeita a partir de hoje.
 # Regime normal: 3 e 7 dias. No piloto de 8 dias (1.5.1): 2 e 4 dias, pelo .env.
 ORQ_INATIVIDADE_REFAZER_DIAS = int(os.getenv("ORQ_INATIVIDADE_REFAZER_DIAS", "7"))
-# Conclusão sem domínio (PROVISÓRIO, Pessoa 4): quando os itens de uma competência acabam sem
+# Conclusão sem domínio (Pessoa 4): quando os itens de uma competência acabam sem
 # TUTOR_ACERTOS_CONCLUIR acertos seguidos no nível 3, a sessão termina "concluída com ressalvas".
 # A R1 só avança se a taxa de acerto da sessão for pelo menos esta; abaixo, reforço ou material.
 ORQ_ACERTO_MIN_AVANCO = float(os.getenv("ORQ_ACERTO_MIN_AVANCO", "0.6"))
@@ -241,7 +241,7 @@ API_DOCS = os.getenv("API_DOCS", "0" if EM_PRODUCAO else "1").lower() in ("1", "
 
 # --- Painel do docente (EAP 1.4.5) ---
 # Alerta de desempenho baixo: taxa de acerto geral abaixo deste valor, desde que o
-# aluno tenha pelo menos PAINEL_MIN_RESPOSTAS respostas. PROVISÓRIO (Pessoa 4).
+# aluno tenha pelo menos PAINEL_MIN_RESPOSTAS respostas.
 PAINEL_DESEMPENHO_BAIXO = float(os.getenv("PAINEL_DESEMPENHO_BAIXO", "0.5"))
 PAINEL_MIN_RESPOSTAS = int(os.getenv("PAINEL_MIN_RESPOSTAS", "5"))
 

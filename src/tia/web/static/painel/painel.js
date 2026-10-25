@@ -198,8 +198,7 @@
   }
 
   function mostrarGeral(r) {
-    $("geral-grupo").textContent = descricaoGrupo(r.alunos, r.min_grupo) + " Gerado em " + dataHora(r.gerado_em) +
-      ". Indicadores PROVISÓRIOS (critérios a validar com a Pessoa 4).";
+    $("geral-grupo").textContent = descricaoGrupo(r.alunos, r.min_grupo) + " Gerado em " + dataHora(r.gerado_em) + ".";
     const area = $("geral-indicadores");
     if (r.suprimido) {
       area.replaceChildren(el("p", { classe: "aviso aviso--alerta", texto: "Este grupo tem " + r.alunos.texto +
@@ -287,7 +286,7 @@
     const r = estado.risco;
     if (!r) return;
     const c = r.criterios;
-    $("risco-criterios").textContent = "Critérios (PROVISÓRIOS): sem atividade há " + c.inatividade_dias +
+    $("risco-criterios").textContent = "Critérios: sem atividade há " + c.inatividade_dias +
       " dias ou mais (quem concluiu a trilha não entra); queda de " + Math.round(c.queda_pontos * 100) +
       " pontos ou mais no acerto recente; acerto abaixo de " + porcento(c.desempenho_baixo) + " com pelo menos " +
       c.min_respostas + " respostas; questões de uma competência terminadas sem domínio (avança só com acerto de " +

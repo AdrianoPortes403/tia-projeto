@@ -3,7 +3,7 @@ Modelos Pydantic do Agente 3 (Relatório): os 5 indicadores e os dois
 relatórios (por aluno e por turma/instituição), em JSON estruturado para o
 dashboard (pacote 1.4.5) consumir.
 
-Os 5 indicadores são PROVISÓRIOS: critérios finais a validar com a Pessoa 4
+Os 5 indicadores têm critérios validados com a Pessoa 4
 (ver docs/arquitetura/relatorio_indicadores.md).
 
 Taxas são frações de 0 a 1 (None quando não há dado). No relatório da
@@ -57,7 +57,7 @@ class Progresso(BaseModel):
 # --- 2. desempenho ---
 
 class Tendencia(BaseModel):
-    """Acerto recente x anterior (PROVISÓRIO). base "sessao": última sessão x
+    """Acerto recente x anterior. base "sessao": última sessão x
     sessões anteriores (respostas com sessao_id); base "janela": últimas
     respostas x anteriores, para respostas antigas, sem sessao_id."""
     base: Literal["sessao", "janela"]
@@ -186,7 +186,7 @@ class AlertaTurma(BaseModel):
 
 class RelatorioTurma(BaseModel):
     """Visão agregada da turma/instituição: sem aluno_id nem grupo com menos
-    de min_grupo alunos (R08). PROVISÓRIO: não existe turma no banco; o grupo
+    de min_grupo alunos (R08). Não existe turma no banco; o grupo
     é a instituição inteira ou um perfil (perfil_id da trilha)."""
     gerado_em: str
     perfil_id: str | None

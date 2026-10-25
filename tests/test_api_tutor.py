@@ -21,7 +21,7 @@ client = TestClient(app)
 
 ALUNO = "A2026-007"
 COMPETENCIA = "repeticao"
-MATERIAL = "provisorio_repeticao.txt"
+MATERIAL = "repeticao.txt"
 ITENS = {i["id"]: i for i in carregar_itens()}
 
 

@@ -1,7 +1,7 @@
 """
 Consultas SOMENTE DE LEITURA do painel do docente (EAP 1.4.5).
 
-    ementa(), perfis()                    conteúdo pedagógico (PROVISÓRIO, Pessoa 4)
+    ementa(), perfis()                    conteúdo pedagógico (validado, Pessoa 4)
     alunos_em_risco(perfil_id)            alunos com inatividade, queda ou desempenho baixo,
                                           COM código; a consulta é auditada (R11)
     desempenho_competencias(perfil_id)    acerto e tendência por competência e itens com
@@ -81,8 +81,8 @@ def _nomes() -> dict[str, str]:
 # --- alertas de risco ---
 
 def avaliar_risco(dados, agora: datetime, nomes: dict[str, str]) -> AlunoEmRisco | None:
-    """Motivos de risco de um aluno (None se não há nenhum). PROVISÓRIO:
-    inatividade e queda usam as mesmas regras do Agente 3 e do orquestrador;
+    """Motivos de risco de um aluno (None se não há nenhum).
+    Inatividade e queda usam as mesmas regras do Agente 3 e do orquestrador;
     quem concluiu a trilha não entra por inatividade."""
     progresso = indicadores.progresso(dados, nomes)
     engajamento = indicadores.engajamento(dados, agora)
@@ -293,7 +293,7 @@ def _linhas_grupo(indicador: str, grupos: list[GrupoTaxa], nomes: dict[str, str]
 def exportar_indicadores_csv(perfil_id: str | None = None, agora: datetime | None = None) -> str:
     """Os indicadores agregados do relatório da turma (sem narrativa do LLM e
     sem códigos de aluno), em CSV separado por ";" com BOM (abre direto no
-    Excel em pt-BR). PROVISÓRIO: formato a confirmar com a Pessoa 4."""
+    Excel em pt-BR). Formato validado com a Pessoa 4."""
     relatorio = gerar_relatorio_turma(perfil_id, agora=agora, com_narrativa=False)
     nomes = _nomes()
     linhas = [["indicador", "grupo", "alunos", "respostas", "medida", "valor", "observacao"],

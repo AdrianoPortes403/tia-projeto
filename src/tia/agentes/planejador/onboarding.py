@@ -50,7 +50,7 @@ log = logging.getLogger(__name__)
 
 DIAS = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"]
 NOME_TRILHA = {"dev": "Desenvolvimento de Software", "defesa_cibernetica": "Defesa Cibernética"}
-# PROVISÓRIO: textos ao aluno, até a revisão pedagógica (Pessoa 4)
+# Textos ao aluno (validados pela Pessoa 4)
 SAUDACAO = ("Olá! Sou o tutor do Sistema TIA. Antes de montar seu plano de estudo, preciso de algumas "
             "informações rápidas.\n\nQual trilha você quer seguir: Desenvolvimento de Software (Dev) ou "
             "Defesa Cibernética? Se estiver em dúvida, é só dizer.")

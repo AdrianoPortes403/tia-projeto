@@ -1,8 +1,7 @@
 # Agente 3 (Relatório): indicadores — EAP 1.3.4
 
-> **Status: PROVISÓRIO.** Definições, fórmulas e limiares foram propostos pela frente A3
-> (infraestrutura e integração) em 10/10/2026, para a fatia vertical. Os critérios finais
-> serão validados com a Pessoa 4 (conteúdo pedagógico).
+> **Status: validado pela Pessoa 4 (conteúdo pedagógico) em 19/10/2026.** Definições, fórmulas e limiares
+> foram propostos pela frente A3 (infraestrutura e integração) em 10/10/2026, para a fatia vertical.
 
 Código: `src/tia/agentes/relatorio/` (cálculo em `indicadores.py`). API: `GET /relatorio/aluno/{aluno_id}`
 e `GET /relatorio/turma[?perfil_id=]`. Demonstração: `python -m tia.agentes.relatorio --demo`.
@@ -25,11 +24,11 @@ e `GET /relatorio/turma[?perfil_id=]`. Demonstração: `python -m tia.agentes.re
 
 | # | Indicador | Definição | Fórmula | Fonte de dados | Status |
 |---|---|---|---|---|---|
-| 1 | Progresso na trilha | Quanto da trilha do Planejador o aluno concluiu e em que nível está em cada competência | `% = etapas concluídas / etapas da trilha`. Etapa concluída = há sessão do questionário concluída na competência. Nível atual = `nivel` da sessão mais recente da competência | `trilha_estudo` (Agente 1), `tutor_sessoes` | PROVISÓRIO |
-| 2 | Desempenho | Taxa de acerto por competência e por nível, com tendência | `taxa = acertos / respostas`. Tendência (`base: "sessao"`): taxa na **última sessão** (a da resposta mais recente) − taxa nas outras sessões, só entre respostas com `sessao_id`; exige 2 sessões ou mais e 3 respostas de cada lado. Senão (respostas antigas sem `sessao_id`, sessão recém-aberta), fallback (`base: "janela"`): últimas 5 respostas − anteriores. ≥ +15 pontos = subindo, ≤ −15 = caindo, senão estável; menos de 3 respostas em um dos lados = insuficiente | `historico_respostas` (`topico`, `nivel`, `acertou`, `timestamp`, `sessao_id`) | PROVISÓRIO |
-| 3 | Engajamento | Sessões, dias ativos e dias de inatividade | sessões = linhas em `tutor_sessoes`; dias ativos = datas distintas com resposta, sessão ou pergunta no diálogo; dias de inatividade = dias inteiros desde a última ação (sem ação: desde a criação da trilha); inativo se ≥ `INATIVIDADE_DIAS` (3) | `tutor_sessoes`, `historico_respostas`, `tutor_dialogo`, `trilha_estudo` | PROVISÓRIO |
-| 4 | Pontos fracos recorrentes | Competências e itens com erro repetido, e quanto o aluno pediu explicação nelas | **Competência** (todas as respostas, com ou sem `item_id`): ≥ 2 erros **e** taxa de erro ≥ 50%; também a maior sequência de erros seguidos e o nº de perguntas no diálogo na competência (aproximação de "uso de explicação"). **Item** (`itens_fracos`, só respostas com `item_id`): mesmos limiares por item | `historico_respostas` (`item_id`), `tutor_dialogo` (`competencia_id`) | PROVISÓRIO |
-| 5 | Qualidade do feedback | Quanto do feedback veio do LLM, foi barrado pela guarda ou caiu no fallback, e quanto o docente vetou | `taxa(origem) = respostas com a origem / respostas com origem registrada` (item + diálogo); `taxa de veto = diálogos vetados / diálogos` | `auditoria` (origem de cada resposta de item, por `referencia_id`), `tutor_dialogo` (`origem`, `vetada`) | PROVISÓRIO |
+| 1 | Progresso na trilha | Quanto da trilha do Planejador o aluno concluiu e em que nível está em cada competência | `% = etapas concluídas / etapas da trilha`. Etapa concluída = há sessão do questionário concluída na competência. Nível atual = `nivel` da sessão mais recente da competência | `trilha_estudo` (Agente 1), `tutor_sessoes` | Validado |
+| 2 | Desempenho | Taxa de acerto por competência e por nível, com tendência | `taxa = acertos / respostas`. Tendência (`base: "sessao"`): taxa na **última sessão** (a da resposta mais recente) − taxa nas outras sessões, só entre respostas com `sessao_id`; exige 2 sessões ou mais e 3 respostas de cada lado. Senão (respostas antigas sem `sessao_id`, sessão recém-aberta), fallback (`base: "janela"`): últimas 5 respostas − anteriores. ≥ +15 pontos = subindo, ≤ −15 = caindo, senão estável; menos de 3 respostas em um dos lados = insuficiente | `historico_respostas` (`topico`, `nivel`, `acertou`, `timestamp`, `sessao_id`) | Validado |
+| 3 | Engajamento | Sessões, dias ativos e dias de inatividade | sessões = linhas em `tutor_sessoes`; dias ativos = datas distintas com resposta, sessão ou pergunta no diálogo; dias de inatividade = dias inteiros desde a última ação (sem ação: desde a criação da trilha); inativo se ≥ `INATIVIDADE_DIAS` (3) | `tutor_sessoes`, `historico_respostas`, `tutor_dialogo`, `trilha_estudo` | Validado |
+| 4 | Pontos fracos recorrentes | Competências e itens com erro repetido, e quanto o aluno pediu explicação nelas | **Competência** (todas as respostas, com ou sem `item_id`): ≥ 2 erros **e** taxa de erro ≥ 50%; também a maior sequência de erros seguidos e o nº de perguntas no diálogo na competência (aproximação de "uso de explicação"). **Item** (`itens_fracos`, só respostas com `item_id`): mesmos limiares por item | `historico_respostas` (`item_id`), `tutor_dialogo` (`competencia_id`) | Validado |
+| 5 | Qualidade do feedback | Quanto do feedback veio do LLM, foi barrado pela guarda ou caiu no fallback, e quanto o docente vetou | `taxa(origem) = respostas com a origem / respostas com origem registrada` (item + diálogo); `taxa de veto = diálogos vetados / diálogos` | `auditoria` (origem de cada resposta de item, por `referencia_id`), `tutor_dialogo` (`origem`, `vetada`) | Validado |
 
 ### Turma / instituição (agregado)
 

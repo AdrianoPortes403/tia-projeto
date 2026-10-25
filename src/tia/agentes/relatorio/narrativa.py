@@ -131,7 +131,7 @@ def redigir(resumo: str, publico: str) -> Narrativa:
 def formatar_texto_aluno(rel: RelatorioAluno) -> str:
     p, d, e, q = rel.progresso, rel.desempenho, rel.engajamento, rel.qualidade_feedback
     nomes = {c.competencia_id: c.nome for c in p.por_competencia}
-    linhas = [f"RELATÓRIO DO ALUNO {rel.aluno_id}  (gerado em {rel.gerado_em}; indicadores PROVISÓRIOS)", ""]
+    linhas = [f"RELATÓRIO DO ALUNO {rel.aluno_id}  (gerado em {rel.gerado_em})", ""]
     linhas.append("1. Seu progresso na trilha")
     if p.tem_trilha:
         linhas.append(f"   {p.concluidas} de {p.etapas} etapas concluídas ({pct(p.percentual)})")
@@ -182,8 +182,7 @@ def _grupo(g) -> str:
 
 def formatar_texto_turma(rel: RelatorioTurma) -> str:
     grupo = f"perfil {rel.perfil_id}" if rel.perfil_id else "instituição"
-    linhas = [f"RELATÓRIO DA TURMA ({grupo}; gerado em {rel.gerado_em}; grupo mínimo {rel.min_grupo}; "
-              f"indicadores PROVISÓRIOS)", f"Alunos: {rel.alunos.texto}", ""]
+    linhas = [f"RELATÓRIO DA TURMA ({grupo}; gerado em {rel.gerado_em}; grupo mínimo {rel.min_grupo})", f"Alunos: {rel.alunos.texto}", ""]
     if rel.suprimido:
         return "\n".join(linhas + [rel.narrativa.texto])
     linhas += ["1. Progresso na trilha",

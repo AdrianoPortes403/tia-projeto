@@ -50,7 +50,7 @@ def falha_imediata(*args, **kwargs):
 def feedback_llm(monkeypatch):
     """O feedback do Tutor sai como se o LLM tivesse escrito (com fonte)."""
     def gerar(item, indice, materiais, modo=None):
-        return ResultadoFeedback(montar_veredito(item, indice), TEXTO_LLM, ["provisorio_funcoes.txt"], "LLM")
+        return ResultadoFeedback(montar_veredito(item, indice), TEXTO_LLM, ["funcoes.txt"], "LLM")
     monkeypatch.setattr(tutor, "gerar_feedback", gerar)
 
 
@@ -92,7 +92,7 @@ def test_texto_do_feedback_e_gravado_com_origem_fontes_item_e_sessao(feedback_ll
     assert feedback["resposta_id"] is not None and feedback["explicacao"] == TEXTO_LLM
     linha = linha_feedback(feedback["resposta_id"])
     assert linha["explicacao"] == TEXTO_LLM and linha["veredito"] == feedback["veredito"]
-    assert (linha["origem"], linha["fontes"]) == ("LLM", '["provisorio_funcoes.txt"]')
+    assert (linha["origem"], linha["fontes"]) == ("LLM", '["funcoes.txt"]')
     assert (linha["aluno_id"], linha["item_id"], linha["sessao_id"], linha["competencia_id"]) == (
         ALUNO, feedback["item_id"], feedback["sessao_id"], "funcoes")
     assert linha["vetada"] == 0 and linha["correcao_docente"] is None

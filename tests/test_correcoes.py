@@ -50,7 +50,7 @@ def evento_respondido(monkeypatch):
     """Aluno matriculado que respondeu a primeira pergunta por evento; devolve (corpo do evento, resultado)."""
     monkeypatch.setattr(llm_client.requests, "post", falha_imediata)
     monkeypatch.setattr(tutor, "gerar_feedback", lambda item, indice, materiais, modo=None: ResultadoFeedback(
-        montar_veredito(item, indice), TEXTO_LLM, ["provisorio_funcoes.txt"], "LLM"))
+        montar_veredito(item, indice), TEXTO_LLM, ["funcoes.txt"], "LLM"))
     client.post(f"/aluno/{ALUNO}/iniciar", json={"perfil_id": "intermediario", "horas_semanais": 6, "diagnostico": {
         "variaveis_tipos": 1.0, "condicionais": 1.0, "repeticao": 1.0}})
     sessao = client.post(f"/aluno/{ALUNO}/sessao", json={"competencia_id": "funcoes"}).json()["sessao"]

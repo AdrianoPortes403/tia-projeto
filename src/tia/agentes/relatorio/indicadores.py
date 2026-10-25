@@ -3,8 +3,8 @@ Os 5 indicadores do Agente 3 (Relatório), calculados por CÓDIGO, de forma
 determinística (mesmos dados e mesmo "agora", mesmo resultado). O LLM não
 calcula nada: só redige a interpretação dos números (narrativa.py).
 
-PROVISÓRIO: definições, limiares e janelas abaixo são da frente A3, até a
-validação dos critérios com a Pessoa 4 (docs/arquitetura/relatorio_indicadores.md).
+Definições, limiares e janelas abaixo validados com a Pessoa 4
+(docs/arquitetura/relatorio_indicadores.md).
 
     1. progresso:          % de etapas da trilha concluídas e nível atual por competência
                            (com a ressalva das competências terminadas sem domínio)
@@ -35,7 +35,7 @@ from tia.agentes.relatorio.repositorio import DadosAluno
 from tia.core.config import (INATIVIDADE_DIAS, RELATORIO_TENDENCIA_JANELA, RELATORIO_TENDENCIA_LIMIAR,
                              RELATORIO_TENDENCIA_MIN_RESPOSTAS)
 
-# PROVISÓRIO: critérios a validar com a Pessoa 4.
+# Critérios validados com a Pessoa 4.
 # tendência: limiares em core/config.py (também usados pela regra de queda do orquestrador)
 JANELA_TENDENCIA = RELATORIO_TENDENCIA_JANELA
 MIN_RESPOSTAS_TENDENCIA = RELATORIO_TENDENCIA_MIN_RESPOSTAS
