@@ -99,7 +99,7 @@ ROTAS_DOCS = ("/docs", "/docs/oauth2-redirect")
 
 def cabecalhos_para(caminho: str) -> dict[str, str]:
     if caminho == web.PREFIXO or caminho.startswith(web.PREFIXO + "/"):
-        return web.CABECALHOS_SEGURANCA
+        return web.cabecalhos_app()
     return CABECALHOS_DOCS if caminho in ROTAS_DOCS else CABECALHOS_API
 
 

@@ -1,0 +1,8 @@
+{
+  "name": "tia-ebaula-teste",
+  "private": true,
+  "type": "module",
+  "description": "Teste do plug-in do EBAULA em um navegador simulado (jsdom). Rodar: npm install && npm test",
+  "scripts": { "test": "node --test teste_plugin.mjs" },
+  "devDependencies": { "jsdom": "^24.1.0" }
+}

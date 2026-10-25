@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EBAULA (simulado) – demonstração do plug-in TIA</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f3f5f2; color: #222; }
+  header { background: #2f4a2f; color: #fff; padding: 1rem 1.5rem; }
+  main { max-width: 48rem; margin: 1.5rem auto; padding: 0 1rem; }
+  .aviso { background: #fff7d6; border: 1px solid #d9c46a; padding: .75rem 1rem; border-radius: .5rem; }
+</style>
+</head>
+<body>
+<header><strong>EBAULA</strong> – Curso simulado</header>
+<main>
+  <p class="aviso">Página de demonstração: não é o EBAULA. Ajuste o endereço do TIA no
+  <code>data-tia-url</code> abaixo (padrão: TIA local em http://localhost:8000, que precisa de
+  <code>TIA_FRAME_ANCESTORS</code> com a origem desta página).</p>
+  <h1>Módulo 1 – Fundamentos</h1>
+  <p>Conteúdo do curso aqui. Use o botão "Tutor TIA" no canto da tela.</p>
+</main>
+<script src="http://localhost:8000/app/plugin/tia-ebaula.js"
+        data-tia-url="http://localhost:8000" defer></script>
+</body>
+</html>
