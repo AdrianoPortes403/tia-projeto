@@ -397,6 +397,10 @@ ENDERECOS_PERMITIDOS = {
     "https://cdn.jsdelivr.net",        # CSP do /docs (desligado em produção)
     "https://fastapi.tiangolo.com",    # CSP do /docs (ícone)
     "http://testserver",               # nunca usado fora de teste, mas pode aparecer em docstring
+    # exemplos em comentários/documentação do plug-in EBAULA (sem chamada de rede)
+    "https://ebaula.exemplo.eb.mil.br.",  # o ponto final vem da pontuação do comentário (regex o inclui)
+    "https://tia.exemplo.eb.mil.br",   # exemplo de uso no cabeçalho de tia-ebaula.js
+    "https://host",                    # sintaxe de origem em config.py (https://host[:porta])
 }
 
 
