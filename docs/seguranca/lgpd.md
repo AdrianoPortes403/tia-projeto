@@ -141,6 +141,9 @@ instituição.
 - A API não faz chamadas de saída.
 - O teste `test_pontos_de_rede_do_codigo` varre `src/tia` e falha se aparecer qualquer outro endereço ou
   biblioteca de rede.
+- Os endereços `https://ebaula.exemplo.eb.mil.br`, `https://tia.exemplo.eb.mil.br` e `https://host`
+  aparecem apenas em comentários e na documentação do plug-in EBAULA (`config.py` e `tia-ebaula.js`);
+  não geram tráfego de rede.
 
 | # | Ponto | Direção | Host e porta | Onde no código | Observação |
 |---|---|---|---|---|---|
