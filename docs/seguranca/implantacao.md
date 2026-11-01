@@ -1,6 +1,6 @@
 # Implantação: sessão, cookies e o EBAULA (EAP 1.4.6)
 
-> Frente A3, 11/10/2026. Documento para **decisão com a equipe do EBAULA**. Arquitetura da segurança:
+> Frente A3, 11/10/2026 (atualizado em 31/10/2026: iframe do plug-in). Documento para **decisão com a equipe do EBAULA**. Arquitetura da segurança:
 > `docs/arquitetura/arquitetura.md`, seção "Segurança".
 
 ## 1. Como a sessão funciona hoje
@@ -9,8 +9,13 @@
   `SameSite=Strict`, `Secure` (configurável) e `Path=/`.
 - O JavaScript não lê o cookie. Toda escrita leva também o cabeçalho `X-CSRF-Token`, cujo valor fica só em
   memória.
-- As telas (`/app/` e `/app/painel/`) mandam `Content-Security-Policy: frame-ancestors 'none'`, ou seja,
-  hoje **nenhum site pode abrir o TIA dentro de um iframe**.
+- As telas (`/app/` e `/app/painel/`) mandam `Content-Security-Policy: frame-ancestors`, com as origens de
+  `TIA_FRAME_ANCESTORS` (`core/config.py`; vazio = `'none'`). A API continua `frame-ancestors 'none'`.
+- **O plug-in do EBAULA já abre o TIA em iframe** (`plugin-ebaula/`, commit `f06586b`), mas o
+  login dentro dele **só funciona com o TIA no mesmo site do EBAULA** (seção 2). Em outro site, a alternativa
+  é o modo `aba` do plug-in: **abrir o TIA em nova aba**, que funciona em qualquer domínio.
+- No nginx (`deploy/proxy/nginx-tia.conf`), o `X-Frame-Options: DENY` precisa sair para o iframe funcionar;
+  prefira tirá-lo só de um `location /app/`, em vez de apagar a linha de todas as rotas.
 
 ## 2. O impacto do `SameSite=Strict` dentro do EBAULA
 
@@ -22,7 +27,7 @@ site (`exemplo.edu.br`). Já `https://ebaula.com.br` e `https://tia.exemplo.edu.
 | Como o EBAULA abre o TIA | O que acontece com o `SameSite=Strict` |
 |---|---|
 | Link que abre o TIA em outra aba (navegação de topo) | **Funciona.** A primeira página não recebe o cookie, mas ela é estática. Os pedidos seguintes (`/auth/eu` e as rotas) já são do mesmo site e levam o cookie |
-| iframe, com o TIA no **mesmo site** do EBAULA (subdomínio ou caminho) | **Funciona**, desde que `frame-ancestors` libere a origem do EBAULA (hoje está `'none'`) |
+| iframe, com o TIA no **mesmo site** do EBAULA (subdomínio ou caminho) | **Funciona**, desde que `TIA_FRAME_ANCESTORS` libere a origem do EBAULA (padrão: `'none'`) |
 | iframe, com o TIA em **outro site** | **Não funciona.** Dentro do iframe, o navegador não envia o cookie `Strict` (nem o `Lax`) e recusa gravá-lo no login. O aluno entra, a tela pede o login de novo e fica nesse ciclo |
 
 Trocar para `SameSite=None; Secure` não resolve com segurança. Com essa marca, o cookie vira "cookie de
@@ -55,7 +60,16 @@ principal. Se for usado, o anti-CSRF pelo cabeçalho continua valendo, porque n�
    `tia.api.rotas_auth` e `seguranca.acesso`, que ganhariam essa segunda forma.
 4. **Evitar D** como solução principal.
 
-Nada disso foi implementado ainda: a escolha depende das respostas abaixo.
+**Estado em 31/10/2026:**
+
+- **A**: implementada no TIA. `TIA_FRAME_ANCESTORS` libera as origens do EBAULA e o plug-in abre o iframe.
+  Falta o EBAULA confirmar o domínio. Prefira **subdomínio** (`tia.<domínio>`): por caminho
+  (`<EBAULA>/tia/`) o TIA fica na mesma origem do EBAULA, e o sandbox `allow-scripts allow-same-origin` do
+  iframe deixa de isolar os dois.
+- **B**: funciona hoje (modo `aba` do plug-in). Falta só o login único; até lá, o aluno usa o login local.
+- **C** e **D**: não implementadas.
+- O plug-in foi testado só em jsdom. Falta conferir num navegador real se o aviso "O tutor não carregou"
+  aparece quando o login em iframe falha (provavelmente não aparece, porque a página carrega).
 
 ## 4. Perguntas para a equipe do EBAULA
 
