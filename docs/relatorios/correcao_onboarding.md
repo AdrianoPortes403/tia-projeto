@@ -132,5 +132,5 @@ de cópia não precisou agir no teste real; ele está coberto pelos testes com L
 
 ## Estado deixado na máquina
 
-`data/tia.db` ganhou os usuários e as matrículas de A2026-T03 e A2026-T04 (senha "Nova-senha-teste-T-2026",
+`data/tia.db` ganhou os usuários e as matrículas de A2026-T03 e A2026-T04 (senha de teste (apenas local),
 só desta máquina). Servidor parado. `.env` e `conteudo/` sem alteração.

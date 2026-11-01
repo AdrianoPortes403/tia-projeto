@@ -125,6 +125,6 @@ No diagnóstico, o roteiro acertou toda a base comum e errou metade das questõe
 ## Estado deixado na máquina
 
 - `data/tia.db`: além dos dados do teste funcional, os usuários e as matrículas de A2026-T01 e A2026-T02
-  (senha "Nova-senha-teste-T-2026", só desta máquina). Para voltar ao banco de demonstração limpo: mover
+  (senha de teste (apenas local), só desta máquina). Para voltar ao banco de demonstração limpo: mover
   `data/tia.db` e rodar `python -m tia.web.dados_demo` e `python -m tia.web.dados_painel`.
 - Servidor parado. `.env` e `conteudo/` sem alteração.
