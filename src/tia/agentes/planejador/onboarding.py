@@ -5,10 +5,16 @@ trilha (dev ou defesa_cibernetica), horas por semana, dias (opcional) e
 objetivo (opcional), com confirmação no fim.
 
 Divisão de responsabilidades:
-    - LLM local (R07) ou, sem ele, regras: ENTENDER a resposta livre e
-      extrair campos ("umas 2h por dia, menos fim de semana" -> 10 h/semana);
-    - código: VALIDAR os campos e DECIDIR a próxima pergunta. O LLM nunca
-      decide sozinho que o onboarding terminou: quem decide é a confirmação.
+    - código (regras): ENTENDER a resposta e DECIDIR. Cada pergunta só grava
+      os seus campos; dias, objetivo e a confirmação são só do código; a
+      matrícula exige "sim" explícito no resumo, e "não" volta às perguntas;
+    - LLM local (R07), só nas perguntas de trilha e de horas: SUGERE o valor
+      quando as regras não entendem ("duas horinhas nos dias de semana" ->
+      10 h/semana). A sugestão só é aceita se estiver ancorada no texto do
+      aluno (a trilha citada por ele; horas a partir dos números que ele
+      escreveu). Campo de outra pergunta, valor inventado ou copiado do
+      prompt é descartado. Correção de 01/11/2026:
+      docs/relatorios/correcao_onboarding.md.
 
 Conhecimento NÃO é perguntado: vem do diagnóstico (diagnostico.py).
 
@@ -93,7 +99,46 @@ class ErroOnboarding(ValueError):
     """Erro de uso do onboarding (mensagem pensada para o usuário)."""
 
 
-# --- extração por regras (sem LLM, ou se o LLM falhar) ---
+# --- regras do código: o que vale como resposta do aluno ---
+#
+# Correção de 01/11/2026 (docs/relatorios/correcao_onboarding.md): com o qwen3:1.7b, o LLM devolvia
+# campos que o aluno não disse (trilha, horas, dias e objetivo de uma vez, ou o exemplo do prompt) e o
+# código gravava. Agora:
+#   1. cada pergunta só grava os SEUS campos (CAMPOS_DA_PERGUNTA); o resto que vier é descartado;
+#   2. todo valor aceito é ANCORADO no texto do aluno deste turno: trilha só se a mensagem cita palavras
+#      dela; horas só se o número sai dos números escritos pelo aluno; mensagem vaga não grava nada;
+#   3. dias, objetivo e a confirmação são decididos só pelo código (o LLM nunca os escreve);
+#   4. a confirmação exige "sim" explícito; "não" sem correção volta ao começo das perguntas.
+
+# campos que cada pergunta pode gravar (dias vêm junto da resposta de horas, decididos pelo código;
+# na confirmação, só correções ancoradas no texto, decididas pelo código)
+CAMPOS_DA_PERGUNTA = {
+    "trilha": ("trilha",),
+    "horas": ("horas_semana", "dias_disponiveis"),
+    "objetivo": ("objetivo",),
+    "confirmacao": ("trilha", "horas_semana", "dias_disponiveis"),
+}
+# perguntas em que o LLM é consultado (nas outras, só o código)
+PERGUNTAS_COM_LLM = ("trilha", "horas")
+
+# PROVISÓRIO (textos novos de 01/11/2026, a validar com a Pessoa 4)
+TRILHA_DE_NOVO = ("Não entendi qual trilha você prefere. Responda \"Dev\" (Desenvolvimento de Software) ou "
+                  "\"Defesa Cibernética\". Se quiser, pergunte a diferença.")
+HORAS_DE_NOVO = ("Não entendi quantas horas. Responda com um número, por exemplo: \"5 horas por semana\" ou "
+                 "\"1 hora por dia\".")
+CONFIRMACAO_DE_NOVO = "Preciso de uma resposta clara: os dados acima estão certos? Responda \"sim\" ou \"não\"."
+REFAZER = "Sem problema, vamos refazer o cadastro.\n\n"
+
+PALAVRAS_TRILHA = {
+    "defesa_cibernetica": r"\b(ciber\w*|cyber\w*|seguranca|defesa|hack\w*|pentest\w*|forense|blue team|red team)\b",
+    "dev": r"\b(dev|desenvolv\w*|software|programa\w*|programar|backend|back end|frontend|front end|full ?stack)\b",
+}
+DUVIDA_TRILHA = r"\b(nao sei|duvida|diferenca|diferente|tanto faz|qualquer uma|nao tenho certeza|qual (e )?(a )?melhor)\b"
+NUMEROS_ESCRITOS = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "tres": 3, "quatro": 4, "cinco": 5, "seis": 6,
+                    "sete": 7, "oito": 8, "nove": 9, "dez": 10, "doze": 12, "quinze": 15, "vinte": 20}
+SIM = r"\b(sim|s|confirmo|confirmado|correto|certo|isso|exato|ok|pode seguir)\b"
+NAO = r"\b(nao|n|errado|incorreto|corrig\w*|mudar|alterar|trocar)\b"
+
 
 def _norm(texto: str) -> str:
     texto = unicodedata.normalize("NFKD", texto.lower())
@@ -104,31 +149,45 @@ def _num(texto: str) -> float:
     return float(texto.replace(",", "."))
 
 
-def extrair_por_regras(texto: str, ultima_pergunta: str) -> dict:
+def _com_algarismos(t: str) -> str:
+    """'duas horas e meia' -> '2.5 horas' (texto já normalizado)."""
+    t = re.sub(r"\b(" + "|".join(NUMEROS_ESCRITOS) + r")\b", lambda m: str(NUMEROS_ESCRITOS[m.group(1)]), t)
+    t = re.sub(r"(\d+)\s*(h|hr|hrs|hora|horas)?\s+e\s+meia\b", r"\g<1>.5 \2", t)
+    return re.sub(r"\bmeia hora\b", "0.5 hora", t)
+
+
+def trilhas_citadas(texto: str) -> set[str]:
+    """Trilhas cujas palavras aparecem no texto sem negação logo antes ("não quero dev" não conta)."""
     t = _norm(texto)
-    saida: dict = {}
-    if ultima_pergunta == "trilha" and re.search(r"\b(nao sei|duvida|diferenca|tanto faz)\b", t):
-        saida["duvida_trilha"] = True
-    # a trilha só é lida quando foi perguntada (ou numa correção do resumo): "estágio em
-    # segurança" na pergunta de objetivo não troca a trilha
-    if ultima_pergunta in ("trilha", "confirmacao"):
-        if re.search(r"\b(ciber|cyber|seguranca|defesa|hack|pentest|forense|blue team|red team)", t):
-            saida["trilha"] = "defesa_cibernetica"
-        elif re.search(r"\b(dev\b|desenvolv|software|programa|backend|frontend|full ?stack)", t):
-            saida["trilha"] = "dev"
-    dias: list[str] = []
+    citadas = set()
+    for trilha, padrao in PALAVRAS_TRILHA.items():
+        for achado in re.finditer(padrao, t):
+            antes = t[max(0, achado.start() - 30):achado.start()]
+            if not re.search(r"\bnao\b(\s+\w+){0,2}\s*$", antes):
+                citadas.add(trilha)
+    return citadas
+
+
+def _dias(t: str) -> list[str]:
     if re.search(r"(menos|exceto|sem|fora)( n?o)? (fim de semana|fds)", t) or \
-            re.search(r"\b(dias uteis|segunda a sexta|seg a sex)\b", t):
-        dias = DIAS[:5]
-    elif re.search(r"\b(todo dia|todos os dias|diariamente)\b", t):
-        dias = DIAS[:]
-    else:
-        # palavras inteiras; "ter" sozinho é verbo, então só "terca" conta
-        mapa = {"seg": r"\bseg(unda)?\b", "ter": r"\bterca\b", "qua": r"\bqua(rta)?\b", "qui": r"\bqui(nta)?\b",
-                "sex": r"\bsex(ta)?\b", "sab": r"\bsab(ado)?\b", "dom": r"\bdom(ingo)?\b"}
-        dias = [d for d, rx in mapa.items() if re.search(rx, t)]
-        if re.search(r"\b(fim de semana|fds)\b", t) and not dias:
-            dias = ["sab", "dom"]
+            re.search(r"\b(dias uteis|dias de semana|segunda a sexta|seg a sex)\b", t):
+        return DIAS[:5]
+    if re.search(r"\b(todo dia|todos os dias|diariamente)\b", t):
+        return DIAS[:]
+    # palavras inteiras; "ter" sozinho é verbo, então só "terca" conta
+    mapa = {"seg": r"\bseg(unda)?\b", "ter": r"\bterca\b", "qua": r"\bqua(rta)?\b", "qui": r"\bqui(nta)?\b",
+            "sex": r"\bsex(ta)?\b", "sab": r"\bsab(ado)?\b", "dom": r"\bdom(ingo)?\b"}
+    dias = [d for d, rx in mapa.items() if re.search(rx, t)]
+    if re.search(r"\b(fim de semana|fds)\b", t) and not dias:
+        dias = ["sab", "dom"]
+    return dias
+
+
+def _horas_e_dias(texto: str, ultima_pergunta: str) -> dict:
+    """Horas por semana e dias, só pelo texto (regras)."""
+    t = _com_algarismos(_norm(texto))
+    saida: dict = {}
+    dias = _dias(t)
     if dias:
         saida["dias_disponiveis"] = dias
     por_semana = re.search(r"(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|hora|horas)?\s*(?:por|/|na|a)\s*semana", t)
@@ -141,30 +200,69 @@ def extrair_por_regras(texto: str, ultima_pergunta: str) -> dict:
         saida.setdefault("dias_disponiveis", dias or DIAS[:5])
     elif so_numero and ultima_pergunta == "horas":
         saida["horas_semana"] = _num(so_numero.group(1))
-    if ultima_pergunta == "confirmacao":
-        if re.search(r"\b(nao|errado|corrig|mudar|alterar|trocar)\b", t):
-            saida["confirmou"] = False
-        elif re.search(r"\b(sim|isso|confirmo|ok|certo|pode|correto|exato|beleza|show)\b", t):
-            saida["confirmou"] = True
-    if ultima_pergunta == "objetivo":
-        saida["objetivo"] = "" if re.search(r"\b(pular|nenhum|nao sei|sem objetivo|tanto faz)\b", t) \
-            else texto.strip()[:200]
     return saida
 
 
-# --- extração pelo LLM local ---
+def horas_ancoradas(valor, texto: str) -> bool:
+    """O número de horas sai dos números que o aluno escreveu (o próprio número, ou por dia vezes
+    os dias citados, 5 ou 7)? Barra o LLM que inventa ou copia o exemplo do prompt."""
+    if not isinstance(valor, (int, float)) or isinstance(valor, bool) or not 0 < valor <= 60:
+        return False
+    t = _com_algarismos(_norm(texto))
+    numeros = [_num(n) for n in re.findall(r"\d+(?:[.,]\d+)?", t)]
+    multiplicadores = {1, 5, 7, len(_dias(t)) or 5}
+    return any(abs(valor - n * m) < 0.01 for n in numeros for m in multiplicadores)
 
-PROMPT_EXTRACAO = """Você extrai dados da resposta de um aluno no cadastro de uma plataforma de estudos.
-Responda SOMENTE com um objeto JSON com estas chaves (use null quando a resposta não informar):
-"trilha": "dev" (desenvolvimento de software) ou "defesa_cibernetica" (segurança, redes, defesa);
-"horas_semana": número de horas POR SEMANA (converta: "2h por dia, de segunda a sexta" = 10);
-"dias_disponiveis": lista com valores entre "seg","ter","qua","qui","sex","sab","dom";
-"objetivo": objetivo do aluno em poucas palavras (só se a pergunta foi sobre objetivo);
-"confirmou": true ou false, só se a pergunta foi a confirmação do resumo;
-"duvida_trilha": true se o aluno disse que não sabe qual trilha escolher.
-Não invente valores.
-Pergunta feita ao aluno: {pergunta}
+
+def _confirmacao(texto: str) -> bool | None:
+    """True só com "sim" explícito; False com "não"; None se não dá para saber (inclusive com os dois:
+    "sim, não precisa mudar" pede a resposta de novo, em vez de adivinhar)."""
+    t = _norm(texto)
+    sim, nao = bool(re.search(SIM, t)), bool(re.search(NAO, t))
+    if sim == nao:
+        return None
+    return sim
+
+
+def extrair_por_regras(texto: str, ultima_pergunta: str) -> dict:
+    """O que o CÓDIGO entende da resposta, só com os campos da pergunta da vez."""
+    t = _norm(texto)
+    saida: dict = {}
+    if ultima_pergunta in ("trilha", "confirmacao"):
+        duvida = bool(re.search(DUVIDA_TRILHA, t))
+        citadas = trilhas_citadas(texto)
+        if ultima_pergunta == "trilha" and duvida:
+            saida["duvida_trilha"] = True
+        elif len(citadas) == 1:  # citou as duas, ou nenhuma: não decide
+            saida["trilha"] = citadas.pop()
+    if ultima_pergunta in ("horas", "confirmacao"):
+        saida.update(_horas_e_dias(texto, ultima_pergunta))
+    if ultima_pergunta == "objetivo":
+        saida["objetivo"] = "" if re.search(r"\b(pular|nenhum|nao sei|sem objetivo|tanto faz|nao tenho)\b", t) \
+            else texto.strip()[:200]
+    if ultima_pergunta == "confirmacao":
+        confirmou = _confirmacao(texto)
+        if confirmou is not None:
+            saida["confirmou"] = confirmou
+    return saida
+
+
+# --- extração pelo LLM local (só trilha e horas; o código confere) ---
+
+PROMPT_TRILHA = """Um aluno respondeu à pergunta: "Qual trilha você quer seguir: Desenvolvimento de Software \
+(Dev) ou Defesa Cibernética?".
+Responda SOMENTE com um objeto JSON com as chaves "trilha" e "duvida_trilha".
+"trilha": "dev" ou "defesa_cibernetica" se o aluno ESCOLHEU uma delas; null se não escolheu.
+"duvida_trilha": true se o aluno disse que não sabe ou perguntou a diferença; senão false.
 Resposta do aluno: {texto}"""
+
+PROMPT_HORAS = """Um aluno respondeu à pergunta: "Quantas horas por semana você consegue dedicar ao estudo?".
+Responda SOMENTE com um objeto JSON com a chave "horas_semana": o total de horas POR SEMANA que o aluno \
+informou (se ele falou em horas por dia, multiplique pelos dias que ele citou), ou null se ele não informou \
+um número.
+Resposta do aluno: {texto}"""
+
+PROMPTS = {"trilha": PROMPT_TRILHA, "horas": PROMPT_HORAS}
 
 
 def _json_da_resposta(texto: str) -> dict:
@@ -179,15 +277,31 @@ def _json_da_resposta(texto: str) -> dict:
 
 
 def extrair_com_llm(texto: str, ultima_pergunta: str) -> dict:
-    resposta = chamar_llm(PROMPT_EXTRACAO.format(pergunta=ultima_pergunta, texto=texto), think=False,
+    """Pedido ao LLM só sobre a pergunta da vez. O resultado é uma SUGESTÃO: ver aceitar_do_llm."""
+    resposta = chamar_llm(PROMPTS[ultima_pergunta].format(texto=texto), think=False,
                           timeout=ONBOARDING_TIMEOUT_LLM, temperatura=0.0)
     return _json_da_resposta(resposta)
+
+
+def aceitar_do_llm(sugestao: dict, texto: str, ultima_pergunta: str) -> dict:
+    """Do que o LLM sugeriu, só o campo da pergunta da vez e só se ancorado no texto do aluno."""
+    aceito: dict = {}
+    if ultima_pergunta == "trilha":
+        trilha = sugestao.get("trilha")
+        # aceita a escolha do LLM só entre as trilhas que o aluno citou (quando citou as duas, o LLM desempata)
+        if trilha in NOME_TRILHA and trilha in trilhas_citadas(texto) and \
+                not re.search(DUVIDA_TRILHA, _norm(texto)):
+            aceito["trilha"] = trilha
+    elif ultima_pergunta == "horas":
+        if horas_ancoradas(sugestao.get("horas_semana"), texto):
+            aceito["horas_semana"] = round(float(sugestao["horas_semana"]), 1)
+    return aceito
 
 
 # --- validação e diálogo ---
 
 def _validar(campos: dict) -> dict:
-    """Mantém só os campos válidos; o resto é ignorado (o aluno é perguntado de novo)."""
+    """Mantém só os campos com valor válido."""
     ok: dict = {}
     if campos.get("trilha") in NOME_TRILHA:
         ok["trilha"] = campos["trilha"]
@@ -203,6 +317,12 @@ def _validar(campos: dict) -> dict:
         if isinstance(campos.get(chave), bool):
             ok[chave] = campos[chave]
     return ok
+
+
+def dados_completos(dados: dict) -> bool:
+    """Os campos obrigatórios para a matrícula estão presentes e válidos."""
+    validos = _validar(dados)
+    return "trilha" in validos and "horas_semana" in validos
 
 
 def _resumo(dados: dict, prazo_dias: int | None) -> str:
@@ -225,6 +345,31 @@ def nova_sessao(aluno_id: str, anterior: SessaoOnboarding | None = None) -> tupl
     return sessao, SAUDACAO
 
 
+def _entender(sessao: SessaoOnboarding, texto: str, usar_llm: bool) -> tuple[dict, str]:
+    """Campos desta resposta (só os da pergunta da vez, ancorados no texto) e a origem."""
+    pergunta = sessao.ultima_pergunta
+    regras = extrair_por_regras(texto, pergunta)
+    sugestao: dict = {}
+    if usar_llm and pergunta in PERGUNTAS_COM_LLM and sessao.chamadas_llm < config.ONBOARDING_MAX_MENSAGENS:
+        sessao.chamadas_llm += 1
+        try:
+            sugestao = extrair_com_llm(texto, pergunta)
+        except Exception as erro:  # qualquer falha do LLM: segue por regras
+            log.warning("Onboarding sem LLM (%s); usando regras.", type(erro).__name__)
+    do_llm = aceitar_do_llm(sugestao, texto, pergunta)
+    # o código decide: dias, objetivo e confirmação vêm só das regras; trilha e horas, das regras
+    # quando elas entendem, senão da sugestão do LLM que passou na âncora
+    campos = dict(regras)
+    for chave, valor in do_llm.items():
+        campos.setdefault(chave, valor)
+    if pergunta == "trilha" and sugestao.get("duvida_trilha") is True and "trilha" not in campos:
+        campos["duvida_trilha"] = True  # dúvida não grava nada: só mostra a explicação
+    permitidos = CAMPOS_DA_PERGUNTA.get(pergunta, ()) + ("confirmou", "duvida_trilha")
+    campos = {k: v for k, v in _validar(campos).items() if k in permitidos}
+    usou_llm = any(campos.get(k) == v for k, v in do_llm.items())
+    return campos, "LLM" if usou_llm else "regras"
+
+
 def processar(sessao: SessaoOnboarding, texto: str, prazo_dias: int | None = None,
               usar_llm: bool | None = None) -> RespostaOnboarding:
     """Uma resposta do aluno -> próxima pergunta (altera a sessão recebida).
@@ -236,35 +381,32 @@ def processar(sessao: SessaoOnboarding, texto: str, prazo_dias: int | None = Non
         raise ErroOnboarding(f"Limite de {limite} mensagens desta conversa atingido. Recomece o cadastro.")
     sessao.mensagens += 1
     sessao.historico.append({"papel": "aluno", "texto": texto})
-    campos, origem = {}, "regras"
-    if (ONBOARDING_USA_LLM if usar_llm is None else usar_llm) and sessao.chamadas_llm < limite:
-        sessao.chamadas_llm += 1
-        try:
-            campos, origem = extrair_com_llm(texto, sessao.ultima_pergunta), "LLM"
-        except Exception as erro:  # qualquer falha do LLM: segue por regras
-            log.warning("Onboarding sem LLM (%s); usando regras.", type(erro).__name__)
-            campos = {}
-    if not _validar(campos):
-        campos, origem = extrair_por_regras(texto, sessao.ultima_pergunta), "regras"
-    campos = _validar(campos)
+    campos, origem = _entender(sessao, texto, ONBOARDING_USA_LLM if usar_llm is None else usar_llm)
     confirmou = campos.pop("confirmou", None)
     duvida = campos.pop("duvida_trilha", False)
+    pergunta = sessao.ultima_pergunta
     novos = {k: v for k, v in campos.items() if sessao.dados.get(k) != v}
-    sessao.dados.update(campos)
+    prefixo = ""
+
+    if pergunta == "confirmacao" and confirmou is False and not novos:
+        # "não" sem dizer o que corrigir: volta ao começo das perguntas, sem os valores anteriores
+        sessao.dados, sessao.perguntados, prefixo = {}, ["trilha"], REFAZER
+    else:
+        sessao.dados.update(campos)
     dados = sessao.dados
 
-    if sessao.ultima_pergunta == "confirmacao" and confirmou is True and not novos:
+    if pergunta == "confirmacao" and confirmou is True and not novos and dados_completos(dados):
         sessao.concluido, proxima, resposta = True, "fim", CONCLUSAO
     elif "trilha" not in dados:
         proxima = "trilha"
-        resposta = EXPLICACAO_TRILHAS if duvida else \
-            "Não entendi qual trilha você prefere. É Dev (desenvolvimento) ou Defesa Cibernética?"
+        resposta = prefixo + (SAUDACAO.split("\n\n", 1)[1] if prefixo else
+                              EXPLICACAO_TRILHAS if duvida else TRILHA_DE_NOVO)
     elif "horas_semana" not in dados:
-        proxima, resposta = "horas", PERGUNTA_HORAS
+        proxima, resposta = "horas", HORAS_DE_NOVO if pergunta == "horas" else PERGUNTA_HORAS
     elif "objetivo" not in dados and "objetivo" not in sessao.perguntados:
         proxima, resposta = "objetivo", PERGUNTA_OBJETIVO
-    elif sessao.ultima_pergunta == "confirmacao" and confirmou is False and not novos:
-        proxima, resposta = "confirmacao", "Sem problema. O que você quer corrigir? Pode me dizer o valor certo."
+    elif pergunta == "confirmacao" and confirmou is None and not novos:
+        proxima, resposta = "confirmacao", CONFIRMACAO_DE_NOVO + "\n\n" + _resumo(dados, prazo_dias)
     else:
         proxima, resposta = "confirmacao", _resumo(dados, prazo_dias)
 

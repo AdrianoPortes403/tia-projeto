@@ -95,7 +95,8 @@ def test_onboarding_com_llm_e_queda_para_regras(monkeypatch):
                         lambda prompt, **kw: '<think>x</think>{"trilha": "dev", "horas_semana": 7.5, "objetivo": null}')
     sessao, _ = onboarding.nova_sessao("O-002")
     resposta = onboarding.processar(sessao, "quero programar, umas 7 horas e meia", usar_llm=True)
-    assert (resposta.origem, sessao.dados) == ("LLM", {"trilha": "dev", "horas_semana": 7.5})
+    # só o campo da pergunta da vez (trilha): as horas ditas junto são descartadas e perguntadas depois
+    assert (resposta.origem, sessao.dados, resposta.proxima_pergunta) == ("LLM", {"trilha": "dev"}, "horas")
 
     def fora_do_ar(prompt, **kw):
         raise ConnectionError("Ollama parado")
@@ -239,3 +240,183 @@ def test_limite_de_mensagens_e_de_chamadas_ao_llm(monkeypatch):
     resposta = client.post("/aluno/P-012/onboarding/mensagem", json={"texto": "dev"}).json()
     assert resposta["origem"] == "regras" and resposta["dados"]["trilha"] == "dev"
     assert len(chamadas) == 3
+
+
+# --- correção de 01/11/2026: o LLM só sugere; o código ancora no texto e decide ---
+# (docs/relatorios/correcao_onboarding.md). LLMs simulados com os defeitos vistos no qwen3:1.7b.
+
+TUDO_DE_UMA_VEZ = ('{"trilha": "defesa_cibernetica", "horas_semana": 10, "dias_disponiveis": ["seg", "ter", "qua", '
+                   '"qui", "sex", "sab"], "objetivo": "aprender sobre segurança e redes", "confirmou": true}')
+
+
+def llm_simulado(monkeypatch, resposta: str) -> list[str]:
+    """Liga o LLM do onboarding com uma resposta fixa; devolve a lista dos prompts recebidos."""
+    prompts = []
+
+    def llm(prompt, **kwargs):
+        prompts.append(prompt)
+        return resposta
+    monkeypatch.setattr(onboarding, "ONBOARDING_USA_LLM", True)
+    monkeypatch.setattr(onboarding, "chamar_llm", llm)
+    return prompts
+
+
+def falar(sessao, fala):
+    return onboarding.processar(sessao, fala)
+
+
+def test_llm_que_devolve_todos_os_campos_de_uma_vez_nao_grava_nada_alem_da_pergunta(monkeypatch):
+    """(a) O caso do teste funcional: "não sei" virava trilha, horas, dias e objetivo inventados."""
+    prompts = llm_simulado(monkeypatch, TUDO_DE_UMA_VEZ)
+    sessao, _ = onboarding.nova_sessao("O-101")
+    r = falar(sessao, "ainda não sei, qual a diferença entre as duas?")
+    assert sessao.dados == {} and (r.proxima_pergunta, r.resposta) == ("trilha", onboarding.EXPLICACAO_TRILHAS)
+    r = falar(sessao, "vou de desenvolvimento de software")
+    assert sessao.dados == {"trilha": "dev"} and r.proxima_pergunta == "horas"  # o LLM disse cyber: descartado
+    r = falar(sessao, "umas 2h por dia, menos no fim de semana")
+    assert sessao.dados == {"trilha": "dev", "horas_semana": 10.0, "dias_disponiveis": ["seg", "ter", "qua", "qui", "sex"]}
+    r = falar(sessao, "quero conseguir um estágio")
+    # dias e objetivo são do código: o "sab" e o objetivo do LLM não entram
+    assert sessao.dados["dias_disponiveis"] == ["seg", "ter", "qua", "qui", "sex"]
+    assert sessao.dados["objetivo"] == "quero conseguir um estágio" and r.proxima_pergunta == "confirmacao"
+    assert not r.concluido  # o "confirmou": true do LLM não confirma nada
+    assert falar(sessao, "sim").concluido
+    # o LLM só é consultado nas perguntas de trilha e de horas, e só sobre o campo da vez
+    assert len(prompts) == 3 and all("objetivo" not in p for p in prompts)
+
+
+def test_llm_com_a_trilha_errada_nao_troca_a_escolha_do_aluno(monkeypatch):
+    """(b) O LLM devolve a outra trilha: vale o que o aluno escreveu. Pelas rotas, até a matrícula em Dev."""
+    llm_simulado(monkeypatch, '{"trilha": "defesa_cibernetica", "duvida_trilha": false}')
+    sessao, _ = onboarding.nova_sessao("O-102")
+    r = falar(sessao, "quero dev")
+    assert (sessao.dados, r.origem) == ({"trilha": "dev"}, "regras")
+    sessao, _ = onboarding.nova_sessao("O-103")
+    assert falar(sessao, "não quero segurança, prefiro programar").proxima_pergunta == "horas"
+    assert sessao.dados == {"trilha": "dev"}  # "não quero segurança" não conta como escolha
+    # citou as duas: o LLM desempata, porque a escolha dele está ancorada no texto
+    sessao, _ = onboarding.nova_sessao("O-104")
+    assert (falar(sessao, "programação de software para segurança").origem, sessao.dados) == (
+        "LLM", {"trilha": "defesa_cibernetica"})
+    percorrer("P-101", "quero a trilha de desenvolvimento", acertar_base=True)
+    trilha = client.post("/aluno/P-101/primeiro-acesso/concluir").json()["trilha"]
+    assert trilha["trilha"] == "dev"
+
+
+def test_llm_que_copia_o_exemplo_do_prompt_nao_inventa_horas(monkeypatch):
+    """(c) O LLM devolve as 10 h do exemplo para uma resposta sem número: nada gravado, pergunta de novo.
+    Com número no texto que as regras não entendem, a sugestão ancorada é aceita."""
+    llm_simulado(monkeypatch, '{"horas_semana": 10}')
+    sessao, _ = onboarding.nova_sessao("O-105")
+    falar(sessao, "dev")
+    r = falar(sessao, "ainda não sei, depende da semana")
+    assert "horas_semana" not in sessao.dados and (r.proxima_pergunta, r.resposta) == ("horas", onboarding.HORAS_DE_NOVO)
+    r = falar(sessao, "duas horinhas nos dias de semana")  # 2 x 5 dias = 10: ancorado
+    assert (r.origem, sessao.dados["horas_semana"], sessao.dados["dias_disponiveis"]) == (
+        "LLM", 10.0, ["seg", "ter", "qua", "qui", "sex"])
+    assert onboarding.horas_ancoradas(10, "3 horas por semana") is False
+    assert onboarding.horas_ancoradas(10, "2 horas por dia de segunda a sexta") is True
+
+
+def test_llm_com_texto_vazio_segue_pelas_regras(monkeypatch):
+    """(d) Resposta vazia (sem JSON): regras, do começo ao fim."""
+    llm_simulado(monkeypatch, "")
+    sessao, _ = onboarding.nova_sessao("O-106")
+    respostas = [falar(sessao, f) for f in ("dev", "3 horas por semana", "pular", "sim")]
+    assert respostas[-1].concluido and {r.origem for r in respostas} == {"regras"}
+    assert sessao.dados == {"trilha": "dev", "horas_semana": 3.0, "objetivo": ""}
+
+
+def test_confirmacao_exige_sim_explicito_e_nao_volta_as_perguntas():
+    sessao, r = conversar(["dev", "3 horas por semana", "pular"])
+    assert r.proxima_pergunta == "confirmacao"
+    for vago in ("hmm", "sim, não precisa mudar"):  # sem resposta clara, nada de matrícula
+        r = onboarding.processar(sessao, vago, usar_llm=False)
+        assert not r.concluido and r.resposta.startswith(onboarding.CONFIRMACAO_DE_NOVO)
+    r = onboarding.processar(sessao, "não", usar_llm=False)
+    assert (sessao.dados, r.proxima_pergunta, r.concluido) == ({}, "trilha", False)
+    assert r.resposta.startswith(onboarding.REFAZER)
+    for fala in ("segurança", "4", "pular"):
+        r = onboarding.processar(sessao, fala, usar_llm=False)
+    assert r.proxima_pergunta == "confirmacao"  # o objetivo é perguntado de novo
+    assert onboarding.processar(sessao, "sim", usar_llm=False).concluido
+    assert sessao.dados == {"trilha": "defesa_cibernetica", "horas_semana": 4.0, "objetivo": ""}
+
+
+def test_rotas_nao_matriculam_sem_o_sim():
+    aluno = "P-102"
+    client.post(f"/aluno/{aluno}/onboarding/iniciar")
+    for fala in ("dev", "3 horas por semana", "pular", "talvez"):
+        corpo = client.post(f"/aluno/{aluno}/onboarding/mensagem", json={"texto": fala}).json()
+    assert corpo["concluido"] is False and corpo["proxima_pergunta"] == "confirmacao"
+    assert client.post(f"/aluno/{aluno}/diagnostico/iniciar").status_code == 409
+    recusa = client.post(f"/aluno/{aluno}/primeiro-acesso/concluir")
+    assert recusa.status_code == 409 and '"sim"' in recusa.json()["detail"]
+
+
+def test_onboarding_sem_llm_do_comeco_ao_fim(monkeypatch):
+    """ONBOARDING_USA_LLM=0: o LLM nunca é chamado, e o percurso vai até a matrícula em Dev."""
+    def proibido(*args, **kwargs):
+        raise AssertionError("o LLM não pode ser chamado com ONBOARDING_USA_LLM=0")
+    monkeypatch.setattr(onboarding, "ONBOARDING_USA_LLM", False)
+    monkeypatch.setattr(onboarding, "chamar_llm", proibido)
+    aluno = "P-103"
+    client.post(f"/aluno/{aluno}/onboarding/iniciar")
+    for fala in ("não sei, qual a diferença?", "desenvolvimento", "umas 2h por dia, menos no fim de semana",
+                 "estágio em backend", "sim"):
+        corpo = client.post(f"/aluno/{aluno}/onboarding/mensagem", json={"texto": fala}).json()
+        assert corpo["origem"] == "regras"
+    assert corpo["concluido"] and corpo["dados"]["trilha"] == "dev" and corpo["dados"]["horas_semana"] == 10.0
+    situacao = client.post(f"/aluno/{aluno}/diagnostico/iniciar").json()
+    while not situacao["concluido"]:
+        p = situacao["pergunta"]
+        situacao = client.post(f"/aluno/{aluno}/diagnostico/responder",
+                               json={"item_id": p["item_id"], "indice_escolhido": GABARITO[p["item_id"]]}).json()
+    assert client.post(f"/aluno/{aluno}/primeiro-acesso/concluir").json()["trilha"]["trilha"] == "dev"
+
+
+def test_limite_de_mensagens_vale_tambem_depois_do_nao(monkeypatch):
+    import tia.core.config as config
+    monkeypatch.setattr(config, "ONBOARDING_MAX_MENSAGENS", 5)
+    sessao, _ = conversar(["dev", "3", "pular", "não"])  # o "não" volta ao começo, mas a conta continua
+    onboarding.processar(sessao, "dev", usar_llm=False)
+    with pytest.raises(onboarding.ErroOnboarding, match="Limite de 5 mensagens"):
+        onboarding.processar(sessao, "3", usar_llm=False)
+
+
+# --- justificativas do Planejador: cópia do prompt não vale como texto do LLM ---
+
+def matricular_com_justificativas(monkeypatch, aluno: str, resposta_llm) -> dict:
+    monkeypatch.setattr(justificar, "chamar_llm", resposta_llm)
+    percorrer(aluno, "desenvolvimento", acertar_base=False)
+    return client.post(f"/aluno/{aluno}/primeiro-acesso/concluir").json()
+
+
+def test_justificativa_que_copia_o_prompt_cai_no_texto_padrao(monkeypatch):
+    def ecoa(prompt, **kwargs):  # o que o qwen3:1.7b fez: repetiu o detalhe de cada linha do prompt
+        linhas = [l for l in prompt.splitlines() if l[:1].isdigit()]
+        return "\n".join(f"{l.split('. ', 1)[0]}. {l[l.index(' ('):].strip()}" for l in linhas)
+    corpo = matricular_com_justificativas(monkeypatch, "P-104", ecoa)
+    etapas = corpo["trilha"]["etapas"]
+    assert {e["origem_justificativa"] for e in etapas} == {"fallback"}
+    assert not any("nota no diagnóstico" in e["justificativa"] and e["justificativa"].startswith("(")
+                   for e in etapas)
+    assert corpo["trilha"]["falha_llm"] == "copia_do_prompt"
+    assert corpo["decisao"]["origem_justificativas"] == "fallback"
+
+
+def test_justificativa_genuina_continua_como_llm_e_copias_parciais_saem(monkeypatch):
+    def misto(prompt, **kwargs):
+        n = sum(1 for l in prompt.splitlines() if l[:1].isdigit())
+        frases = ["Base para entender como os programas guardam e mudam valores."] * n
+        frases[1] = "frase"  # o exemplo do formato
+        frases[2] = "escreva UMA frase curta dizendo ao aluno por que estudar aquilo naquele momento"
+        return "\n".join(f"{i}. {f}" for i, f in enumerate(frases, 1))
+    corpo = matricular_com_justificativas(monkeypatch, "P-105", misto)
+    origens = [e["origem_justificativa"] for e in corpo["trilha"]["etapas"]]
+    assert origens[0] == "LLM" and origens[1:3] == ["fallback", "fallback"] and origens[3] == "LLM"
+    assert corpo["decisao"]["origem_justificativas"] == "parcial"
+    from tia.agentes.planejador.justificar import copia_do_prompt
+    prompt = "1. Funções e modularização (nota no diagnóstico: 0.33; 1.5 h)"
+    assert copia_do_prompt("Funções e modularização", prompt, "Funções e modularização")
+    assert not copia_do_prompt("Funções organizam o código em partes reutilizáveis.", prompt)

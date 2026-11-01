@@ -31,7 +31,8 @@
     LLM: "justificativa escrita pela IA local",
     fallback: "justificativa padrão (a IA não respondeu)",
   };
-  const FALHA = { timeout: "a IA demorou demais (timeout)" };
+  const FALHA = { timeout: "a IA demorou demais (timeout)",
+    copia_do_prompt: "a IA repetiu o pedido em vez de justificar" };
 
   const estado = {
     aluno: null,
@@ -539,9 +540,14 @@
     continuar.focus();
   }
 
-  function blocoFontes(fontes) {
+  // semFonte: texto quando não há trecho do material (no feedback de questão, a explicação é a do item;
+  // no diálogo não há item, e o texto é outro)
+  const SEM_FONTE_ITEM = "Fonte: texto do próprio item (sem trecho do material).";
+  const SEM_FONTE_DIALOGO = "Esta resposta não usou trecho do material do curso.";
+
+  function blocoFontes(fontes, semFonte = SEM_FONTE_ITEM) {
     if (!fontes || !fontes.length) {
-      return el("p", { classe: "fontes", texto: "Fonte: texto do próprio item (sem trecho do material)." });
+      return el("p", { classe: "fontes", texto: semFonte });
     }
     return el("div", { classe: "fontes" }, "Fontes do material (R03):",
       el("ul", {}, fontes.map((fonte) => el("li", {}, el("code", { texto: fonte })))));
@@ -557,7 +563,7 @@
       el("p", { classe: "origem" }, "Origem: " + (vetada ? "professor" : item.origem) + ". " +
         (ORIGEM_FEEDBACK[vetada ? "docente" : item.origem] || "") +
         (item.falha_llm ? " Motivo: " + (FALHA[item.falha_llm] || item.falha_llm) + "." : "") + tempo(item.tempo_ms)),
-      item.origem === "fallback" && !vetada ? null : blocoFontes(item.fontes));
+      item.origem === "fallback" && !vetada ? null : blocoFontes(item.fontes, SEM_FONTE_DIALOGO));
   }
 
   async function carregarDialogo() {
@@ -610,6 +616,9 @@
   }
 
   async function carregarRelatorio() {
+    // nomes da ementa: o desempenho pode ter competências fora da trilha (ex.: tópicos do piloto
+    // praticados pela rota avulsa), que não estão em progresso.por_competencia
+    await carregarNomes();
     const r = await chamar("GET", rota("/relatorio/aluno/{id}") + "?narrativa=false", null, "Calculando os indicadores…");
     const pr = r.progresso, de = r.desempenho, en = r.engajamento, qf = r.qualidade_feedback;
     const nomes = {};
@@ -648,10 +657,13 @@
       r.itens_fracos.length ? el("p", { classe: "dica", texto: r.itens_fracos.length +
         " pergunta(s) com erro repetido." }) : null);
 
-    const total = qf.respostas_com_origem;
+    // mesma base no numerador e no denominador: por_origem soma as explicações das questões e as
+    // respostas do diálogo, então o total é a soma dele (não respostas_com_origem, que conta só questões)
+    const total = Object.values(qf.por_origem).reduce((soma, n) => soma + n, 0);
     const qualidade = indicador("5. Explicações do tutor",
       total ? el("ul", {},
-        el("li", { texto: (qf.por_origem.LLM || 0) + " de " + total + " escritas pela IA local e conferidas" }),
+        el("li", { texto: (qf.por_origem.LLM || 0) + " de " + total +
+          " textos do tutor (explicações e respostas às suas perguntas) escritos pela IA local e conferidos" }),
         el("li", { texto: (qf.por_origem.guarda || 0) + " barradas pela verificação (trocadas pelo material)" }),
         el("li", { texto: (qf.por_origem.fallback || 0) + " com texto fixo" })) :
         el("p", { texto: "Ainda não há explicações registradas." }),

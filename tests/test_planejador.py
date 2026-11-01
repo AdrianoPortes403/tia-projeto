@@ -184,14 +184,14 @@ def test_justificativas_so_para_o_que_falta(monkeypatch):
 
     def llm_falso(prompt, **kwargs):
         prompts.append(prompt)
-        return "1. Frase B.\n2. Frase C.\n3. Frase D."
+        return "1. Motivo B.\n2. Motivo C.\n3. Motivo D."
 
     monkeypatch.setattr(justificar, "chamar_llm", llm_falso)
     justificada = justificar_trilha(gerar_trilha(entrada(concluidas=["a"]), EMENTA, PERFIS), {})
     assert "1. B" in prompts[0] and "A (nota" not in prompts[0]  # a concluída não vai ao LLM
     assert [(e.competencia_id, e.justificativa, e.origem_justificativa) for e in justificada.etapas] == [
-        ("a", "Competência já concluída.", None), ("b", "Frase B.", "LLM"), ("c", "Frase C.", "LLM"),
-        ("d", "Frase D.", "LLM")]
+        ("a", "Competência já concluída.", None), ("b", "Motivo B.", "LLM"), ("c", "Motivo C.", "LLM"),
+        ("d", "Motivo D.", "LLM")]
     assert justificada.falha_llm is None
 
 
@@ -240,7 +240,7 @@ def test_falha_do_llm_nao_bloqueia_trilha(monkeypatch):
 
 def test_llm_justifica_tudo_sem_falha(monkeypatch):
     monkeypatch.setattr(justificar, "chamar_llm",
-                        lambda prompt, **kwargs: "\n".join(f"{n}. Frase {n}." for n in range(1, 5)))
+                        lambda prompt, **kwargs: "\n".join(f"{n}. Motivo {n}." for n in range(1, 5)))
     justificada = justificar_trilha(gerar_trilha(entrada(), EMENTA, PERFIS), {})
     assert justificada.falha_llm is None and {e.origem_justificativa for e in justificada.etapas} == {"LLM"}
 

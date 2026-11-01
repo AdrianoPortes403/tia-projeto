@@ -198,7 +198,7 @@ CAMPOS_USADOS = {
     relatorio.Engajamento: {"sessoes", "sessoes_concluidas", "respostas", "perguntas_dialogo", "dias_ativos",
                             "dias_inativo", "inativo"},
     relatorio.PontoFraco: {"nome", "erros", "respostas"},
-    relatorio.QualidadeFeedback: {"respostas_com_origem", "por_origem", "vetados"},
+    relatorio.QualidadeFeedback: {"por_origem", "vetados"},
     relatorio.Narrativa: {"texto", "origem", "falha_llm"},
 }
 
@@ -272,6 +272,65 @@ def test_erros_que_o_front_mostra_tem_detail_em_texto():
     invalido = client.post(f"/aluno/{ALUNO}/iniciar", json={"perfil_id": "x", "horas_semanais": 0}).json()
     assert all("msg" in erro for erro in invalido["detail"])
     assert client.get("/aluno/nome com espaço/estado").status_code in (404, 422)
+
+
+# --- correções da tela do aluno (teste funcional local de 01/11/2026) ---
+
+def corpo_da_funcao(nome: str) -> str:
+    """Texto de uma função de app.js, até a próxima função do mesmo nível."""
+    js = ler("app.js")
+    inicio = re.search(rf"\n  (async )?function {nome}\(", js).start()
+    fim = re.search(r"\n  (async )?function \w+\(", js[inicio + 1:])
+    return js[inicio:inicio + 1 + fim.start()] if fim else js[inicio:]
+
+
+def test_relatorio_qualidade_usa_a_mesma_base_no_numerador_e_no_denominador():
+    """Falha 1: a tela mostrava "26 de 21". por_origem soma questões e diálogo, então o total
+    da tela é a soma de por_origem, não respostas_com_origem (só questões)."""
+    relatorio_js = corpo_da_funcao("carregarRelatorio")
+    assert "Object.values(qf.por_origem)" in relatorio_js
+    assert "qf.respostas_com_origem" not in relatorio_js
+    # contrato: por_origem cobre as questões com origem e o diálogo
+    from tia.agentes.relatorio.indicadores import qualidade_feedback
+    q = qualidade_feedback([{"origem": "LLM"}, {"origem": "fallback"}, {"origem": None}],
+                           [{"origem": "LLM", "vetada": 0}, {"origem": "LLM", "vetada": 1}])
+    assert q.respostas_com_origem == 2 and q.dialogos == 2
+    assert sum(q.por_origem.values()) == q.respostas_com_origem + q.dialogos == 4
+    assert q.por_origem["LLM"] <= sum(q.por_origem.values())
+
+
+def test_relatorio_mostra_o_nome_de_competencia_fora_da_trilha():
+    """Falha 2: o desempenho trazia "dev_01" (praticado pela rota avulsa, fora da trilha) pelo código.
+    A tela carrega a ementa antes do relatório, e a ementa tem o nome de toda chave do desempenho."""
+    relatorio_js = corpo_da_funcao("carregarRelatorio")
+    assert relatorio_js.index("await carregarNomes()") < relatorio_js.index('"/relatorio/aluno/{id}"')
+    assert "estado.nomes[c.id] = c.nome" in corpo_da_funcao("carregarNomes")
+
+    aluno = "A2026-W09"
+    assert client.post(f"/aluno/{aluno}/iniciar", json={"perfil_id": "intermediario", "horas_semanais": 6,
+                                                        "diagnostico": DIAGNOSTICO}).status_code == 200
+    sessao = client.post("/tutor/sessao", json={"aluno_id": aluno, "competencia_id": "dev_01"}).json()
+    pergunta = sessao["pergunta"]
+    assert client.post("/tutor/resposta", json={"sessao_id": sessao["sessao_id"], "aluno_id": aluno,
+                                                "item_id": pergunta["item_id"],
+                                                "indice_escolhido": GABARITO[pergunta["item_id"]]}).status_code == 200
+    indicadores = client.get(f"/relatorio/aluno/{aluno}?narrativa=false").json()
+    na_trilha = {c["competencia_id"] for c in indicadores["progresso"]["por_competencia"]}
+    chaves = {t["chave"] for t in indicadores["desempenho"]["por_competencia"]}
+    assert "dev_01" in chaves - na_trilha  # o caso da falha: sem nome no progresso
+    nomes = {c["id"]: c["nome"] for c in client.get("/conteudo/ementa").json()}
+    assert all(nomes.get(chave) and nomes[chave] != chave for chave in chaves)
+
+
+def test_dialogo_sem_fonte_nao_fala_de_item():
+    """Falha 3: no diálogo não há item; a resposta sem trecho do material (ex.: vetada pelo
+    professor) mostrava "Fonte: texto do próprio item". O feedback de questão mantém o texto do item."""
+    js = ler("app.js")
+    sem_fonte_dialogo = re.search(r'const SEM_FONTE_DIALOGO = "([^"]+)";', js).group(1)
+    assert "item" not in sem_fonte_dialogo.lower() and len(sem_fonte_dialogo) <= 80
+    assert "blocoFontes(item.fontes, SEM_FONTE_DIALOGO)" in corpo_da_funcao("itemConversa")
+    assert "texto do próprio item" in re.search(r'const SEM_FONTE_ITEM = "([^"]+)";', js).group(1)
+    assert "blocoFontes(f.fontes)" in js  # feedback da questão: texto do item (padrão)
 
 
 # --- dados fictícios ---

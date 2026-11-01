@@ -4,7 +4,11 @@ Justificativas da trilha do Agente 1 (Planejador), escritas pelo LLM local.
 Faz UM único pedido ao llm_client para a trilha toda (uma frase curta por
 etapa), com timeout curto. Se o LLM falhar, demorar ou responder fora do
 formato, cada etapa sem frase válida fica com o texto padrão gerado por
-planejar.py: a trilha nunca é bloqueada por falha do LLM.
+planejar.py: a trilha nunca é bloqueada por falha do LLM. Frase que copia o
+prompt (o detalhe "(nota no diagnóstico: ...; ... h)", o nome da etapa sozinho,
+o exemplo do formato ou as instruções) também cai no texto padrão, com
+falha_llm "copia_do_prompt": origem "LLM" só para texto genuíno (correção de
+01/11/2026, docs/relatorios/correcao_onboarding.md).
 
 O prompt não leva aluno_id nem qualquer dado pessoal (R08), só nomes de
 competências e notas.
@@ -18,6 +22,7 @@ Pré-requisitos:
 
 import logging
 import re
+import unicodedata
 
 from tia.agentes.planejador.modelos import Trilha
 from tia.core.config import PLANEJADOR_TIMEOUT_LLM
@@ -28,6 +33,9 @@ log = logging.getLogger(__name__)
 # "1. frase", "1) frase" ou "1 - frase", uma por linha
 PADRAO_LINHA = re.compile(r"^\s*(\d+)\s*[.)\-:]\s*(.+?)\s*$")
 TAMANHO_MAXIMO_FRASE = 240
+CURTA = 3                      # frase com menos palavras e todas tiradas do prompt é cópia ("frase")
+LIMITE_COPIA = 0.5             # fração de trincas de palavras da frase que já estão no prompt
+FALHA_COPIA = "copia_do_prompt"
 
 
 def _pendentes(trilha: Trilha) -> list:
@@ -79,6 +87,33 @@ def _sem_prefixo_do_nome(frase: str, nome: str) -> str:
     return frase
 
 
+def _palavras(texto: str) -> list[str]:
+    texto = unicodedata.normalize("NFKD", texto.lower())
+    texto = "".join(c for c in texto if not unicodedata.combining(c))
+    return re.findall(r"[a-z0-9]+(?:[.,][0-9]+)?", texto)
+
+
+def _trincas(palavras: list[str]) -> set[tuple[str, ...]]:
+    return {tuple(palavras[i:i + 3]) for i in range(len(palavras) - 2)}
+
+
+def copia_do_prompt(frase: str, prompt: str, nome: str = "") -> bool:
+    """A frase repete o prompt em vez de justificar? Detecta o detalhe da linha da etapa
+    ("nota no diagnóstico: 0.33; 1.5 h"), o nome da etapa sozinho, frase curta só com palavras do
+    prompt ("frase", do exemplo do formato) e cópia das instruções ou da lista (metade ou mais das trincas de
+    palavras da frase já estão no prompt)."""
+    palavras, do_prompt = _palavras(frase), _palavras(prompt)
+    texto = " ".join(palavras)
+    if not palavras or (nome and palavras == _palavras(nome)):
+        return True
+    if re.search(r"nota no diagnostico|sem diagnostico|\b\d+(?:[.,]\d+)? h$", texto):
+        return True
+    if len(palavras) < CURTA:
+        return set(palavras) <= set(do_prompt)
+    trincas = _trincas(palavras)
+    return len(trincas & _trincas(do_prompt)) / len(trincas) >= LIMITE_COPIA
+
+
 def justificar_trilha(trilha: Trilha, diagnostico: dict[str, float],
                       timeout: int = PLANEJADOR_TIMEOUT_LLM) -> Trilha:
     """Devolve uma cópia da trilha com as justificativas do LLM onde houver;
@@ -98,15 +133,21 @@ def justificar_trilha(trilha: Trilha, diagnostico: dict[str, float],
                                             "origem_justificativa": "LLM"})
         return etapa.model_copy(update={"origem_justificativa": "fallback"})
 
+    prompt = montar_prompt(trilha, diagnostico)
     try:
-        resposta = chamar_llm(montar_prompt(trilha, diagnostico), think=False, timeout=timeout)
+        resposta = chamar_llm(prompt, think=False, timeout=timeout)
         frases = extrair_frases(resposta, len(pendentes))
     except Exception as erro:  # qualquer falha do LLM: segue com o texto padrão
         falha = descrever_falha(erro)
         log.warning("Justificativas do LLM indisponíveis (%s); usando texto padrão.", falha)
         return trilha.model_copy(update={"etapas": [com_origem(e, None) for e in trilha.etapas], "falha_llm": falha})
 
+    # só texto genuíno vale como origem "LLM": cópia do prompt cai no texto padrão
+    nomes = {numero[e.ordem]: e.nome for e in pendentes}
+    copias = {n for n, f in frases.items() if copia_do_prompt(_sem_prefixo_do_nome(f, nomes[n]), prompt, nomes[n])}
+    frases = {n: f for n, f in frases.items() if n not in copias}
     if len(frases) < len(pendentes):
-        log.info("LLM justificou %d de %d etapas; restante com texto padrão.", len(frases), len(pendentes))
-    falha = None if len(frases) == len(pendentes) else "formato"
+        log.info("LLM justificou %d de %d etapas (%d cópia(s) do prompt); restante com texto padrão.",
+                 len(frases), len(pendentes), len(copias))
+    falha = None if len(frases) == len(pendentes) else FALHA_COPIA if copias else "formato"
     return trilha.model_copy(update={"etapas": [com_origem(e, frases) for e in trilha.etapas], "falha_llm": falha})

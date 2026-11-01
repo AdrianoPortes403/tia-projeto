@@ -98,6 +98,11 @@ def _situacao(estado: diagnostico.EstadoDiagnostico, acertou: bool | None = None
                                notas=dict(estado.notas) if estado.concluido else None)
 
 
+def _cadastro_confirmado(sessao) -> bool:
+    """Cadastro concluído (só acontece com "sim" explícito no resumo) e com trilha e horas válidas."""
+    return sessao is not None and sessao.concluido and onboarding.dados_completos(sessao.dados)
+
+
 # campos do cadastro que só o próprio aluno recebe (texto livre; R08)
 SO_DO_ALUNO = ("objetivo",)
 
@@ -151,7 +156,7 @@ def iniciar_diagnostico(aluno_id: CodigoNaRota) -> SituacaoDiagnostico:
     """Começa (ou recomeça) o diagnóstico na trilha escolhida no cadastro."""
     _exigir_nao_matriculado(aluno_id)
     sessao = onboarding.ler(aluno_id)
-    if sessao is None or not sessao.concluido:
+    if not _cadastro_confirmado(sessao):
         raise HTTPException(status_code=409, detail="Conclua o cadastro (onboarding) antes do diagnóstico.")
     return _situacao(diagnostico.comecar(aluno_id, sessao.dados["trilha"]))
 
@@ -176,8 +181,9 @@ def concluir(aluno_id: CodigoNaRota) -> ResultadoMatricula:
     _exigir_nao_matriculado(aluno_id)
     sessao = onboarding.ler(aluno_id)
     estado = diagnostico.ler(aluno_id)
-    if sessao is None or not sessao.concluido:
-        raise HTTPException(status_code=409, detail="Conclua o cadastro (onboarding) antes de montar a trilha.")
+    if not _cadastro_confirmado(sessao):
+        raise HTTPException(status_code=409, detail="Conclua o cadastro (onboarding) e confirme os dados "
+                                                    "com \"sim\" antes de montar a trilha.")
     if estado is None or not estado.concluido or estado.trilha != sessao.dados["trilha"]:
         raise HTTPException(status_code=409, detail="Conclua o diagnóstico antes de montar a trilha.")
     matricula = Matricula(trilha=sessao.dados["trilha"], horas_semanais=sessao.dados["horas_semana"],
