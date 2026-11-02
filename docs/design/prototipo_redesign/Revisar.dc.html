@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Revisar textos do tutor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a:focus-visible,button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #C9A227;outline-offset:2px}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;min-height:900px;background:#F4F1E6;color:#1F2A17;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+
+  <aside style="flex:0 0 240px;box-sizing:border-box;background:#3B4A2A;color:#F4F1E6;padding:28px 16px;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;align-items:center;gap:12px;padding:0 8px">
+      <div style="width:40px;height:40px;border-radius:12px;background:#A8B88A;color:#2A3720;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">T</div>
+      <div style="display:flex;flex-direction:column">
+        <span style="font-weight:700;font-size:18px">TIA</span>
+        <span style="font-size:12px;color:#D9DEC8">Painel do docente</span>
+      </div>
+    </div>
+    <nav aria-label="Principal" style="display:flex;flex-direction:column;gap:6px">
+      <a href="PainelDocente.dc.html" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:#F4F1E6;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Visão geral
+      </a>
+      <a href="Revisar.dc.html" aria-current="page" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#F4F1E6;color:#2A3720;font-weight:700;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h9"/></svg>
+        Revisar textos
+        <span style="margin-left:auto;min-width:24px;padding:2px 8px;box-sizing:border-box;border-radius:999px;background:#C9A227;color:#2A3720;font-size:13px;font-weight:800;text-align:center">5</span>
+      </a>
+      <a href="RelatorioTurma.dc.html" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:#F4F1E6;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+        Relatório da turma
+      </a>
+    </nav>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px 8px;border-top:1px solid #5C7040">
+      <div style="width:36px;height:36px;border-radius:50%;background:#A8B88A;color:#2A3720;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">DC</div>
+      <div style="display:flex;flex-direction:column;flex-grow:1">
+        <span style="font-size:14px;font-weight:600">Docente</span>
+        <a href="Entrar.dc.html" style="font-size:13px;color:#D9DEC8">Sair</a>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:999 1 560px;min-width:0;box-sizing:border-box;padding:36px 44px;display:flex;flex-direction:column;gap:24px">
+
+    <header style="display:flex;flex-direction:column;gap:6px">
+      <h1 style="margin:0;font-size:34px;line-height:1.15;font-weight:800">Revisar textos do tutor</h1>
+      <p style="margin:0;font-size:16px;color:#55604A">Aprove o texto ou vete com uma correção. O aluno passa a ver a sua correção.</p>
+    </header>
+
+    <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+
+      <section aria-label="Fila de revisão" style="flex:1 1 280px;min-width:0;background:#FFFFFF;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:8px">
+        <h2 style="margin:0 0 4px;padding:0 8px;font-size:15px;font-weight:800;color:#55604A">Aguardando revisão (5)</h2>
+        <sc-for list="{{ fila }}" as="f" hint-placeholder-count="5">
+          <a href="Revisar.dc.html" style="{{ f.estilo }}">
+            <span style="font-size:15px;font-weight:800">{{ f.aluno }}</span>
+            <span style="font-size:14px;color:#3C4630">{{ f.competencia }}</span>
+            <span style="font-size:13px;color:#55604A">{{ f.tipo }}</span>
+          </a>
+        </sc-for>
+      </section>
+
+      <section aria-labelledby="texto" style="flex:2 1 460px;min-width:0;background:#FFFFFF;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between">
+          <h2 id="texto" style="margin:0;font-size:20px;font-weight:800">DEMO-P08 · Condicionais</h2>
+          <span style="font-size:14px;color:#55604A">Explicação do tutor</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:13px;font-weight:700;color:#55604A">Questão</span>
+          <p style="margin:0;font-size:16px;line-height:1.5">Qual é o resultado de <code style="font-family:ui-monospace,Menlo,Consolas,monospace;background:#F4F1E6;padding:2px 6px;border-radius:6px">5 &gt; 3 and 2 &gt; 4</code>?</p>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;padding:18px 20px;border-radius:16px;background:#E6E9D2">
+          <span style="font-size:13px;font-weight:700;color:#55604A">Texto escrito pelo tutor</span>
+          <p style="margin:0;font-size:16px;line-height:1.55">O resultado é <strong>False</strong>. O operador <code style="font-family:ui-monospace,Menlo,Consolas,monospace">and</code> só devolve verdadeiro quando as duas condições são verdadeiras. Aqui a primeira é verdadeira, mas a segunda não é.</p>
+          <details>
+            <summary style="font-size:14px;font-weight:600;color:#3B4A2A">Ver fonte</summary>
+            <p style="margin:8px 0 0;font-size:14px;color:#3C4630">Material: condicionais.txt</p>
+          </details>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label for="correcao" style="font-size:15px;font-weight:700">Correção (obrigatória para vetar)</label>
+          <textarea id="correcao" rows="4" placeholder="Escreva aqui o texto correto que o aluno deve ver." style="box-sizing:border-box;width:100%;padding:12px 14px;border-radius:12px;border:2px solid #D8D6C6;background:#FFFFFF;font-size:16px;font-family:inherit;color:#1F2A17;resize:vertical"></textarea>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end">
+          <button type="button" style="min-height:52px;padding:0 28px;border-radius:14px;border:2px solid #A8452B;background:#FFFFFF;color:#7A2E17;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer">Vetar com correção</button>
+          <button type="button" style="min-height:52px;padding:0 32px;border-radius:14px;border:0;background:#3B4A2A;color:#FFFFFF;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer">Aprovar</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const base = 'display:flex;flex-direction:column;gap:2px;padding:14px 16px;border-radius:14px;text-decoration:none;color:#1F2A17;';
+    const dados = [
+      { aluno: 'DEMO-P08', competencia: 'Condicionais', tipo: 'Explicação', ativo: true },
+      { aluno: 'DEMO-P06', competencia: 'Repetição', tipo: 'Resposta a pergunta' },
+      { aluno: 'DEMO-P02', competencia: 'Funções', tipo: 'Explicação' },
+      { aluno: 'DEMO-P11', competencia: 'Variáveis e tipos', tipo: 'Explicação' },
+      { aluno: 'DEMO-P01', competencia: 'Funções', tipo: 'Resposta a pergunta' }
+    ];
+    const fila = dados.map((d) => ({
+      aluno: d.aluno,
+      competencia: d.competencia,
+      tipo: d.tipo,
+      estilo: base + (d.ativo ? 'background:#E6E9D2;border:2px solid #5C7040' : 'background:#FFFFFF;border:2px solid #ECE9DC')
+    }));
+    return { fila };
+  }
+}
+</script>
+</body>
+</html>

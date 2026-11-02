@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Relatório da turma</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a:focus-visible,button:focus-visible{outline:3px solid #C9A227;outline-offset:2px}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;min-height:900px;background:#F4F1E6;color:#1F2A17;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+
+  <aside style="flex:0 0 240px;box-sizing:border-box;background:#3B4A2A;color:#F4F1E6;padding:28px 16px;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;align-items:center;gap:12px;padding:0 8px">
+      <div style="width:40px;height:40px;border-radius:12px;background:#A8B88A;color:#2A3720;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">T</div>
+      <div style="display:flex;flex-direction:column">
+        <span style="font-weight:700;font-size:18px">TIA</span>
+        <span style="font-size:12px;color:#D9DEC8">Painel do docente</span>
+      </div>
+    </div>
+    <nav aria-label="Principal" style="display:flex;flex-direction:column;gap:6px">
+      <a href="PainelDocente.dc.html" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:#F4F1E6;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Visão geral
+      </a>
+      <a href="Revisar.dc.html" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:#F4F1E6;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h9"/></svg>
+        Revisar textos
+        <span style="margin-left:auto;min-width:24px;padding:2px 8px;box-sizing:border-box;border-radius:999px;background:#C9A227;color:#2A3720;font-size:13px;font-weight:800;text-align:center">5</span>
+      </a>
+      <a href="RelatorioTurma.dc.html" aria-current="page" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#F4F1E6;color:#2A3720;font-weight:700;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+        Relatório da turma
+      </a>
+    </nav>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px 8px;border-top:1px solid #5C7040">
+      <div style="width:36px;height:36px;border-radius:50%;background:#A8B88A;color:#2A3720;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">DC</div>
+      <div style="display:flex;flex-direction:column;flex-grow:1">
+        <span style="font-size:14px;font-weight:600">Docente</span>
+        <a href="Entrar.dc.html" style="font-size:13px;color:#D9DEC8">Sair</a>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:999 1 560px;min-width:0;box-sizing:border-box;padding:36px 44px;display:flex;flex-direction:column;gap:24px">
+
+    <header style="display:flex;flex-direction:column;gap:6px">
+      <h1 style="margin:0;font-size:34px;line-height:1.15;font-weight:800">Relatório da turma</h1>
+      <p style="margin:0;font-size:16px;color:#55604A">Indicadores calculados pelo sistema, com resumo escrito pelo tutor.</p>
+    </header>
+
+    <section aria-labelledby="resumo" style="background:#E6E9D2;border-radius:20px;padding:24px 28px;display:flex;flex-direction:column;gap:10px">
+      <h2 id="resumo" style="margin:0;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#55604A">Resumo da semana (texto do tutor)</h2>
+      <p style="margin:0;font-size:17px;line-height:1.55">A turma avançou de forma estável na Base comum. A maior dificuldade está em Condicionais, onde dois alunos precisaram de reforço. Quatro alunos concluíram uma competência nesta semana.</p>
+    </section>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <div style="flex:1 1 200px;background:#FFFFFF;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:#55604A">Acerto médio</span>
+        <span style="font-size:40px;line-height:1;font-weight:800;color:#3B4A2A">74%</span>
+      </div>
+      <div style="flex:1 1 200px;background:#FFFFFF;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:#55604A">Competências concluídas</span>
+        <span style="font-size:40px;line-height:1;font-weight:800">23</span>
+      </div>
+      <div style="flex:1 1 200px;background:#FBF3D4;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:#6B5200">Concluídas com ressalvas</span>
+        <span style="font-size:40px;line-height:1;font-weight:800;color:#3C3000">2</span>
+      </div>
+      <div style="flex:1 1 200px;background:#FBEAE3;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:#7A2E17">Inativos há 3 dias ou mais</span>
+        <span style="font-size:40px;line-height:1;font-weight:800;color:#7A2E17">1</span>
+      </div>
+    </div>
+
+    <section aria-labelledby="grupos" style="background:#FFFFFF;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <h2 id="grupos" style="margin:0;font-size:20px;font-weight:800">Desempenho por grupo</h2>
+        <p style="margin:0;font-size:14px;color:#55604A">Grupos com menos de 5 alunos ficam ocultos para proteger a privacidade.</p>
+      </div>
+      <sc-for list="{{ grupos }}" as="g" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;gap:12px;font-size:16px">
+            <span style="font-weight:600">{{ g.nome }}</span>
+            <span style="color:#55604A">{{ g.texto }}</span>
+          </div>
+          <div role="progressbar" aria-valuenow="{{ g.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ g.nome }}" style="height:12px;border-radius:999px;background:#ECE9DC">
+            <div style="{{ g.barra }}"></div>
+          </div>
+        </div>
+      </sc-for>
+      <div style="display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:14px;background:#ECE9DC;color:#55604A;font-size:15px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        Iniciante (4 alunos): oculto por ter menos de 5 alunos.
+      </div>
+    </section>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dados = [
+      { nome: 'Intermediário (6 alunos)', pct: 78 },
+      { nome: 'Avançado (5 alunos)', pct: 86 }
+    ];
+    const grupos = dados.map((d) => ({
+      nome: d.nome,
+      pct: d.pct,
+      texto: d.pct + '% de acerto',
+      barra: 'height:12px;border-radius:999px;width:' + d.pct + '%;background:#5C7040'
+    }));
+    return { grupos };
+  }
+}
+</script>
+</body>
+</html>

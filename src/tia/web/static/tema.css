@@ -90,6 +90,80 @@
   }
 }
 
+/*
+ * Aplicação do ALUNO (redesenho de 01/11/2026, docs/design/prototipo_redesign/): paleta própria,
+ * só em body.app-aluno. O painel do docente (painel/) continua com os valores acima até a parte 2.
+ * Redefine os tokens antigos (os componentes de estilo.css os usam) e acrescenta os novos.
+ * Contraste conferido (WCAG AA; docs/relatorios/redesign_aluno.md): texto 4.5:1, bordas e
+ * indicadores 3:1. Ajustes em relação à prévia: foco em anel duplo (dourado + contorno escuro),
+ * dourado escuro nas barras e no contorno da etapa atual, texto de bloqueado e borda de campo mais escuros.
+ * Só tema claro: color-scheme light (o escuro fica para depois, sem prioridade).
+ */
+body.app-aluno {
+  color-scheme: light;
+
+  /* paleta */
+  --cor-oliva: #3b4a2a;          /* menu e botão principal */
+  --cor-oliva-escuro: #2a3720;   /* texto sobre claro/dourado, hover do botão */
+  --cor-verde: #5c7040;          /* progresso e concluído */
+  --cor-verde-claro: #a8b88a;    /* só decoração (2.1:1 sobre branco) */
+  --cor-verde-suave: #e6e9d2;    /* fundo de destaque (cartão "continue", balão do tutor) */
+  --cor-creme: #f4f1e6;          /* fundo */
+  --cor-creme-escuro: #ece9dc;   /* trilho das barras, etapa bloqueada */
+  --cor-linha: #e3e0cf;          /* divisórias */
+  --cor-dourado: #c9a227;        /* etapa atual e foco */
+  --cor-dourado-escuro: #8c6d00; /* contorno da etapa atual e barras < 80% (3:1 sobre branco) */
+  --cor-dourado-suave: #fbf3d4;  /* fundo da etapa atual e dos avisos */
+  --cor-terracota: #a8452b;
+  --cor-terracota-fundo: #fbeae3;
+  --cor-terracota-texto: #7a2e17;
+  --cor-aviso-fundo: #fbf3d4;
+  --cor-aviso-texto: #6b5200;
+  --cor-bloqueado: #5e6454;      /* era #6B7260 na prévia: 4.1:1 sobre #ECE9DC */
+  --cor-borda-campo: #858a76;    /* era #D8D6C6 na prévia: 1.5:1 sobre branco */
+  --cor-borda-suave: #d8d6c6;    /* borda decorativa de cartão de escolha (o texto já contrasta) */
+  --cor-sobre-menu: #f4f1e6;
+  --cor-sobre-menu-suave: #d9dec8;
+  --cor-foco-contorno: #1f2a17;  /* anel interno do foco: dourado sozinho tem 2.1:1 sobre o creme */
+  --sombra-cartao-alto: 0 12px 40px rgba(59, 74, 42, 0.14);
+
+  /* tokens antigos com a paleta nova (usados pelos componentes de estilo.css) */
+  --cor-fundo: var(--cor-creme);
+  --cor-superficie: #ffffff;
+  --cor-texto: #1f2a17;
+  --cor-texto-suave: #55604a;
+  --cor-borda: var(--cor-borda-suave);
+  --cor-primaria: var(--cor-oliva);
+  --cor-primaria-escura: var(--cor-oliva-escuro);
+  --cor-sobre-primaria: #ffffff;
+  --cor-foco: var(--cor-dourado);
+  --cor-topo: var(--cor-oliva);
+  --cor-sobre-topo: var(--cor-sobre-menu);
+  --cor-sobre-topo-suave: var(--cor-sobre-menu-suave);
+  --cor-marcador: var(--cor-dourado);
+  --cor-trilha: #cfcdbd;
+  --cor-sucesso: var(--cor-verde);
+  --cor-sucesso-fundo: var(--cor-verde-suave);
+  --cor-erro: var(--cor-terracota-texto);
+  --cor-erro-fundo: var(--cor-terracota-fundo);
+  --cor-alerta: var(--cor-aviso-texto);
+  --cor-alerta-fundo: var(--cor-aviso-fundo);
+  --cor-info-fundo: var(--cor-verde-suave);
+  --cor-destaque-fundo: var(--cor-verde-suave);
+
+  --fonte-texto: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fonte-titulo: var(--fonte-texto);
+
+  --raio: 20px;
+  --raio-grande: 24px;
+  --raio-medio: 14px;
+  --raio-pequeno: 12px;
+  --altura-botao: 3.25rem;       /* 52px: botão principal */
+  --largura-menu: 15rem;         /* 240px */
+  --largura-max: 72rem;
+  --sombra: none;
+}
+
 /* Impressão (painel do docente): sempre o tema claro, mesmo com o sistema no escuro. */
 @media print {
   :root {

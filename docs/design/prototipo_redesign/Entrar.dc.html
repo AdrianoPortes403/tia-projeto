@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Entrar no TIA</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #C9A227;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height:760px;box-sizing:border-box;padding:48px 16px;display:flex;align-items:center;justify-content:center;background-color:#F4F1E6;background-image:linear-gradient(#E3E0CF 1px,transparent 1px),linear-gradient(90deg,#E3E0CF 1px,transparent 1px);background-size:48px 48px;color:#1F2A17;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+
+  <main style="width:100%;max-width:420px;box-sizing:border-box;background:#FFFFFF;border-radius:24px;padding:40px 36px;display:flex;flex-direction:column;gap:24px;box-shadow:0 12px 40px rgba(59,74,42,.14)">
+
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+      <div style="width:56px;height:56px;border-radius:16px;background:#3B4A2A;color:#F4F1E6;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px">T</div>
+      <h1 style="margin:0;font-size:28px;line-height:1.2;font-weight:800">Entrar no TIA</h1>
+      <p style="margin:0;font-size:15px;color:#55604A">Sua trilha de aprendizagem personalizada.</p>
+    </div>
+
+    <form style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label for="codigo" style="font-size:14px;font-weight:700">Código de aluno</label>
+        <input id="codigo" type="text" autocomplete="username" placeholder="Ex.: A2026-001" style="box-sizing:border-box;width:100%;min-height:48px;padding:12px 14px;border-radius:12px;border:2px solid #D8D6C6;background:#FFFFFF;font-size:16px;font-family:inherit;color:#1F2A17">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+          <label for="senha" style="font-size:14px;font-weight:700">Senha</label>
+          <a href="Entrar.dc.html" style="font-size:14px;font-weight:600;color:#3B4A2A">Esqueci a senha</a>
+        </div>
+        <div style="position:relative">
+          <input id="senha" type="password" autocomplete="current-password" placeholder="Sua senha" style="box-sizing:border-box;width:100%;min-height:48px;padding:12px 52px 12px 14px;border-radius:12px;border:2px solid #D8D6C6;background:#FFFFFF;font-size:16px;font-family:inherit;color:#1F2A17">
+          <button type="button" aria-label="Mostrar senha" style="position:absolute;right:4px;top:4px;width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:#55604A;display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <a href="Main.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:52px;box-sizing:border-box;border-radius:14px;background:#3B4A2A;color:#FFFFFF;font-size:17px;font-weight:700;text-decoration:none">Entrar</a>
+    </form>
+
+    <div style="border-top:1px solid #E3E0CF;padding-top:20px;display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center">
+      <span style="font-size:15px;color:#55604A">É seu primeiro acesso?</span>
+      <a href="PrimeiroAcesso.dc.html" style="font-size:16px;font-weight:700;color:#3B4A2A">Criar minha senha</a>
+    </div>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

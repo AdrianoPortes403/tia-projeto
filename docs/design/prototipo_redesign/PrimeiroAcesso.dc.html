@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Primeiro acesso: trilha</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a:focus-visible,button:focus-visible{outline:3px solid #C9A227;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height:760px;box-sizing:border-box;padding:48px 16px;display:flex;align-items:center;justify-content:center;background-color:#F4F1E6;background-image:linear-gradient(#E3E0CF 1px,transparent 1px),linear-gradient(90deg,#E3E0CF 1px,transparent 1px);background-size:48px 48px;color:#1F2A17;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+
+  <main style="width:100%;max-width:640px;box-sizing:border-box;background:#FFFFFF;border-radius:24px;padding:36px;display:flex;flex-direction:column;gap:28px;box-shadow:0 12px 40px rgba(59,74,42,.14)">
+
+    <ol aria-label="Etapas do primeiro acesso" style="list-style:none;margin:0;padding:0;display:flex;gap:8px">
+      <sc-for list="{{ etapas }}" as="e" hint-placeholder-count="4">
+        <li style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <span style="{{ e.barra }}"></span>
+          <span style="{{ e.rotulo }}">{{ e.nome }}</span>
+        </li>
+      </sc-for>
+    </ol>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <h1 style="margin:0;font-size:28px;line-height:1.2;font-weight:800">Qual trilha você quer seguir?</h1>
+      <p style="margin:0;font-size:16px;color:#55604A">Você poderá conversar com o tutor sobre isso depois. Escolha a que mais combina com seu objetivo agora.</p>
+    </div>
+
+    <div role="radiogroup" aria-label="Trilha" style="display:flex;flex-direction:column;gap:12px">
+      <button type="button" role="radio" aria-checked="true" style="text-align:left;display:flex;gap:16px;align-items:flex-start;padding:20px;border-radius:18px;border:2px solid #5C7040;background:#E6E9D2;color:#1F2A17;font-family:inherit;cursor:pointer">
+        <span style="flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:#3B4A2A;color:#FFFFFF;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>
+        <span style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:18px;font-weight:800">Desenvolvimento de software</span>
+          <span style="font-size:15px;line-height:1.45;color:#3C4630">Complexidade de algoritmos e estruturas lineares (pilhas, filas e listas).</span>
+        </span>
+      </button>
+      <button type="button" role="radio" aria-checked="false" style="text-align:left;display:flex;gap:16px;align-items:flex-start;padding:20px;border-radius:18px;border:2px solid #D8D6C6;background:#FFFFFF;color:#1F2A17;font-family:inherit;cursor:pointer">
+        <span style="flex:0 0 28px;width:28px;height:28px;border-radius:50%;border:2px solid #A9AE9A;box-sizing:border-box"></span>
+        <span style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:18px;font-weight:800">Defesa cibernética</span>
+          <span style="font-size:15px;line-height:1.45;color:#3C4630">Redes TCP/IP e captura de pacotes, DNS, HTTP e TLS.</span>
+        </span>
+      </button>
+    </div>
+
+    <a href="PrimeiroAcesso.dc.html" style="font-size:15px;font-weight:600;color:#3B4A2A">Ainda não sei. Explique a diferença.</a>
+
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center">
+      <a href="Entrar.dc.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;box-sizing:border-box;border-radius:14px;border:2px solid #D8D6C6;color:#1F2A17;font-size:16px;font-weight:700;text-decoration:none">Voltar</a>
+      <a href="Confirmar.dc.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 32px;box-sizing:border-box;border-radius:14px;background:#3B4A2A;color:#FFFFFF;font-size:16px;font-weight:700;text-decoration:none">Continuar</a>
+    </div>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const nomes = ['Senha', 'Trilha', 'Tempo', 'Confirmar'];
+    const atual = 1;
+    const etapas = nomes.map((nome, i) => ({
+      nome,
+      barra: 'height:6px;border-radius:999px;background:' + (i <= atual ? '#5C7040' : '#D8D6C6'),
+      rotulo: 'font-size:13px;' + (i === atual ? 'font-weight:800;color:#1F2A17' : 'font-weight:500;color:#55604A')
+    }));
+    return { etapas };
+  }
+}
+</script>
+</body>
+</html>

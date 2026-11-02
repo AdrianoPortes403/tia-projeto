@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Painel do docente</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a:focus-visible,button:focus-visible{outline:3px solid #C9A227;outline-offset:2px}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;min-height:900px;background:#F4F1E6;color:#1F2A17;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+
+  <aside style="flex:0 0 240px;box-sizing:border-box;background:#3B4A2A;color:#F4F1E6;padding:28px 16px;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;align-items:center;gap:12px;padding:0 8px">
+      <div style="width:40px;height:40px;border-radius:12px;background:#A8B88A;color:#2A3720;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">T</div>
+      <div style="display:flex;flex-direction:column">
+        <span style="font-weight:700;font-size:18px">TIA</span>
+        <span style="font-size:12px;color:#D9DEC8">Painel do docente</span>
+      </div>
+    </div>
+    <nav aria-label="Principal" style="display:flex;flex-direction:column;gap:6px">
+      <a href="PainelDocente.dc.html" aria-current="page" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#F4F1E6;color:#2A3720;font-weight:700;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Visão geral
+      </a>
+      <a href="Revisar.dc.html" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:#F4F1E6;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h9"/></svg>
+        Revisar textos
+        <span style="margin-left:auto;min-width:24px;padding:2px 8px;box-sizing:border-box;border-radius:999px;background:#C9A227;color:#2A3720;font-size:13px;font-weight:800;text-align:center">5</span>
+      </a>
+      <a href="RelatorioTurma.dc.html" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:#F4F1E6;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+        Relatório da turma
+      </a>
+    </nav>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px 8px;border-top:1px solid #5C7040">
+      <div style="width:36px;height:36px;border-radius:50%;background:#A8B88A;color:#2A3720;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">DC</div>
+      <div style="display:flex;flex-direction:column;flex-grow:1">
+        <span style="font-size:14px;font-weight:600">Docente</span>
+        <a href="Entrar.dc.html" style="font-size:13px;color:#D9DEC8">Sair</a>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:999 1 560px;min-width:0;box-sizing:border-box;padding:36px 44px;display:flex;flex-direction:column;gap:24px">
+
+    <header style="display:flex;flex-direction:column;gap:6px">
+      <h1 style="margin:0;font-size:34px;line-height:1.15;font-weight:800">Visão geral da turma</h1>
+      <p style="margin:0;font-size:16px;color:#55604A">Quem precisa da sua atenção primeiro.</p>
+    </header>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <div style="flex:1 1 200px;background:#FFFFFF;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:#55604A">Alunos ativos</span>
+        <span style="font-size:40px;line-height:1;font-weight:800">12</span>
+      </div>
+      <div style="flex:1 1 200px;background:#FBEAE3;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:#7A2E17">Precisam de atenção</span>
+        <span style="font-size:40px;line-height:1;font-weight:800;color:#7A2E17">3</span>
+      </div>
+      <div style="flex:1 1 200px;background:#FFFFFF;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:#55604A">Concluíram esta semana</span>
+        <span style="font-size:40px;line-height:1;font-weight:800;color:#3B4A2A">4</span>
+      </div>
+      <a href="Revisar.dc.html" style="flex:1 1 200px;background:#FBF3D4;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit">
+        <span style="font-size:14px;color:#6B5200">Textos para revisar</span>
+        <span style="font-size:40px;line-height:1;font-weight:800;color:#3C3000">5</span>
+      </a>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+
+      <section aria-labelledby="alertas" style="flex:1 1 300px;min-width:0;background:#FFFFFF;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:16px">
+        <h2 id="alertas" style="margin:0;font-size:20px;font-weight:800">Alertas</h2>
+        <sc-for list="{{ alertas }}" as="a" hint-placeholder-count="3">
+          <div style="{{ a.estilo }}">
+            <span style="font-size:15px;font-weight:800">{{ a.aluno }}</span>
+            <span style="font-size:15px;font-weight:700">{{ a.titulo }}</span>
+            <span style="font-size:14px;color:#55604A">{{ a.detalhe }}</span>
+          </div>
+        </sc-for>
+      </section>
+
+      <section aria-labelledby="alunos" style="flex:2 1 460px;min-width:0;background:#FFFFFF;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+          <h2 id="alunos" style="margin:0;font-size:20px;font-weight:800">Alunos</h2>
+          <div role="group" aria-label="Filtrar por nível" style="display:flex;flex-wrap:wrap;gap:8px">
+            <button type="button" aria-pressed="true" style="min-height:40px;padding:0 16px;border-radius:999px;border:2px solid #3B4A2A;background:#3B4A2A;color:#FFFFFF;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">Todos</button>
+            <button type="button" aria-pressed="false" style="min-height:40px;padding:0 16px;border-radius:999px;border:2px solid #D8D6C6;background:#FFFFFF;color:#1F2A17;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">Iniciante</button>
+            <button type="button" aria-pressed="false" style="min-height:40px;padding:0 16px;border-radius:999px;border:2px solid #D8D6C6;background:#FFFFFF;color:#1F2A17;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">Intermediário</button>
+            <button type="button" aria-pressed="false" style="min-height:40px;padding:0 16px;border-radius:999px;border:2px solid #D8D6C6;background:#FFFFFF;color:#1F2A17;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">Avançado</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;min-width:520px;border-collapse:collapse;font-size:15px">
+            <thead>
+              <tr style="text-align:left;color:#55604A;font-size:13px">
+                <th scope="col" style="padding:10px 8px;font-weight:700">Aluno</th>
+                <th scope="col" style="padding:10px 8px;font-weight:700">Competência atual</th>
+                <th scope="col" style="padding:10px 8px;font-weight:700">Acerto</th>
+                <th scope="col" style="padding:10px 8px;font-weight:700">Situação</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ alunos }}" as="r" hint-placeholder-count="6">
+                <tr style="border-top:1px solid #ECE9DC">
+                  <th scope="row" style="padding:14px 8px;text-align:left;font-weight:700">{{ r.codigo }}</th>
+                  <td style="padding:14px 8px">{{ r.competencia }}</td>
+                  <td style="padding:14px 8px">{{ r.acerto }}</td>
+                  <td style="padding:14px 8px"><span style="{{ r.chip }}">{{ r.situacao }}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cartao = 'display:flex;flex-direction:column;gap:2px;padding:14px 16px;border-radius:14px;';
+    const alertas = [
+      { aluno: 'DEMO-P08', titulo: 'Queda de desempenho', detalhe: 'Acertos caíram nas últimas 2 sessões.', estilo: cartao + 'background:#FBEAE3' },
+      { aluno: 'DEMO-P06', titulo: 'Concluída com ressalvas', detalhe: 'Itens acabaram sem domínio em Repetição.', estilo: cartao + 'background:#FBF3D4' },
+      { aluno: 'DEMO-P11', titulo: 'Sem atividade há 3 dias', detalhe: 'Incentivo enviado ao aluno.', estilo: cartao + 'background:#ECE9DC' }
+    ];
+    const chipBase = 'display:inline-block;padding:4px 12px;border-radius:999px;font-size:13px;font-weight:700;';
+    const ok = chipBase + 'background:#E6E9D2;color:#2A3720';
+    const atencao = chipBase + 'background:#FBF3D4;color:#6B5200';
+    const alerta = chipBase + 'background:#FBEAE3;color:#7A2E17';
+    const alunos = [
+      { codigo: 'DEMO-P01', competencia: 'Funções', acerto: '88%', situacao: 'No ritmo', chip: ok },
+      { codigo: 'DEMO-P02', competencia: 'Repetição', acerto: '75%', situacao: 'No ritmo', chip: ok },
+      { codigo: 'DEMO-P06', competencia: 'Listas e strings', acerto: '58%', situacao: 'Com ressalvas', chip: atencao },
+      { codigo: 'DEMO-P08', competencia: 'Condicionais', acerto: '45%', situacao: 'Queda', chip: alerta },
+      { codigo: 'DEMO-P11', competencia: 'Variáveis e tipos', acerto: '70%', situacao: 'Inativo', chip: atencao },
+      { codigo: 'DEMO-P12', competencia: 'Funções', acerto: '92%', situacao: 'No ritmo', chip: ok }
+    ];
+    return { alertas, alunos };
+  }
+}
+</script>
+</body>
+</html>
