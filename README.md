@@ -22,7 +22,8 @@ python -m tia.web.dados_demo           # alunos fictícios DEMO-W01, DEMO-W02 e 
 uvicorn tia.api.main:app --reload      # com o Ollama rodando
 ```
 
-Abra http://localhost:8000/app/ e entre com um dos códigos:
+Abra http://localhost:8000/app/ e entre com um dos usuários abaixo (senha fictícia de demonstração
+`FICTICIA-demo-2026`, impressa pelo comando; o docente é `DEMO-DOCENTE`):
 
 - `DEMO-W01`: recém-matriculado (começa Funções);
 - `DEMO-W02`: concluiu Funções e tem uma sessão aberta em Listas e strings;

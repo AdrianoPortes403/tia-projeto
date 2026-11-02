@@ -514,7 +514,7 @@ def test_provedor_trocavel(pessoas, monkeypatch):
 
 
 def test_usuarios_de_demonstracao():
-    assert usuarios.criar_usuarios_demonstracao() == ["DEMO-W01", "DEMO-DOCENTE"]
+    assert usuarios.criar_usuarios_demonstracao() == ["DEMO-W01", "DEMO-W02", "DEMO-W03", "DEMO-DOCENTE"]
     assert usuarios.criar_usuarios_demonstracao() == []
     aluno, _ = logado("DEMO-W01", usuarios.SENHA_DEMONSTRACAO)
     assert aluno.get("/auth/eu").json()["usuario"] == {"id": "DEMO-W01", "papel": "aluno", "aluno_id": "DEMO-W01",

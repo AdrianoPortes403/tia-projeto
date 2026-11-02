@@ -59,7 +59,12 @@ PADRAO_ID = re.compile(r"^[A-Za-z0-9_-]{1,32}$")  # mesmo padrão do código de 
 # A senha abaixo é FICTÍCIA, pública e serve só para demonstração em máquina de
 # desenvolvimento: nunca usar em banco com dados reais.
 SENHA_DEMONSTRACAO = "FICTICIA-demo-2026"
-USUARIOS_DEMONSTRACAO = (("DEMO-W01", "aluno", "DEMO-W01"), ("DEMO-DOCENTE", "docente", None))
+USUARIOS_DEMONSTRACAO = (
+    ("DEMO-W01", "aluno", "DEMO-W01"),
+    ("DEMO-W02", "aluno", "DEMO-W02"),
+    ("DEMO-W03", "aluno", "DEMO-W03"),
+    ("DEMO-DOCENTE", "docente", None),
+)
 
 
 class ErroUsuario(ValueError):
@@ -195,7 +200,7 @@ def trocar_propria_senha(usuario_id: str, atual: str, nova: str) -> bool:
 
 
 def criar_usuarios_demonstracao() -> list[str]:
-    """Usuários FICTÍCIOS das demonstrações (aluno DEMO-W01 e um docente), com
+    """Usuários FICTÍCIOS das demonstrações (alunos DEMO-W01 a W03 e um docente), com
     a SENHA_DEMONSTRACAO. Quem já existe é mantido. Devolve os criados."""
     criados = []
     for usuario_id, papel, aluno_id in USUARIOS_DEMONSTRACAO:

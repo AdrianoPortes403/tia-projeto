@@ -452,8 +452,8 @@ escrever a classe, registrá-la em `PROVEDORES` e usar `AUTH_PROVEDOR=<nome>`. O
 login, a auditoria grava `sem_login` e as duas telas mostram
 "Modo de desenvolvimento: autenticação desligada". **Padrão: ligada.** Os testes que verificam os agentes
 pelas rotas usam esse modo (fixture `auth_desligada` no `conftest`); os de segurança (`test_seguranca.py`
-e `test_seguranca_etapa2.py`) ligam a autenticação. `python -m tia.web.dados_demo` e `python -m tia.web.dados_painel` criam o aluno
-DEMO-W01 e o docente DEMO-DOCENTE com uma senha de demonstração **fictícia e pública**, impressa pelo
+e `test_seguranca_etapa2.py`) ligam a autenticação. `python -m tia.web.dados_demo` e `python -m tia.web.dados_painel` criam os alunos
+DEMO-W01, DEMO-W02 e DEMO-W03 e o docente DEMO-DOCENTE com uma senha de demonstração **fictícia e pública**, impressa pelo
 próprio comando. Só serve para a máquina de desenvolvimento.
 
 ### LGPD e segurança geral (etapa 2 de 2)

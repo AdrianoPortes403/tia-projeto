@@ -26,8 +26,8 @@ explicação do item e, na origem "LLM", vem marcado "[demonstração]", como os
 textos do diálogo. No fim, roda a verificação de inatividade do
 orquestrador (R3), que registra as decisões de incentivo e de refazer a
 trilha. Aluno que já existe é mantido (rodar de novo não duplica). Cria
-também os usuários FICTÍCIOS do login (1.4.6): o docente DEMO-DOCENTE e o
-aluno DEMO-W01, com a senha de demonstração impressa no fim.
+também os usuários FICTÍCIOS do login (1.4.6): o docente DEMO-DOCENTE e os
+alunos DEMO-W01 a W03 (os dados de estudo deles vêm do dados_demo), com a senha de demonstração impressa no fim.
 Imprime o tempo gasto.
 
 Como rodar (a partir da raiz, com o venv ativo):
