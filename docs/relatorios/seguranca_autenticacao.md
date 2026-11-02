@@ -56,7 +56,7 @@
 | `src/tia/web/static/comum.js` | `obterSessao`, `entrar`, `sair`, `mostrarSessao`; `X-CSRF-Token` nas escritas; 401 volta ao login |
 | `src/tia/web/static/index.html`, `app.js` | tela de login, barra do usuário, aviso do modo de desenvolvimento; o código do aluno vem da sessão |
 | `src/tia/web/static/painel/*` | login só para docente, barra do usuário, coluna "Usuário" e filtro "Segurança" na auditoria |
-| `src/tia/web/dados_demo.py`, `dados_painel.py` | criam o aluno DEMO-W01 e o docente DEMO-DOCENTE (senha fictícia impressa pelo comando) |
+| `src/tia/web/dados_demo.py`, `dados_painel.py` | criam os alunos DEMO-W01 a W03 e o docente DEMO-DOCENTE (senha fictícia impressa pelo comando) |
 | `src/tia/orquestrador/eventos.py`, `agentes/relatorio/*`, `agentes/tutor/incentivo.py`, `painel/consultas.py` | Parte A |
 | `tests/conftest.py`, `test_seguranca.py` (novo), `test_correcoes.py` (novo), `test_web.py`, `test_painel.py` | testes |
 | `docs/arquitetura/arquitetura.md`, `CLAUDE.md` | seção "Segurança" e pendências |
