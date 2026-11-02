@@ -1,137 +1,177 @@
 /*
  * Tema da aplicação web standalone do TIA (EAP 1.4.4).
  *
- * SÓ variáveis: cores, fontes, espaçamentos, bordas. estilo.css usa apenas
- * estas variáveis, então trocar pelo visual do EBAULA = trocar este arquivo.
- * PROVISÓRIO: paleta verde-oliva da A1 até a definição visual do EBAULA.
+ * SÓ variáveis: cores, fontes, espaçamentos, bordas, sombras e transições.
+ * estilo.css e painel/painel.css usam apenas estas variáveis, então trocar
+ * pelo visual do EBAULA = trocar este arquivo.
  * Contraste: textos sobre fundo com pelo menos 4.5:1 (WCAG AA).
  *
  * Fontes: só as que já vêm no sistema (a CSP não deixa carregar fontes de fora).
- * Títulos em Bahnschrift (Windows 10+, letreiro técnico); fora do Windows,
- * caem em fontes condensadas parecidas e, por fim, na fonte do sistema.
  */
 :root {
   /* cores de base */
-  --cor-fundo: #eef1eb;
+  --cor-fundo: #f5f7f6;
   --cor-superficie: #ffffff;
-  --cor-texto: #18211a;
-  --cor-texto-suave: #4a584d;
-  --cor-borda: #c3cdc0;
+  --cor-texto: #111c15;
+  --cor-texto-suave: #4a5a50;
+  --cor-borda: #ced8d2;
 
   /* marca e ações */
-  --cor-primaria: #3d5a27;
-  --cor-primaria-escura: #2c4419;
+  --cor-primaria: #1a3324;
+  --cor-primaria-escura: #102217;
   --cor-sobre-primaria: #ffffff;
-  --cor-foco: #c8962e;
+  --cor-foco: #d9a520;
 
   /* faixa do topo */
-  --cor-topo: #26361b;
-  --cor-sobre-topo: #f2f5ee;
-  --cor-sobre-topo-suave: #c4d0b8;
-  --cor-marcador: #d9a43a;
+  --cor-topo: #13261b;
+  --cor-sobre-topo: #f5f7f6;
+  --cor-sobre-topo-suave: #b8c7be;
+  --cor-marcador: #d9a520;
 
   /* trilha (linha que liga as etapas) */
-  --cor-trilha: #b7c3b2;
+  --cor-trilha: #c5d1ca;
 
   /* estados */
-  --cor-sucesso: #12654f;
-  --cor-sucesso-fundo: #e0f1ea;
-  --cor-erro: #a32020;
-  --cor-erro-fundo: #fbe9e9;
-  --cor-alerta: #7a4b00;
-  --cor-alerta-fundo: #fff2d3;
-  --cor-info-fundo: #e7eee1;
-  --cor-destaque-fundo: #f1f6ec;
+  --cor-sucesso: #186442;
+  --cor-sucesso-fundo: #e6f4ed;
+  --cor-erro: #b42318;
+  --cor-erro-fundo: #fef3f2;
+  --cor-alerta: #855800;
+  --cor-alerta-fundo: #fef7e6;
+  --cor-info-fundo: #eaf3ee;
+  --cor-destaque-fundo: #eef6f1;
 
-  /* tipografia */
-  --fonte-texto: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
-  --fonte-titulo: Bahnschrift, "DIN Alternate", "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", var(--fonte-texto);
-  --fonte-codigo: ui-monospace, "Cascadia Mono", Consolas, Menlo, "Liberation Mono", monospace;
+  /* tipografia 100% moderna e geométrica */
+  --fonte-texto: "Inter", "Plus Jakarta Sans", "Segoe UI Variable Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fonte-titulo: "Inter", "Plus Jakarta Sans", "Segoe UI Variable Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --fonte-codigo: "JetBrains Mono", "Cascadia Code", "Cascadia Mono", ui-monospace, Consolas, Menlo, "Liberation Mono", monospace;
   --tamanho-base: 1rem;
   --tamanho-pequeno: 0.875rem;
   --altura-linha: 1.55;
 
   /* forma e espaço */
-  --raio: 6px;
-  --raio-pequeno: 4px;
+  --raio: 8px;
+  --raio-pequeno: 6px;
   --espaco-1: 0.25rem;
   --espaco-2: 0.5rem;
   --espaco-3: 1rem;
   --espaco-4: 1.5rem;
   --espaco-5: 2rem;
   --largura-max: 52rem;
-  --sombra: 0 1px 2px rgba(24, 33, 26, 0.08);
+  --sombra: 0 1px 2px rgba(15, 28, 20, 0.06);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --cor-fundo: #121711;
-    --cor-superficie: #1a2119;
-    --cor-texto: #e6ebe2;
-    --cor-texto-suave: #b2bdad;
-    --cor-borda: #374333;
-    --cor-primaria: #9dc27a;
-    --cor-primaria-escura: #b6d498;
-    --cor-sobre-primaria: #142010;
-    --cor-topo: #0d120c;
-    --cor-sobre-topo: #e6ebe2;
-    --cor-sobre-topo-suave: #a9b6a2;
-    --cor-marcador: #e0b04d;
-    --cor-trilha: #3f4c3a;
-    --cor-sucesso: #7fd4b4;
-    --cor-sucesso-fundo: #15302a;
-    --cor-erro: #ff9b9b;
-    --cor-erro-fundo: #3a1a1a;
-    --cor-alerta: #ffd479;
-    --cor-alerta-fundo: #3a2e12;
-    --cor-info-fundo: #1e2a1b;
-    --cor-destaque-fundo: #20291d;
+    --cor-fundo: #0d1510;
+    --cor-superficie: #142019;
+    --cor-texto: #e8efe9;
+    --cor-texto-suave: #9fb0a5;
+    --cor-borda: #283a2f;
+    --cor-primaria: #68b68e;
+    --cor-primaria-escura: #88cba8;
+    --cor-sobre-primaria: #0d1912;
+    --cor-topo: #09100c;
+    --cor-sobre-topo: #e8efe9;
+    --cor-sobre-topo-suave: #9fb0a5;
+    --cor-marcador: #e5b333;
+    --cor-trilha: #2c4034;
+    --cor-sucesso: #5dd39e;
+    --cor-sucesso-fundo: #112d21;
+    --cor-erro: #f98080;
+    --cor-erro-fundo: #361717;
+    --cor-alerta: #facc6b;
+    --cor-alerta-fundo: #33260e;
+    --cor-info-fundo: #15271d;
+    --cor-destaque-fundo: #182c20;
     --sombra: none;
   }
 }
 
 /*
- * Aplicação do ALUNO e painel do DOCENTE (redesenho de 01/11/2026, docs/design/prototipo_redesign/):
- * paleta própria, em body.app-aluno e body.app-docente (parte 2). Os valores do :root ficam para o plug-in.
- * Redefine os tokens antigos (os componentes de estilo.css os usam) e acrescenta os novos.
- * Contraste conferido (WCAG AA; docs/relatorios/redesign_aluno.md): texto 4.5:1, bordas e
- * indicadores 3:1. Ajustes em relação à prévia: foco em anel duplo (dourado + contorno escuro),
- * dourado escuro nas barras e no contorno da etapa atual, texto de bloqueado e borda de campo mais escuros.
- * Só tema claro: color-scheme light (o escuro fica para depois, sem prioridade).
+ * Aplicação do ALUNO e painel do DOCENTE — Estética Institucional Moderna (SaaS Executivo):
+ * Fundo branco-gelo neutro (sem tom amarelado), cartões branco puro com bordas de precisão,
+ * verde-floresta profundo, esmeralda institucional e ouro sóbrio.
+ * Mantém 100% da conformidade WCAG AA (texto >= 4.5:1, bordas >= 3:1).
  */
 body.app-aluno, body.app-docente {
   color-scheme: light;
 
-  /* paleta */
-  --cor-oliva: #3b4a2a;          /* menu e botão principal */
-  --cor-oliva-escuro: #2a3720;   /* texto sobre claro/dourado, hover do botão */
-  --cor-verde: #5c7040;          /* progresso e concluído */
-  --cor-verde-claro: #a8b88a;    /* só decoração (2.1:1 sobre branco) */
-  --cor-verde-suave: #e6e9d2;    /* fundo de destaque (cartão "continue", balão do tutor) */
-  --cor-creme: #f4f1e6;          /* fundo */
-  --cor-creme-escuro: #ece9dc;   /* trilho das barras, etapa bloqueada */
-  --cor-linha: #e3e0cf;          /* divisórias */
-  --cor-dourado: #c9a227;        /* etapa atual e foco */
-  --cor-dourado-escuro: #8c6d00; /* contorno da etapa atual e barras < 80% (3:1 sobre branco) */
-  --cor-dourado-suave: #fbf3d4;  /* fundo da etapa atual e dos avisos */
-  --cor-terracota: #a8452b;
-  --cor-terracota-fundo: #fbeae3;
-  --cor-terracota-texto: #7a2e17;
-  --cor-aviso-fundo: #fbf3d4;
-  --cor-aviso-texto: #6b5200;
-  --cor-bloqueado: #5e6454;      /* era #6B7260 na prévia: 4.1:1 sobre #ECE9DC */
-  --cor-borda-campo: #858a76;    /* era #D8D6C6 na prévia: 1.5:1 sobre branco */
-  --cor-borda-suave: #d8d6c6;    /* borda decorativa de cartão de escolha (o texto já contrasta) */
-  --cor-sobre-menu: #f4f1e6;
-  --cor-sobre-menu-suave: #d9dec8;
-  --cor-foco-contorno: #1f2a17;  /* anel interno do foco: dourado sozinho tem 2.1:1 sobre o creme */
-  --sombra-cartao-alto: 0 12px 40px rgba(59, 74, 42, 0.14);
+  /* paleta principal institucional moderna (WCAG AA) */
+  --cor-oliva: #1a3324;          /* verde-floresta executivo profundo */
+  --cor-oliva-escuro: #102217;   /* hover e textos de máximo contraste */
+  --cor-verde: #1e6b47;          /* esmeralda institucional para progresso e sucesso */
+  --cor-verde-claro: #74ba96;    /* destaque luminoso para marca e avatar no menu */
+  --cor-verde-suave: #eaf3ee;    /* superfície de destaque menta-gelo limpa */
+  --cor-creme: #f5f7f6;          /* fundo principal branco-gelo neutro (zero amarelo) */
+  --cor-creme-escuro: #e8eeea;   /* trilho das barras, cabeçalho de tabela e etapa bloqueada */
+  --cor-linha: #dce4df;          /* divisórias técnicas de precisão */
+  --cor-dourado: #d9a520;        /* ouro institucional para etapa atual e foco */
+  --cor-dourado-escuro: #946b00; /* contorno de alto contraste (> 3.5:1 no branco) */
+  --cor-dourado-suave: #fef8e6;  /* fundo luminoso de etapa atual e avisos */
+  --cor-terracota: #c83e2b;
+  --cor-terracota-fundo: #fef2f0;
+  --cor-terracota-texto: #8c2315;
+  --cor-aviso-fundo: #fef7e6;
+  --cor-aviso-texto: #734f00;
+  --cor-bloqueado: #5a6860;
+  --cor-borda-campo: #6e7f74;    /* contraste >= 3.1:1 sobre branco */
+  --cor-borda-suave: #cfd9d3;
+  --cor-sobre-menu: #f5f7f6;
+  --cor-sobre-menu-suave: #b8c7be;
+  --cor-foco-contorno: #102217;
+
+  /* superfícies translúcidas, bordas de precisão e código */
+  --cor-borda-cartao: rgba(16, 34, 23, 0.095);
+  --cor-borda-cartao-hover: rgba(26, 51, 36, 0.24);
+  --cor-borda-destaque: rgba(30, 107, 71, 0.22);
+  --cor-vidro-fundo: rgba(255, 255, 255, 0.90);
+  --cor-vidro-borda: rgba(16, 34, 23, 0.14);
+  --cor-menu-item-hover: rgba(245, 247, 246, 0.09);
+  --cor-menu-borda: rgba(245, 247, 246, 0.12);
+  --cor-hover-linha: rgba(30, 107, 71, 0.045);
+  --cor-codigo-fundo: rgba(26, 51, 36, 0.065);
+  --cor-codigo-borda: rgba(26, 51, 36, 0.14);
+  --cor-bloco-codigo-fundo: #0f1a14;
+  --cor-bloco-codigo-texto: #e8f1ec;
+  --cor-bloco-codigo-borda: #23382c;
+  --cor-anel-dourado: rgba(217, 165, 32, 0.28);
+  --cor-anel-dourado-zero: rgba(217, 165, 32, 0);
+
+  /* gradientes executivos e técnicos */
+  --gradiente-menu: linear-gradient(180deg, #182f21 0%, #122419 60%, #0d1a12 100%);
+  --gradiente-destaque: linear-gradient(135deg, #f0f7f3 0%, #e3f0e9 100%);
+  --gradiente-primario: linear-gradient(180deg, #21402d 0%, #172e20 100%);
+  --gradiente-primario-hover: linear-gradient(180deg, #172e20 0%, #0f2016 100%);
+  --gradiente-barra: linear-gradient(90deg, #1a5c3d 0%, #258558 100%);
+  --gradiente-barra-atencao: linear-gradient(90deg, #946b00 0%, #c49008 100%);
+  --gradiente-dourado-suave: linear-gradient(135deg, #fffdf5 0%, #fef5d8 100%);
+  --gradiente-balao-tutor: linear-gradient(145deg, #f2f8f5 0%, #e7f2ec 100%);
+  --gradiente-shimmer: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 100%);
+
+  /* sombras SaaS de alta precisão */
+  --sombra: 0 1px 2px rgba(16, 34, 23, 0.04), 0 4px 12px -2px rgba(16, 34, 23, 0.05);
+  --sombra-cartao-hover: 0 4px 10px -2px rgba(16, 34, 23, 0.06), 0 12px 28px -4px rgba(16, 34, 23, 0.09);
+  --sombra-cartao-alto: 0 20px 44px -10px rgba(16, 34, 23, 0.14), 0 4px 12px -2px rgba(16, 34, 23, 0.06);
+  --sombra-destaque: 0 4px 16px -2px rgba(26, 51, 36, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --sombra-botao: 0 1px 3px rgba(16, 34, 23, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --sombra-botao-hover: 0 4px 12px rgba(16, 34, 23, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --sombra-hud: 0 10px 28px -4px rgba(16, 34, 23, 0.14), 0 2px 6px rgba(16, 34, 23, 0.06);
+  --sombra-aba-ativa: inset 4px 0 0 #d9a520, 0 2px 8px rgba(9, 18, 12, 0.25);
+  --sombra-etapa-atual: 0 4px 20px -2px rgba(148, 107, 0, 0.12);
+
+  /* transições e curvas de movimento */
+  --curva-fluida: cubic-bezier(0.22, 1, 0.36, 1);
+  --curva-mola: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transicao-rapida: 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transicao-media: 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transicao-barra: 650ms cubic-bezier(0.22, 1, 0.36, 1);
 
   /* tokens antigos com a paleta nova (usados pelos componentes de estilo.css) */
   --cor-fundo: var(--cor-creme);
   --cor-superficie: #ffffff;
-  --cor-texto: #1f2a17;
-  --cor-texto-suave: #55604a;
+  --cor-texto: #111c15;
+  --cor-texto-suave: #4a5a50;
   --cor-borda: var(--cor-borda-suave);
   --cor-primaria: var(--cor-oliva);
   --cor-primaria-escura: var(--cor-oliva-escuro);
@@ -141,7 +181,7 @@ body.app-aluno, body.app-docente {
   --cor-sobre-topo: var(--cor-sobre-menu);
   --cor-sobre-topo-suave: var(--cor-sobre-menu-suave);
   --cor-marcador: var(--cor-dourado);
-  --cor-trilha: #cfcdbd;
+  --cor-trilha: #c5d1ca;
   --cor-sucesso: var(--cor-verde);
   --cor-sucesso-fundo: var(--cor-verde-suave);
   --cor-erro: var(--cor-terracota-texto);
@@ -151,17 +191,17 @@ body.app-aluno, body.app-docente {
   --cor-info-fundo: var(--cor-verde-suave);
   --cor-destaque-fundo: var(--cor-verde-suave);
 
-  --fonte-texto: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --fonte-titulo: var(--fonte-texto);
+  --fonte-texto: "Inter", "Plus Jakarta Sans", "Segoe UI Variable Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --fonte-titulo: "Inter", "Plus Jakarta Sans", "Segoe UI Variable Display", var(--fonte-texto);
 
-  --raio: 20px;
-  --raio-grande: 24px;
-  --raio-medio: 14px;
-  --raio-pequeno: 12px;
-  --altura-botao: 3.25rem;       /* 52px: botão principal */
-  --largura-menu: 15rem;         /* 240px */
-  --largura-max: 72rem;
-  --sombra: none;
+  /* geometria SaaS moderna: cantos precisos e proporcionais */
+  --raio: 12px;
+  --raio-grande: 16px;
+  --raio-medio: 10px;
+  --raio-pequeno: 8px;
+  --altura-botao: 2.875rem;      /* 46px: proporção executiva */
+  --largura-menu: 16rem;         /* 256px */
+  --largura-max: 74rem;
 }
 
 /* Impressão (painel do docente): sempre o tema claro, mesmo com o sistema no escuro. */
@@ -172,20 +212,20 @@ body.app-aluno, body.app-docente {
     --cor-texto: #000000;
     --cor-texto-suave: #333333;
     --cor-borda: #888888;
-    --cor-primaria: #3d5a27;
+    --cor-primaria: #1a3324;
     --cor-topo: #ffffff;
     --cor-sobre-topo: #000000;
     --cor-sobre-topo-suave: #333333;
     --cor-marcador: #000000;
     --cor-trilha: #888888;
-    --cor-destaque-fundo: #f1f6ec;
-    --cor-sucesso: #12654f;
-    --cor-sucesso-fundo: #e0f1ea;
-    --cor-erro: #a32020;
-    --cor-erro-fundo: #fbe9e9;
-    --cor-alerta: #7a4b00;
-    --cor-alerta-fundo: #fff2d3;
-    --cor-info-fundo: #e7eee1;
+    --cor-destaque-fundo: #eef6f1;
+    --cor-sucesso: #186442;
+    --cor-sucesso-fundo: #e6f4ed;
+    --cor-erro: #b42318;
+    --cor-erro-fundo: #fef3f2;
+    --cor-alerta: #855800;
+    --cor-alerta-fundo: #fef7e6;
+    --cor-info-fundo: #eaf3ee;
     --sombra: none;
   }
 }

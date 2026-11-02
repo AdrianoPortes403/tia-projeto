@@ -390,3 +390,224 @@ a.botao { text-decoration: none; }
   .barra { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .barra-grupo, .numero, .resumo-turma, .alerta { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
+
+
+/* ======================================================================
+ * Estética Institucional Moderna (SaaS Executivo) do Painel do Docente:
+ * Tabelas de Alta Precisão, Cartões KPI, Alertas, Chips e Barras
+ * (Usa exclusivamente variáveis de ../tema.css)
+ * ====================================================================== */
+
+/* Cartões KPI com faixa superior semântica */
+.app-docente .numero--alerta {
+  border-top-color: var(--cor-terracota);
+}
+.app-docente .numero--progresso {
+  border-top-color: var(--cor-verde);
+}
+.app-docente .numero--aviso {
+  border-top-color: var(--cor-dourado-escuro);
+}
+
+/* Chips de situação e botões de filtro com precisão técnica */
+.app-docente .chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.app-docente .chip--ok {
+  border-color: var(--cor-borda-destaque);
+}
+.app-docente .chip--atencao {
+  border-color: var(--cor-dourado);
+}
+.app-docente .chip--alerta {
+  border-color: var(--cor-terracota);
+}
+
+.app-docente .chip-filtro {
+  min-height: 2.25rem;
+  padding: 0 0.9375rem;
+  border-width: 1px;
+  border-radius: var(--raio-pequeno);
+  font-size: 0.8125rem;
+  box-shadow: var(--sombra);
+  transition: transform var(--transicao-rapida), border-color var(--transicao-rapida),
+    background-color var(--transicao-rapida), color var(--transicao-rapida),
+    box-shadow var(--transicao-rapida);
+}
+.app-docente .chip-filtro:hover:not([aria-pressed="true"]) {
+  transform: translateY(-1px);
+  border-color: var(--cor-oliva);
+  box-shadow: var(--sombra-cartao-hover);
+}
+.app-docente .chip-filtro[aria-pressed="true"] {
+  background: var(--gradiente-primario);
+  border-color: var(--cor-oliva);
+  box-shadow: var(--sombra-botao);
+}
+
+/* Alertas pedagógicos com barra lateral semântica */
+.app-docente .alerta {
+  border: 1px solid var(--cor-borda-cartao);
+  border-left: 4px solid var(--cor-borda-campo);
+  border-radius: var(--raio-medio);
+  padding: 0.9375rem 1.125rem;
+  box-shadow: var(--sombra);
+  animation: surgirSuave var(--transicao-media) both;
+  transition: transform var(--transicao-rapida), box-shadow var(--transicao-rapida);
+}
+.app-docente .alerta--grave {
+  border-left-color: var(--cor-terracota);
+}
+.app-docente .alerta--atencao {
+  border-left-color: var(--cor-dourado-escuro);
+}
+.app-docente .alerta:nth-child(2) { animation-delay: 40ms; }
+.app-docente .alerta:nth-child(3) { animation-delay: 80ms; }
+.app-docente .alerta:nth-child(4) { animation-delay: 120ms; }
+.app-docente .alerta:nth-child(5) { animation-delay: 160ms; }
+.app-docente .alerta:hover {
+  transform: translateY(-1.5px);
+  box-shadow: var(--sombra-cartao-hover);
+}
+
+/* Tabelas Executivas (Data-Grid SaaS) */
+.app-docente .tabela-rolagem {
+  border: 1px solid var(--cor-borda-cartao);
+  border-radius: var(--raio-medio);
+  background: var(--cor-superficie);
+  margin-bottom: 0;
+}
+.app-docente .tabela {
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.app-docente .tabela thead th {
+  background: var(--cor-creme);
+  color: var(--cor-texto-suave);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  border-top: none;
+  border-bottom: 1px solid var(--cor-borda-suave);
+}
+.app-docente .tabela tbody th,
+.app-docente .tabela tbody td {
+  padding: 0.875rem 1rem;
+  vertical-align: middle;
+  border-top: 1px solid var(--cor-linha);
+}
+.app-docente .tabela tbody tr:first-child th,
+.app-docente .tabela tbody tr:first-child td {
+  border-top: none;
+}
+.app-docente .tabela tbody tr {
+  transition: background-color var(--transicao-rapida);
+}
+.app-docente .tabela tbody tr:hover {
+  background-color: var(--cor-hover-linha);
+}
+
+/* Códigos de aluno estilizados como badge técnica monoespaçada */
+.app-docente .tabela code,
+.app-docente .alerta__aluno code,
+.app-docente .fila__aluno code,
+.app-docente .texto-revisao__cabeca h2 code {
+  font-family: var(--fonte-codigo);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  background: var(--cor-codigo-fundo);
+  border: 1px solid var(--cor-codigo-borda);
+  color: var(--cor-oliva-escuro);
+}
+
+/* Fila de revisão docente */
+.app-docente .fila__item {
+  border-width: 1px;
+  border-color: var(--cor-borda-cartao);
+  border-radius: var(--raio-medio);
+  box-shadow: var(--sombra);
+  transition: transform var(--transicao-rapida), border-color var(--transicao-rapida),
+    background-color var(--transicao-rapida), box-shadow var(--transicao-rapida);
+}
+.app-docente .fila__item:hover:not([aria-current="true"]) {
+  transform: translateX(2px);
+  border-color: var(--cor-oliva);
+  box-shadow: var(--sombra-cartao-hover);
+}
+.app-docente .fila__item[aria-current="true"] {
+  background: var(--gradiente-destaque);
+  border-color: var(--cor-verde);
+  box-shadow: inset 3px 0 0 var(--cor-verde), var(--sombra-cartao-hover);
+  transform: translateX(2px);
+}
+
+.app-docente .texto-tutor {
+  border-radius: var(--raio);
+  background: var(--gradiente-balao-tutor);
+  border: 1px solid var(--cor-borda-destaque);
+  box-shadow: var(--sombra);
+}
+
+.app-docente .resumo-turma {
+  background: var(--gradiente-destaque);
+  border: 1px solid var(--cor-borda-destaque);
+  border-left: 4px solid var(--cor-verde);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra-destaque);
+}
+
+/* Barras de progresso por grupo e gráficos SVG */
+.app-docente .grupo {
+  padding: 0.75rem 1rem;
+  border-radius: var(--raio-medio);
+  background: var(--cor-creme);
+  border: 1px solid var(--cor-linha);
+}
+.app-docente .grupo__valor,
+.app-docente .grafico__valor {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: 6px;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-linha);
+  color: var(--cor-texto);
+}
+.app-docente .barra-grupo {
+  height: 0.625rem;
+  background: var(--cor-creme-escuro);
+  box-shadow: inset 0 1px 2px var(--cor-borda-cartao);
+}
+.app-docente .barra-grupo__valor {
+  background: var(--gradiente-barra);
+  transition: width var(--transicao-barra);
+}
+.app-docente .grafico__item {
+  padding: 0.875rem 1rem;
+  border-radius: var(--raio-medio);
+  background: var(--cor-creme);
+  border: 1px solid var(--cor-linha);
+  margin-bottom: 0.75rem;
+}
+.app-docente #relatorio-detalhes .indicador {
+  border: 1px solid var(--cor-linha);
+  border-radius: var(--raio-medio);
+}
+
+.app-docente .contador {
+  box-shadow: var(--sombra);
+  transition: transform var(--curva-mola) 260ms;
+}
+.app-docente .aba:hover .contador {
+  transform: scale(1.08);
+}
