@@ -4,8 +4,9 @@ Modelos Pydantic das rotas de leitura do painel do docente (EAP 1.4.5).
 Os números agregados seguem a mesma regra do Agente 3: contagem de alunos
 abaixo de RELATORIO_MIN_GRUPO sai como Contagem(valor=None, texto="menos de N")
 e grupo abaixo do mínimo sai suprimido (R08). Só as rotas de alertas de
-risco e de revisão mostram códigos de aluno (nunca nomes), e cada consulta
-delas é registrada na auditoria.
+risco, da lista de alunos e de revisão mostram códigos de aluno (nunca nomes),
+e cada consulta delas é registrada na auditoria. A contagem da revisão
+(ContagemRevisao) é só um número: não mostra código e não é auditada.
 
 Não é executável: importar com "from tia.painel.modelos import ...".
 
@@ -21,6 +22,10 @@ from tia.agentes.relatorio.modelos import Contagem, Direcao
 
 TipoRisco = Literal["inatividade", "desempenho_em_queda", "desempenho_baixo", "conclusao_sem_dominio"]
 SituacaoRevisao = Literal["a_revisar", "aprovadas", "vetadas", "todas"]
+# situação de um aluno na lista da visão geral (uma só, pela ordem de prioridade
+# em consultas.situacao_do_aluno)
+SituacaoAluno = Literal["no_ritmo", "desempenho_em_queda", "desempenho_baixo", "conclusao_sem_dominio",
+                        "inatividade", "trilha_concluida", "sem_trilha"]
 
 
 # --- conteúdo (ementa e perfis) ---
@@ -99,6 +104,25 @@ class DesempenhoCompetencias(BaseModel):
     itens_fracos: list[ItemTurma] = []
 
 
+# --- lista de alunos da visão geral (com código; auditada) ---
+
+class AlunoTurma(BaseModel):
+    """Só o necessário para a tabela da visão geral (minimização, R08): nunca
+    nome, objetivo do cadastro nem texto do diálogo."""
+    aluno_id: str  # código, nunca nome
+    perfil_id: str | None
+    competencia_atual: str | None  # tópico da EAP; None: trilha concluída ou sem trilha
+    taxa_acerto: float | None
+    situacao: SituacaoAluno
+
+
+class ListaAlunos(BaseModel):
+    gerado_em: str
+    perfil_id: str | None
+    alunos: list[AlunoTurma]
+    auditoria_id: int  # registro desta consulta na auditoria (R11)
+
+
 # --- revisão docente (R12) ---
 
 TipoRevisao = Literal["dialogo", "feedback"]
@@ -154,6 +178,11 @@ class ListaRevisao(BaseModel):
     feedbacks_sem_texto: int  # respostas anteriores à gravação do texto (não revisáveis)
     feedbacks_por_origem: dict[str, int]  # todas as respostas de questões, pela auditoria
     auditoria_id: int
+
+
+class ContagemRevisao(BaseModel):
+    """Só o número de textos a revisar (contador do menu): sem códigos, não auditada."""
+    a_revisar: int
 
 
 # --- auditoria (R11) ---

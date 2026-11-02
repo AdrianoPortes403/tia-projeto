@@ -6,12 +6,16 @@ Rotas SOMENTE DE LEITURA do painel do docente/instituição (EAP 1.4.5).
     GET /painel/alunos-em-risco         alunos com inatividade, queda ou desempenho baixo,
                                         COM código (nunca nome); cada consulta vai para a
                                         auditoria (R11). ?perfil_id=
+    GET /painel/alunos                  todos os alunos: código, perfil, competência atual,
+                                        acerto e situação (nada além); auditada. ?perfil_id=
     GET /painel/competencias            acerto e tendência por competência e itens com erro
                                         repetido; só agregados (grupo mínimo, R08). ?perfil_id=
     GET /painel/revisao                 respostas do diálogo e feedbacks das questões para o
                                         veto docente (R12); auditada. ?tipo=dialogo|feedback
                                         &situacao=a_revisar|aprovadas|vetadas|todas&origem=
                                         &competencia_id=&pagina=
+    GET /painel/revisao/contagem        só o número de textos a revisar (contador do menu);
+                                        sem códigos, NÃO auditada. ?origem=
     GET /painel/auditoria               trilha de auditoria filtrável e paginada
                                         ?agente=&aluno_id=&desde=&ate=&pagina=&por_pagina=
     GET /painel/exportar/indicadores.csv  indicadores agregados do Agente 3 em CSV. ?perfil_id=
@@ -35,8 +39,9 @@ from tia.agentes.planejador.modelos import PADRAO_CODIGO_ALUNO
 from tia.core import auditoria
 from tia.painel import consultas
 from tia.seguranca.acesso import exigir_papel, usuario_atual
-from tia.painel.modelos import (CompetenciaEmenta, ConsultaRisco, DesempenhoCompetencias, ListaRevisao,
-                                PaginaAuditoria, PerfilResumo, SituacaoRevisao, TipoRevisao)
+from tia.painel.modelos import (CompetenciaEmenta, ConsultaRisco, ContagemRevisao, DesempenhoCompetencias,
+                                ListaAlunos, ListaRevisao, PaginaAuditoria, PerfilResumo, SituacaoRevisao,
+                                TipoRevisao)
 
 # Autenticação (1.4.6): /painel/* só docente (a auditoria grava quem consultou);
 # /conteudo/* qualquer usuário logado (ementa e perfis não têm dado pessoal)
@@ -44,6 +49,7 @@ router = APIRouter(prefix="/painel", tags=["painel"], dependencies=[Depends(exig
 router_conteudo = APIRouter(prefix="/conteudo", tags=["painel"], dependencies=[Depends(usuario_atual)])
 
 Perfil = Annotated[str | None, Query(pattern=r"^[A-Za-z0-9_-]{1,64}$")]  # vai para o nome do arquivo CSV
+Origem = Literal["LLM", "guarda", "fallback"]
 Data = Annotated[str | None, Query(pattern=r"^\d{4}-\d{2}-\d{2}$", examples=["2026-10-11"])]
 
 
@@ -65,6 +71,12 @@ def alunos_em_risco(perfil_id: Perfil = None) -> ConsultaRisco:
     return consultas.alunos_em_risco(perfil_id)
 
 
+@router.get("/alunos", response_model=ListaAlunos)
+def alunos(perfil_id: Perfil = None) -> ListaAlunos:
+    """Alunos com código, perfil, competência atual, acerto e situação; a consulta é auditada."""
+    return consultas.listar_alunos_turma(perfil_id)
+
+
 @router.get("/competencias", response_model=DesempenhoCompetencias)
 def competencias(perfil_id: Perfil = None) -> DesempenhoCompetencias:
     """Acerto agregado e tendência por competência; itens com erro repetido."""
@@ -73,13 +85,19 @@ def competencias(perfil_id: Perfil = None) -> DesempenhoCompetencias:
 
 @router.get("/revisao", response_model=ListaRevisao)
 def revisao(situacao: SituacaoRevisao = "a_revisar",
-            origem: Literal["LLM", "guarda", "fallback"] | None = None,
+            origem: Origem | None = None,
             tipo: TipoRevisao | None = None,
             competencia_id: Annotated[str | None, Query(pattern=r"^[A-Za-z0-9_-]{1,64}$")] = None,
             pagina: Annotated[int, Query(ge=1)] = 1,
             por_pagina: Annotated[int, Query(ge=1, le=100)] = 20) -> ListaRevisao:
     """Respostas do diálogo e feedbacks das questões para revisão (original + correção)."""
     return consultas.listar_revisao(situacao, origem, pagina, por_pagina, tipo, competencia_id)
+
+
+@router.get("/revisao/contagem", response_model=ContagemRevisao)
+def revisao_contagem(origem: Origem | None = None) -> ContagemRevisao:
+    """Só o número de textos a revisar (sem códigos; não auditada)."""
+    return consultas.contar_a_revisar(origem)
 
 
 @router.get("/auditoria", response_model=PaginaAuditoria)

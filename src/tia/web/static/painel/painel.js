@@ -1,11 +1,14 @@
 /*
  * Painel do docente/instituição do TIA (EAP 1.4.5): JavaScript puro, sem build.
  *
- * Telas: visão geral (5 indicadores agregados do Agente 3 e a interpretação),
- * alertas de risco (com código de aluno; consulta auditada), desempenho por
- * competência (barras em SVG), revisão docente (aprovar/vetar o feedback das
- * questões e as respostas do diálogo, R12) e
- * auditoria (R11). Exportação em CSV pela API e impressão pelo navegador.
+ * Redesenho de 01/11/2026 (docs/design/prototipo_redesign/): menu lateral com
+ * Visão geral (4 números, alertas por aluno e tabela de alunos com filtro de
+ * nível; COM código, abertura auditada), Revisar textos (fila e texto do tutor;
+ * aprovar ou vetar com correção obrigatória, R12; o contador do menu é só um
+ * número, sem código e sem auditoria) e Relatório da turma (resumo escrito pela
+ * IA local, indicadores do Agente 3 e desempenho por grupo; só agregados).
+ * Competências (barras em SVG) e Auditoria (R11) continuam como itens
+ * secundários. Exportação em CSV pela API e impressão pelo navegador.
  * Rotas em docs/arquitetura/arquitetura.md, "Painel do docente".
  *
  * Segurança: todo texto vindo da API entra por textContent (el/svg de
@@ -55,6 +58,10 @@
     conclusao_sem_dominio: "Concluída com ressalvas (sem domínio)",
     competencia_com_erro_alto: "Competência com erro alto",
   };
+  const COR_ALERTA_TURMA = {
+    desempenho_em_queda: "alerta--grave", competencia_com_erro_alto: "alerta--grave",
+    conclusao_sem_dominio: "alerta--atencao", inatividade: "alerta--neutro",
+  };
   const SITUACAO = { a_revisar: "A revisar", aprovada: "Aprovada", vetada: "Vetada" };
   const AGENTE = {
     orquestrador: "Orquestrador", planejador: "Planejador", tutor: "Tutor", relatorio: "Relatório",
@@ -92,6 +99,12 @@
     perfis: {},         // perfil -> nome (GET /conteudo/perfis)
     tela: null,
     risco: null,        // última ConsultaRisco (o filtro de motivo é feito aqui)
+    alunos: null,       // última ListaAlunos (o filtro de nível é feito aqui)
+    nivel: "",          // perfil escolhido nos botões da tabela de alunos ("" = todos)
+    revisao: null,      // última ListaRevisao
+    selecionado: null,  // texto aberto na revisão ("tipo-id")
+    grupos: [],         // [nome do perfil, RelatorioTurma do perfil] para "Desempenho por grupo"
+    inatividadeDias: null, // INATIVIDADE_DIAS, dos critérios da consulta de risco (visão geral)
     paginaRevisao: 1,
     paginaAuditoria: 1,
   };
@@ -120,8 +133,6 @@
   function fracaoTexto(fracao) {
     return fracao === null || fracao === undefined ? "sem dados" : porcento(fracao);
   }
-
-  function selo(texto, classe) { return el("span", { classe: "selo " + (classe || ""), texto }); }
 
   function tabela(legenda, cabecalhos, linhas) {
     const corpo = el("tbody", {}, linhas.map((celulas) => el("tr", {}, celulas.map((c, i) =>
@@ -159,19 +170,26 @@
 
   // --- navegação ---
 
-  const TELAS = ["geral", "risco", "competencias", "revisao", "auditoria"];
+  // menu lateral: Visão geral, Revisar textos e Relatório da turma (prévia de 01/11/2026);
+  // Competências e Auditoria continuam como itens secundários
+  const TELAS = ["geral", "revisao", "relatorio", "competencias", "auditoria"];
   const AO_ABRIR = {
-    geral: carregarGeral,
-    risco: carregarRisco,
-    competencias: carregarCompetencias,
+    geral: carregarVisaoGeral,
     revisao: carregarRevisao,
+    relatorio: carregarRelatorio,
+    competencias: carregarCompetencias,
     auditoria: carregarAuditoria,
   };
+  // endereços antigos (/app/painel/#risco) continuam abrindo a tela certa
+  const TELA_ANTIGA = { risco: "geral" };
+  // o filtro de grupo só vale para as visões agregadas
+  const COM_GRUPO = ["relatorio", "competencias"];
 
   function irPara(tela) {
     estado.tela = tela;
     try { history.replaceState(null, "", "#" + tela); } catch (_) { /* sem histórico: segue */ }
     for (const nomeTela of TELAS) $("tela-" + nomeTela).hidden = nomeTela !== tela;
+    $("filtro-grupo").hidden = !COM_GRUPO.includes(tela);
     document.querySelectorAll(".aba").forEach((aba) => {
       if (aba.dataset.tela === tela) aba.setAttribute("aria-current", "page");
       else aba.removeAttribute("aria-current");
@@ -186,26 +204,75 @@
     return el("section", { classe: "cartao indicador" }, el("h2", { texto: titulo }), ...conteudo);
   }
 
-  function oculto(contagem) {
-    return el("p", { classe: "oculto", texto: "Oculto: " + contagem.texto + " alunos neste grupo." });
-  }
-
-  async function carregarGeral() {
+  async function carregarRelatorio() {
     $("exportar-csv").setAttribute("href", comPerfil("/painel/exportar/indicadores.csv"));
     const r = await chamar("GET", comPerfil("/relatorio/turma?narrativa=false"), null, "Calculando os indicadores…");
-    mostrarGeral(r);
+    // desempenho por grupo: o mesmo relatório agregado em cada perfil (a API já oculta grupo pequeno)
+    estado.grupos = [];
+    for (const [id, nomePerfil] of Object.entries(estado.perfis)) {
+      const g = await chamar("GET", "/relatorio/turma?narrativa=false&perfil_id=" + encodeURIComponent(id), null,
+        "Calculando o perfil " + nomePerfil + "…");
+      estado.grupos.push([nomePerfil, g]);
+    }
+    mostrarRelatorio(r);
     mostrarNarrativa(null);
   }
 
-  function mostrarGeral(r) {
-    $("geral-grupo").textContent = descricaoGrupo(r.alunos, r.min_grupo) + " Gerado em " + dataHora(r.gerado_em) + ".";
-    const area = $("geral-indicadores");
+  function decimal(valor) { return String(valor).replace(".", ","); }
+
+  function mostrarNumerosRelatorio(r) {
+    const e = r.engajamento;
+    $("relatorio-numeros").replaceChildren(
+      numero("Progresso médio na trilha", fracaoTexto(r.progresso_medio), "etapas concluídas, média dos alunos",
+        "numero--progresso"),
+      numero("Alunos com trilha", r.alunos_com_trilha.texto, "de " + r.alunos.texto + " alunos no grupo"),
+      numero("Sessões por aluno", decimal(e.media_sessoes), "média; " + decimal(e.media_perguntas_dialogo) +
+        " pergunta(s) ao tutor por aluno"),
+      numero("Alunos inativos", e.inativos.texto, estado.inatividadeDias ? "sem atividade há " +
+        estado.inatividadeDias + " dias ou mais" : "pelo critério de inatividade do sistema",
+        "numero--alerta"));
+  }
+
+  // progresso médio de cada perfil; grupo abaixo do mínimo aparece só como oculto (com cadeado)
+  function mostrarGrupos(minGrupo) {
+    $("grupos-regra").textContent = "Progresso médio na trilha em cada perfil. Grupos com menos de " + minGrupo +
+      " alunos ficam ocultos para proteger a privacidade.";
+    const visiveis = estado.grupos.filter(([, g]) => !g.suprimido);
+    const ocultos = estado.grupos.filter(([, g]) => g.suprimido);
+    $("relatorio-grupos").replaceChildren(...[
+      visiveis.length ? el("ul", { classe: "grupos" }, visiveis.map(([nomePerfil, g]) => {
+        const pct = g.progresso_medio === null ? 0 : Math.round(g.progresso_medio * 100);
+        const rotulo = nomePerfil + " (" + g.alunos.texto + " alunos)";
+        return el("li", { classe: "grupo" },
+          el("div", { classe: "grupo__linha" }, el("span", { classe: "grupo__nome", texto: rotulo }),
+            el("span", { classe: "grupo__valor", texto: fracaoTexto(g.progresso_medio) + " de progresso" })),
+          el("div", { classe: "barra-grupo", role: "progressbar", "aria-label": rotulo, "aria-valuemin": "0",
+            "aria-valuemax": "100", "aria-valuenow": String(pct) },
+          el("span", { classe: "barra-grupo__valor", "data-pct": String(pct) })));
+      })) : null,
+      ...ocultos.map(([nomePerfil, g]) => el("p", { classe: "grupo-oculto" },
+        svg("svg", { classe: "icone", viewBox: "0 0 24 24", "aria-hidden": "true", focusable: "false" },
+          svg("rect", { x: 5, y: 11, width: 14, height: 9, rx: 2 }), svg("path", { d: "M8 11V8a4 4 0 0 1 8 0v3" })),
+        nomePerfil + " (" + g.alunos.texto + " alunos): oculto por ter menos de " + g.min_grupo + " alunos.")),
+      estado.grupos.length ? null : el("p", { texto: "Nenhum perfil cadastrado." }),
+    ].filter(Boolean));
+    // largura da barra pela propriedade de estilo (a CSP não permite atributo style escrito como texto)
+    document.querySelectorAll(".barra-grupo__valor").forEach((b) => { b.style.width = b.dataset.pct + "%"; });
+  }
+
+  function mostrarRelatorio(r) {
+    $("relatorio-grupo").textContent = descricaoGrupo(r.alunos, r.min_grupo) + " Gerado em " + dataHora(r.gerado_em) + ".";
+    mostrarGrupos(r.min_grupo);
+    const area = $("relatorio-indicadores");
     if (r.suprimido) {
-      area.replaceChildren(el("p", { classe: "aviso aviso--alerta", texto: "Este grupo tem " + r.alunos.texto +
-        " alunos: nenhum indicador é exibido, para que nenhum aluno possa ser identificado (LGPD, R08)." }));
-      $("geral-alertas").replaceChildren(el("p", { texto: "Sem alertas exibidos para grupos abaixo do mínimo." }));
+      const aviso = "Este grupo tem " + r.alunos.texto +
+        " alunos: nenhum indicador é exibido, para que nenhum aluno possa ser identificado (LGPD, R08).";
+      $("relatorio-numeros").replaceChildren(el("li", { classe: "aviso aviso--alerta", texto: aviso }));
+      area.replaceChildren(el("p", { classe: "aviso aviso--alerta", texto: aviso }));
+      $("relatorio-alertas").replaceChildren(el("p", { texto: "Sem alertas exibidos para grupos abaixo do mínimo." }));
       return;
     }
+    mostrarNumerosRelatorio(r);
 
     const progresso = cartao("1. Progresso na trilha",
       el("p", { classe: "numero-grande", texto: fracaoTexto(r.progresso_medio) }),
@@ -249,19 +316,23 @@
         " respostas do diálogo (" + fracaoTexto(q.taxa_veto) + ")." }));
 
     area.replaceChildren(el("div", { classe: "indicadores" }, progresso, desempenho, engajamento, fracos, qualidade));
-    $("geral-alertas").replaceChildren(r.alertas.length ? el("ul", { classe: "lista-alertas" }, r.alertas.map((a) =>
-      el("li", {}, selo(ALERTA_TURMA[a.tipo] || a.tipo, "selo--alerta"), " ", a.descricao + " Alunos: " +
-        a.alunos.texto + "."))) : el("p", { texto: "Nenhum alerta." }));
+    $("relatorio-alertas").replaceChildren(r.alertas.length ? el("ul", { classe: "alertas alertas--turma" },
+      r.alertas.map((a) => el("li", { classe: "alerta " + (COR_ALERTA_TURMA[a.tipo] || "") },
+        el("span", { classe: "alerta__titulo", texto: ALERTA_TURMA[a.tipo] || a.tipo }),
+        el("span", { classe: "alerta__detalhe", texto: a.descricao + " Alunos: " + a.alunos.texto + "." }))))
+      : el("p", { texto: "Nenhum alerta." }));
   }
 
   function mostrarNarrativa(narrativa) {
-    const area = $("geral-narrativa");
+    const area = $("relatorio-narrativa");
+    $("gerar-narrativa").textContent = narrativa ? "Gerar de novo (IA local)" : "Gerar resumo (IA local)";
     if (!narrativa) {
       area.replaceChildren(el("p", { classe: "dica",
-        texto: "Parágrafo escrito pela IA local a partir dos números acima (pode levar mais de um minuto)." }));
+        texto: "Parágrafo escrito pela IA local a partir dos indicadores abaixo, só quando você pedir (pode levar " +
+          "mais de um minuto)." }));
       return;
     }
-    area.replaceChildren(el("p", { classe: "explicacao", texto: narrativa.texto }),
+    area.replaceChildren(el("p", { classe: "resumo-turma__texto", texto: narrativa.texto }),
       el("p", { classe: "origem" }, "Origem: " + narrativa.origem + " — " + (ORIGEM_NARRATIVA[narrativa.origem] || "") +
         (narrativa.falha_llm ? " Motivo: " + (FALHA[narrativa.falha_llm] || narrativa.falha_llm) + "." : "")));
   }
@@ -269,46 +340,128 @@
   async function gerarNarrativa() {
     try {
       const r = await chamar("GET", comPerfil("/relatorio/turma?narrativa=true"), null,
-        "A IA local está escrevendo a interpretação…");
-      mostrarGeral(r);
+        "A IA local está escrevendo o resumo…");
+      mostrarRelatorio(r);
       mostrarNarrativa(r.narrativa);
     } catch (erro) { mostrarErro(erro); }
   }
 
-  // --- 2) alertas de risco ---
+  // --- visão geral: números, alertas e alunos (COM código; abertura auditada) ---
 
-  async function carregarRisco() {
-    estado.risco = await chamar("GET", comPerfil("/painel/alunos-em-risco"), null, "Procurando alunos em risco…");
-    mostrarRisco();
+  async function carregarVisaoGeral() {
+    // as duas consultas com código gravam consulta_painel; o relatório (sem código) grava relatorio_turma
+    estado.risco = await chamar("GET", "/painel/alunos-em-risco", null, "Procurando alunos em risco…");
+    estado.alunos = await chamar("GET", "/painel/alunos", null, "Carregando os alunos…");
+    const turma = await chamar("GET", "/relatorio/turma?narrativa=false", null, "Calculando os indicadores…");
+    const contagem = await atualizarContador();
+    mostrarNumeros(turma, contagem);
+    mostrarAlertas();
+    mostrarAlunos();
+    $("geral-auditoria").textContent = "Registros desta abertura: nº " + estado.risco.auditoria_id + " e nº " +
+      estado.alunos.auditoria_id + " (" + dataHora(estado.alunos.gerado_em) + ").";
   }
 
-  function mostrarRisco() {
+  function numero(rotulo, valor, detalhe, classe, aoClicar) {
+    const conteudo = [el("span", { classe: "numero__rotulo", texto: rotulo }),
+      // "menos de 5" e "oculto" (grupo mínimo) em corpo menor que um número
+      el("span", { classe: "numero__valor" + (/[a-z]/i.test(valor) ? " numero__valor--texto" : ""), texto: valor }),
+      detalhe ? el("span", { classe: "numero__detalhe", texto: detalhe }) : null];
+    return el("li", { classe: "numero " + (classe || "") }, aoClicar
+      ? el("button", { type: "button", classe: "numero__botao", onclick: aoClicar }, ...conteudo) : conteudo);
+  }
+
+  function mostrarNumeros(turma, contagem) {
+    const total = estado.alunos.alunos.length;
+    const inativos = estado.risco.alunos.filter((a) => a.motivos.some((m) => m.tipo === "inatividade")).length;
+    // progresso médio: o indicador 1 do Agente 3 (oculto se o grupo estiver abaixo do mínimo)
+    const progresso = turma.suprimido ? "oculto" : fracaoTexto(turma.progresso_medio);
+    $("geral-numeros").replaceChildren(
+      numero("Alunos ativos", String(total - inativos), "de " + total + "; inativo: sem atividade há " +
+        estado.risco.criterios.inatividade_dias + " dias ou mais"),
+      numero("Precisam de atenção", String(estado.risco.alunos.length), "com pelo menos um alerta",
+        "numero--alerta"),
+      numero("Progresso médio na trilha", progresso, turma.suprimido ? "grupo com menos de " + turma.min_grupo +
+        " alunos" : "etapas concluídas, média da turma", "numero--progresso"),
+      numero("Textos para revisar", contagem === null ? "—" : String(contagem), "escritos pela IA local",
+        "numero--aviso", () => irPara("revisao")));
+  }
+
+  // um cartão por motivo; a cor acompanha a gravidade (o texto diz o motivo: nada depende só de cor)
+  const COR_MOTIVO = {
+    desempenho_em_queda: "alerta--grave", desempenho_baixo: "alerta--grave",
+    conclusao_sem_dominio: "alerta--atencao", inatividade: "alerta--neutro",
+  };
+  const ORDEM_GRAVIDADE = ["desempenho_em_queda", "desempenho_baixo", "conclusao_sem_dominio", "inatividade"];
+
+  function mostrarAlertas() {
     const r = estado.risco;
     if (!r) return;
     const c = r.criterios;
-    $("risco-criterios").textContent = "Critérios: sem atividade há " + c.inatividade_dias +
+    estado.inatividadeDias = c.inatividade_dias;
+    $("risco-criterios").textContent = "Sem atividade há " + c.inatividade_dias +
       " dias ou mais (quem concluiu a trilha não entra); queda de " + Math.round(c.queda_pontos * 100) +
       " pontos ou mais no acerto recente; acerto abaixo de " + porcento(c.desempenho_baixo) + " com pelo menos " +
       c.min_respostas + " respostas; questões de uma competência terminadas sem domínio (avança só com acerto de " +
       porcento(c.acerto_min_avanco) + " ou mais). Avaliados: " + r.alunos_avaliados + " alunos.";
     const filtro = $("filtro-motivo").value;
+    // um cartão por aluno (a API já ordena: mais motivos primeiro), com a cor do motivo mais grave
     const alunos = r.alunos.filter((a) => !filtro || a.motivos.some((m) => m.tipo === filtro));
-    $("risco-lista").replaceChildren(alunos.length ? tabela("Alunos em risco",
-      ["Código", "Motivos", "Dias sem atividade", "Acerto", "Tendência", "Progresso", ""],
-      alunos.map((a) => [
-        el("code", { texto: a.aluno_id }),
-        el("ul", { classe: "motivos" }, a.motivos.map((m) => el("li", {},
-          selo(MOTIVO[m.tipo] || m.tipo, "selo--alerta"), " ", m.descricao))),
-        a.dias_inativo === null ? "—" : String(a.dias_inativo),
-        fracaoTexto(a.taxa_acerto) + " (" + a.respostas + " resp.)",
-        DIRECAO[a.tendencia] || a.tendencia,
-        fracaoTexto(a.progresso),
-        el("button", { type: "button", classe: "botao botao--link acao", texto: "Ver auditoria",
-          "aria-label": "Ver auditoria do aluno " + a.aluno_id,
-          onclick: () => auditoriaDoAluno(a.aluno_id) }),
-      ])) : el("p", { classe: "aviso", texto: filtro ? "Nenhum aluno com este motivo." : "Nenhum aluno em risco." }));
-    $("risco-auditoria").textContent = "Esta consulta foi registrada na auditoria em seu nome (registro nº " +
-      r.auditoria_id + ", " + dataHora(r.gerado_em) + ").";
+    $("geral-alertas").replaceChildren(...(alunos.length ? alunos.map((a) => {
+      const cor = ORDEM_GRAVIDADE.find((tipo) => a.motivos.some((m) => m.tipo === tipo));
+      return el("li", { classe: "alerta " + (COR_MOTIVO[cor] || "") },
+        el("span", { classe: "alerta__aluno" }, el("code", { texto: a.aluno_id })),
+        ...a.motivos.flatMap((m) => [el("span", { classe: "alerta__titulo", texto: MOTIVO[m.tipo] || m.tipo }),
+          el("span", { classe: "alerta__detalhe", texto: m.descricao })]),
+        el("button", { type: "button", classe: "botao botao--link acao nao-imprimir", texto: "Ver auditoria",
+          "aria-label": "Ver auditoria do aluno " + a.aluno_id, onclick: () => auditoriaDoAluno(a.aluno_id) }));
+    }) : [el("li", { classe: "aviso", texto: filtro ? "Nenhum aluno com este motivo." : "Nenhum aluno em risco." })]));
+  }
+
+  // situação de cada aluno na tabela (uma só, a mais urgente; regras dos alertas)
+  const SITUACAO_ALUNO = {
+    no_ritmo: ["No ritmo", "chip--ok"],
+    trilha_concluida: ["Trilha concluída", "chip--ok"],
+    desempenho_em_queda: ["Queda", "chip--alerta"],
+    desempenho_baixo: ["Desempenho baixo", "chip--alerta"],
+    conclusao_sem_dominio: ["Com ressalvas", "chip--atencao"],
+    inatividade: ["Inativo", "chip--atencao"],
+    sem_trilha: ["Sem trilha", "chip--atencao"],
+  };
+
+  function botoesDeNivel() {
+    const opcoes = [["", "Todos"]].concat(Object.entries(estado.perfis));
+    $("filtro-nivel").replaceChildren(...opcoes.map(([id, nomePerfil]) => el("button", {
+      type: "button", classe: "chip-filtro", texto: nomePerfil, "aria-pressed": String(id === estado.nivel),
+      onclick: () => { estado.nivel = id; botoesDeNivel(); mostrarAlunos(); } })));
+  }
+
+  function mostrarAlunos() {
+    if (!estado.alunos) return;
+    botoesDeNivel();
+    const alunos = estado.alunos.alunos.filter((a) => !estado.nivel || a.perfil_id === estado.nivel);
+    $("geral-alunos").replaceChildren(alunos.length ? tabela("Alunos da turma",
+      ["Aluno", "Competência atual", "Acerto", "Situação"],
+      alunos.map((a) => {
+        const [texto, classe] = SITUACAO_ALUNO[a.situacao] || [a.situacao, ""];
+        return [el("code", { texto: a.aluno_id }),
+          a.competencia_atual ? nome(a.competencia_atual) : "—",
+          fracaoTexto(a.taxa_acerto),
+          el("span", { classe: "chip " + classe, texto })];
+      })) : el("p", { classe: "aviso", texto: "Nenhum aluno neste nível." }));
+  }
+
+  // contador do menu: só o número de textos a revisar (rota sem códigos, não auditada)
+  async function atualizarContador() {
+    try {
+      const r = await chamar("GET", "/painel/revisao/contagem?origem=LLM", null, "Contando os textos a revisar…");
+      $("contador-revisao").textContent = String(r.a_revisar);
+      $("contador-revisao").hidden = !r.a_revisar;
+      $("contador-revisao").setAttribute("aria-label", r.a_revisar + " a revisar");
+      return r.a_revisar;
+    } catch (erro) {
+      $("contador-revisao").hidden = true;
+      return null;
+    }
   }
 
   function auditoriaDoAluno(codigo) {
@@ -362,11 +515,15 @@
       : el("p", { texto: "Nenhuma questão com erro repetido entre as respondidas por alunos suficientes." }));
   }
 
-  // --- 4) revisão docente (R12): feedback das questões e respostas do diálogo ---
+  // --- revisar textos (R12): feedback das questões e respostas do diálogo ---
 
   // rota do veto de cada tipo (as duas já existiam no Tutor; vetada=false numa resposta sem veto = aprovação)
   const ROTA_VETO = { dialogo: "/tutor/dialogo/{id}/veto", feedback: "/tutor/feedback/{id}/veto" };
-  const TIPO_TEXTO = { dialogo: "Resposta do diálogo", feedback: "Feedback de questão" };
+  const TIPO_TEXTO = { dialogo: "Resposta a pergunta", feedback: "Explicação de questão" };
+  const TITULO_FILA = { a_revisar: "Aguardando revisão", aprovadas: "Aprovados", vetadas: "Vetados",
+    todas: "Todos os textos" };
+
+  function chaveDe(item) { return item.tipo + "-" + item.id; }
 
   function resumoTipo(titulo, resumo) {
     return el("div", { classe: "resumo-tipo" },
@@ -384,8 +541,9 @@
       if ($(campo).value) parametros.set(chave, $(campo).value);
     }
     const r = await chamar("GET", "/painel/revisao?" + parametros, null, "Carregando os textos…");
+    estado.revisao = r;
     const f = r.feedbacks_por_origem;
-    $("revisao-resumo").replaceChildren(el("div", { classe: "cartao resumo-revisao" },
+    $("revisao-resumo").replaceChildren(el("div", { classe: "resumo-revisao" },
       el("div", { classe: "resumo-revisao__tipos" },
         resumoTipo("Feedback das questões", r.feedback), resumoTipo("Respostas do diálogo", r.dialogo)),
       el("p", { classe: "dica", texto: "Origem de todos os feedbacks de questões: IA local " + f.LLM +
@@ -393,89 +551,119 @@
         (r.feedbacks_sem_texto ? " " + r.feedbacks_sem_texto + " resposta(s) antiga(s) sem texto gravado " +
           "(não revisáveis)." : "") }),
       el("p", { classe: "dica", texto: "Consulta registrada na auditoria (registro nº " + r.auditoria_id + ")." })));
-    $("revisao-total").textContent = r.total + " texto(s) com estes filtros, do mais recente para o mais antigo.";
-    $("revisao-lista").replaceChildren(...(r.itens.length ? r.itens.map(itemRevisao)
-      : [el("li", { classe: "aviso", texto: "Nenhum texto com este filtro." })]));
+    $("titulo-fila").textContent = (TITULO_FILA[$("filtro-situacao").value] || "Textos") + " (" + r.total + ")";
+    $("revisao-total").textContent = r.total ? "Do mais recente para o mais antigo; " + r.por_pagina +
+      " por página." : "";
+    // mantém o texto aberto se ele ainda está na lista; senão abre o primeiro
+    if (!r.itens.some((i) => chaveDe(i) === estado.selecionado)) {
+      estado.selecionado = r.itens.length ? chaveDe(r.itens[0]) : null;
+    }
+    mostrarFila();
+    mostrarTextoSelecionado();
     paginacao($("revisao-paginas"), r.pagina, r.total, r.por_pagina, (pagina) => {
       estado.paginaRevisao = pagina;
+      estado.selecionado = null;
       carregarRevisao().catch(mostrarErro);
     });
   }
 
-  function blocoTexto(rotulo, texto, classe) {
-    return el("p", { classe }, el("span", { classe: "rotulo", texto: rotulo }), texto || "");
+  function mostrarFila() {
+    const r = estado.revisao;
+    $("revisao-lista").replaceChildren(...(r.itens.length ? r.itens.map((item) => {
+      const atual = chaveDe(item) === estado.selecionado;
+      return el("li", {}, el("button", { type: "button", classe: "fila__item",
+        "aria-current": atual ? "true" : null,
+        "aria-label": (TIPO_TEXTO[item.tipo] || item.tipo) + " do aluno " + item.aluno_id + ", " +
+          nome(item.competencia_id) + (item.situacao === "a_revisar" ? "" : ", " + SITUACAO[item.situacao]),
+        onclick: () => {
+          estado.selecionado = chaveDe(item);
+          mostrarFila();
+          mostrarTextoSelecionado();
+          $("revisao-detalhe").focus();
+        } },
+      el("span", { classe: "fila__aluno" }, el("code", { texto: item.aluno_id })),
+      el("span", { classe: "fila__competencia", texto: nome(item.competencia_id) }),
+      el("span", { classe: "fila__tipo" }, (TIPO_TEXTO[item.tipo] || item.tipo) + " · " + dataHora(item.ts),
+        item.situacao === "a_revisar" ? null : el("span", {
+          classe: "chip " + (item.vetada ? "chip--alerta" : "chip--ok"), texto: SITUACAO[item.situacao] }))));
+    }) : [el("li", { classe: "aviso", texto: "Nenhum texto com este filtro." })]));
   }
 
-  function itemRevisao(item) {
-    const chave = item.tipo + "-" + item.id;
-    const id = "revisao-" + chave;
+  function bloco(rotulo, ...conteudo) {
+    return el("div", { classe: "bloco" }, el("span", { classe: "bloco__rotulo", texto: rotulo }), ...conteudo);
+  }
+
+  function mostrarTextoSelecionado() {
+    const area = $("revisao-detalhe");
+    const item = estado.revisao && estado.revisao.itens.find((i) => chaveDe(i) === estado.selecionado);
+    if (!item) {
+      area.replaceChildren(el("p", { classe: "dica", texto: "Nenhum texto para revisar com este filtro." }));
+      return;
+    }
     const ehFeedback = item.tipo === "feedback";
-    const acoes = el("div", { classe: "linha-botoes nao-imprimir" });
-    const formVeto = formularioVeto(item, chave);
-    if (item.situacao !== "aprovada" && !item.vetada) {
-      acoes.append(el("button", { type: "button", classe: "botao acao", texto: "Aprovar",
-        "aria-describedby": id, onclick: () => revisar(item, { vetada: false }, "Aprovando…") }));
-    }
-    if (item.vetada) {
-      acoes.append(el("button", { type: "button", classe: "botao botao--secundario acao",
-        texto: "Retirar veto (aprovar a original)", "aria-describedby": id,
-        onclick: () => revisar(item, { vetada: false }, "Retirando o veto…") }));
-    }
-    acoes.append(el("button", { type: "button", classe: "botao botao--secundario acao",
-      texto: item.vetada ? "Editar correção" : "Vetar…", "aria-describedby": id, "aria-expanded": "false",
-      onclick: (e) => {
-        formVeto.hidden = !formVeto.hidden;
-        e.currentTarget.setAttribute("aria-expanded", String(!formVeto.hidden));
-        if (!formVeto.hidden) formVeto.querySelector("textarea").focus();
-      } }));
-    const original = item.vetada ? (ehFeedback ? "Explicação original (vetada): " : "Resposta original (vetada): ")
-      : (ehFeedback ? "Explicação que o aluno viu: " : "Resposta do tutor: ");
-    return el("li", { classe: "cartao item-revisao" },
-      el("div", { classe: "item-revisao__cabeca" },
-        el("p", { classe: "etapa__dados", id },
-          (TIPO_TEXTO[item.tipo] || item.tipo) + " nº " + item.id + " · aluno ", el("code", { texto: item.aluno_id }),
-          " · " + nome(item.competencia_id) + (ehFeedback && item.item_id ? " · questão " + item.item_id +
-            (item.nivel ? " (nível " + item.nivel + ")" : "") : "") + " · " + dataHora(item.ts)),
-        selo(SITUACAO[item.situacao] || item.situacao,
-          item.vetada ? "selo--erro" : item.situacao === "aprovada" ? "selo--sucesso" : "")),
-      blocoTexto(ehFeedback ? "Questão: " : "Pergunta do aluno: ", item.pergunta, "conversa__pergunta"),
-      ehFeedback && item.veredito ? blocoTexto("Veredito automático: ", item.veredito,
-        "veredito-texto " + (item.acertou ? "veredito--acerto" : "veredito--erro")) : null,
-      blocoTexto(original, item.resposta, "conversa__resposta" + (item.vetada ? " riscado" : "")),
-      el("p", { classe: "origem", texto: "Origem: " + item.origem + " — " + (ORIGEM[item.origem] || "") +
-        (item.falha_llm ? " Motivo: " + (FALHA[item.falha_llm] || item.falha_llm) + "." : "") }),
-      item.explicacao_descartada ? el("div", { classe: "descartado" },
-        blocoTexto("Texto da IA barrado pela verificação (o aluno não viu): ", item.explicacao_descartada),
-        item.motivo_descarte ? blocoTexto("Motivo do descarte: ", item.motivo_descarte, "origem") : null) : null,
-      item.fontes.length ? el("div", { classe: "fontes" }, "Fontes citadas (R03):",
-        el("ul", {}, item.fontes.map((fonte) => el("li", {}, el("code", { texto: fonte })))))
-        : el("p", { classe: "fontes", texto: ehFeedback ? "Sem fonte do material: texto do próprio item."
+    const titulo = "titulo-texto-" + chaveDe(item);
+    const campo = "correcao-" + chaveDe(item);
+    const textoTutor = el("div", { classe: "texto-tutor" + (item.vetada ? " texto-tutor--vetado" : "") },
+      el("span", { classe: "bloco__rotulo", texto: item.vetada ? "Texto original do tutor (vetado)"
+        : "Texto escrito pelo tutor" }),
+      el("p", { classe: "texto-tutor__texto" + (item.vetada ? " riscado" : ""), texto: item.resposta || "" }),
+      el("details", { classe: "fonte" }, el("summary", { texto: "Ver fonte" }),
+        item.fontes.length ? el("ul", {}, item.fontes.map((fonte) => el("li", {}, "Material: ",
+          el("code", { texto: fonte })))) : el("p", { texto: ehFeedback ? "Sem fonte do material: texto do próprio item."
           : "Sem fonte citada." }),
-      item.vetada ? blocoTexto("Correção do docente (o aluno vê esta): ", item.correcao_docente, "correcao") : null,
-      acoes, formVeto);
-  }
+        el("p", { classe: "origem", texto: "Origem: " + item.origem + " — " + (ORIGEM[item.origem] || "") +
+          (item.falha_llm ? " Motivo: " + (FALHA[item.falha_llm] || item.falha_llm) + "." : "") })));
 
-  function formularioVeto(item, chave) {
-    const campo = "correcao-" + chave;
-    const form = el("form", { classe: "form-veto", novalidate: true, hidden: true,
-      onsubmit: (e) => {
-        e.preventDefault();
-        const texto = form.querySelector("textarea").value.trim();
-        if (!texto) {
-          mostrarErro(new ErroApi("Escreva a correção (o motivo do veto) que o aluno vai ver.", 0));
-          form.querySelector("textarea").focus();
+    const acoes = el("div", { classe: "linha-botoes texto-revisao__acoes nao-imprimir" });
+    const vetar = (rotulo) => el("button", { type: "button", classe: "botao botao--vetar acao", texto: rotulo,
+      "aria-describedby": titulo, onclick: () => {
+        const correcao = $(campo).value.trim();
+        if (!correcao) {
+          mostrarErro(new ErroApi("Escreva a correção que o aluno vai ver: ela é obrigatória para vetar.", 0));
+          $(campo).focus();
           return;
         }
-        revisar(item, { vetada: true, correcao_docente: texto }, "Gravando o veto…");
-      } },
-    el("label", { for: campo, texto: "Correção que o aluno vai ver (explique o motivo do veto)" }),
-    el("textarea", { id: campo, rows: 3, maxlength: 2000, required: true }),
-    el("div", { classe: "linha-botoes" },
-      el("button", { type: "submit", classe: "botao acao", texto: "Confirmar veto" }),
-      el("button", { type: "button", classe: "botao botao--secundario", texto: "Cancelar",
-        onclick: () => { form.hidden = true; } })));
-    if (item.correcao_docente) form.querySelector("textarea").value = item.correcao_docente;
-    return form;
+        revisar(item, { vetada: true, correcao_docente: correcao }, "Gravando o veto…");
+      } });
+    if (item.vetada) {
+      acoes.append(el("button", { type: "button", classe: "botao botao--secundario acao",
+        texto: "Retirar veto (aprovar a original)", "aria-describedby": titulo,
+        onclick: () => revisar(item, { vetada: false }, "Retirando o veto…") }), vetar("Salvar correção"));
+    } else {
+      acoes.append(vetar("Vetar com correção"));
+      if (item.situacao !== "aprovada") {
+        acoes.append(el("button", { type: "button", classe: "botao acao", texto: "Aprovar", "aria-describedby": titulo,
+          onclick: () => revisar(item, { vetada: false }, "Aprovando…") }));
+      }
+    }
+
+    // replaceChildren nativo escreveria "null": os blocos ausentes saem antes
+    area.replaceChildren(...[
+      el("div", { classe: "texto-revisao__cabeca" },
+        el("h2", { id: titulo }, el("code", { texto: item.aluno_id }), " · " + nome(item.competencia_id)),
+        el("span", { classe: "dica" }, (TIPO_TEXTO[item.tipo] || item.tipo) + " nº " + item.id + " · ",
+          el("span", { classe: "chip " + (item.vetada ? "chip--alerta" : item.situacao === "aprovada" ? "chip--ok"
+            : "chip--atencao"), texto: SITUACAO[item.situacao] || item.situacao }))),
+      bloco(ehFeedback ? "Questão" + (item.item_id ? " " + item.item_id + (item.nivel ? " (nível " + item.nivel +
+        ")" : "") : "") : "Pergunta do aluno", el("p", { classe: "bloco__texto", texto: item.pergunta || "" })),
+      ehFeedback && item.veredito ? bloco("Veredito automático", el("p", {
+        classe: "bloco__texto veredito-texto " + (item.acertou ? "veredito--acerto" : "veredito--erro"),
+        texto: item.veredito })) : null,
+      textoTutor,
+      item.explicacao_descartada ? el("details", { classe: "descartado" },
+        el("summary", { texto: "Texto da IA barrado pela verificação (o aluno não viu)" }),
+        el("p", { classe: "bloco__texto", texto: item.explicacao_descartada }),
+        item.motivo_descarte ? el("p", { classe: "origem", texto: "Motivo do descarte: " + item.motivo_descarte })
+          : null) : null,
+      item.vetada ? bloco("Correção atual (o aluno vê esta)", el("p", { classe: "correcao",
+        texto: item.correcao_docente || "" })) : null,
+      el("div", { classe: "campo-correcao nao-imprimir" },
+        el("label", { for: campo, texto: item.vetada ? "Nova correção (obrigatória para salvar)"
+          : "Correção (obrigatória para vetar)" }),
+        el("textarea", { id: campo, rows: 4, maxlength: 2000,
+          placeholder: "Escreva aqui o texto correto que o aluno deve ver." })),
+      acoes].filter(Boolean));
+    if (item.correcao_docente) $(campo).value = item.correcao_docente;
   }
 
   // única escrita do painel: as rotas de veto do Tutor (cada uso grava veto_docente na auditoria)
@@ -483,7 +671,8 @@
     try {
       await chamar("PATCH", ROTA_VETO[item.tipo].replace("{id}", encodeURIComponent(item.id)), corpo, texto);
       await carregarRevisao();
-      $("revisao-resumo").focus();
+      await atualizarContador();
+      $("revisao-detalhe").focus();
     } catch (erro) { mostrarErro(erro); }
   }
 
@@ -537,6 +726,7 @@
     $("filtro-grupo").hidden = true;
     $("tela-login").hidden = false;
     $("form-login").hidden = !!semFormulario;
+    $("login-outro-papel").hidden = !semFormulario;
     TIA.esconderTrocaDeSenha();
     $("login-mensagem").textContent = mensagem || "";
     $("login-mensagem").hidden = !mensagem;
@@ -559,9 +749,9 @@
     }
     $("tela-login").hidden = true;
     $("abas").hidden = false;
-    $("filtro-grupo").hidden = false;
-    // a tela inicial pode vir no endereço (ex.: /app/painel/#risco)
-    const inicial = TELAS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "geral";
+    // a tela inicial pode vir no endereço (ex.: /app/painel/#revisao)
+    const pedida = TELA_ANTIGA[location.hash.slice(1)] || location.hash.slice(1);
+    const inicial = TELAS.includes(pedida) ? pedida : "geral";
     if (!Object.keys(estado.nomes).length) {
       try { await carregarConteudo(); } catch (erro) { mostrarErro(erro); }
     }
@@ -613,17 +803,19 @@
     $("erro-fechar").addEventListener("click", esconderErro);
     document.querySelectorAll(".aba").forEach((aba) => aba.addEventListener("click", () => irPara(aba.dataset.tela)));
     $("campo-perfil").addEventListener("change", () => {
-      if (["geral", "risco", "competencias"].includes(estado.tela)) AO_ABRIR[estado.tela]().catch(mostrarErro);
+      if (COM_GRUPO.includes(estado.tela)) AO_ABRIR[estado.tela]().catch(mostrarErro);
     });
-    $("atualizar-geral").addEventListener("click", () => carregarGeral().catch(mostrarErro));
+    $("atualizar-relatorio").addEventListener("click", () => carregarRelatorio().catch(mostrarErro));
     $("gerar-narrativa").addEventListener("click", gerarNarrativa);
-    $("imprimir").addEventListener("click", () => window.print());
-    $("atualizar-risco").addEventListener("click", () => carregarRisco().catch(mostrarErro));
-    $("filtro-motivo").addEventListener("change", mostrarRisco);
+    // a impressão leva todos os indicadores (o detalhe recolhido abre antes)
+    $("imprimir").addEventListener("click", () => { $("relatorio-detalhes").open = true; window.print(); });
+    $("atualizar-geral").addEventListener("click", () => carregarVisaoGeral().catch(mostrarErro));
+    $("filtro-motivo").addEventListener("change", mostrarAlertas);
     $("atualizar-competencias").addEventListener("click", () => carregarCompetencias().catch(mostrarErro));
     $("form-revisao").addEventListener("submit", (e) => {
       e.preventDefault();
       estado.paginaRevisao = 1;
+      estado.selecionado = null;
       carregarRevisao().catch(mostrarErro);
     });
     $("form-auditoria").addEventListener("submit", (e) => {
@@ -632,11 +824,12 @@
       carregarAuditoria().catch(mostrarErro);
     });
     window.addEventListener("unhandledrejection", (e) => { e.preventDefault(); mostrarErro(e.reason); });
-    $("revisao-resumo").setAttribute("tabindex", "-1");
+    $("revisao-detalhe").setAttribute("tabindex", "-1");
     TIA.configurar({ aoExigirLogin: () => mostrarLogin("Sua sessão terminou. Entre de novo.") });
     $("form-login").addEventListener("submit", entrarComSenha);
     TIA.ligarTrocaDeSenha(iniciar);
     $("sair").addEventListener("click", encerrarSessao);
+    $("sair-outro-papel").addEventListener("click", encerrarSessao);
     iniciar().catch(mostrarErro);
   });
 })();

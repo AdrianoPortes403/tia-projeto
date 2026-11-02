@@ -5,14 +5,15 @@ Testes do painel do docente (EAP 1.4.5), com o TestClient, banco temporário
 - /app/painel e os arquivos estáticos (tipo, cabeçalhos de segurança, aviso de protótipo);
 - o JavaScript: sem innerHTML/console/eval, ids existentes, rótulos, cores só no tema;
 - contrato: os campos e valores que painel.js lê existem nos modelos;
-- rotas novas de leitura: ementa, perfis, alunos em risco, competências, revisão,
-  auditoria filtrável e exportação CSV;
+- rotas novas de leitura: ementa, perfis, alunos em risco, lista de alunos (só os
+  campos permitidos), competências, revisão, contador da revisão (sem código e sem
+  auditoria), auditoria filtrável e exportação CSV;
 - regra do grupo mínimo (nenhum grupo abaixo de RELATORIO_MIN_GRUPO e nenhum
   código de aluno nas visões agregadas);
 - escape: texto da API chega cru no JSON (o front usa textContent) e o CSV não
   deixa fórmula entrar na planilha;
-- auditoria: cada consulta de risco e de revisão grava um registro; aprovar e
-  vetar gravam "veto_docente".
+- auditoria: cada consulta de risco, da lista de alunos e de revisão grava um
+  registro; o contador da revisão não grava; aprovar e vetar gravam "veto_docente".
 
 Como rodar:
     ./run_tests.sh tests/test_painel.py
@@ -102,9 +103,11 @@ def test_pagina_do_painel_reaproveita_tema_e_utilidades():
         assert client.get(f"/app/{arquivo}").status_code == 200
 
 
-def test_tela_de_risco_avisa_que_a_consulta_e_auditada():
+def test_visao_geral_avisa_que_a_consulta_e_auditada():
+    """A visão geral (redesenho de 01/11/2026) mostra os alunos em risco com código."""
     html = ler("index.html")
-    tela = html[html.index('id="tela-risco"'):html.index('id="tela-competencias"')]
+    inicio = html.index('id="tela-geral"')
+    tela = html[inicio:html.index('<section class="tela"', inicio)]
     assert "códigos de aluno (nunca nomes)" in tela and "auditoria em seu nome" in tela
 
 
@@ -165,6 +168,9 @@ CAMPOS_USADOS = {
     painel.AlunoEmRisco: {"aluno_id", "motivos", "dias_inativo", "taxa_acerto", "respostas", "tendencia",
                           "progresso"},
     painel.MotivoRisco: {"tipo", "descricao"},
+    painel.ListaAlunos: {"alunos", "auditoria_id", "gerado_em"},
+    painel.AlunoTurma: {"aluno_id", "perfil_id", "competencia_atual", "taxa_acerto", "situacao"},
+    painel.ContagemRevisao: {"a_revisar"},
     painel.DesempenhoCompetencias: {"alunos", "min_grupo", "suprimido", "competencias", "itens_fracos"},
     painel.CompetenciaTurma: {"nome", "taxa", "suprimido", "alunos", "respostas", "tendencia"},
     painel.ItemTurma: {"item_id", "nome_competencia", "nivel", "enunciado", "taxa_erro", "alunos_com_erro",
@@ -190,6 +196,7 @@ def test_valores_que_o_painel_traduz():
     """Cada valor possível da API tem texto no painel (motivos, tendência, alertas, tipos, agentes)."""
     js, html = ler("painel.js"), ler("index.html")
     valores = (list(get_args(painel.TipoRisco)) + list(get_args(relatorio.Direcao))
+               + list(get_args(painel.SituacaoAluno))
                + list(get_args(relatorio.AlertaTurma.model_fields["tipo"].annotation)) + list(auditoria.TIPOS)
                + list(auditoria.AGENTES) + ["a_revisar", "aprovada", "vetada"])
     for valor in valores:
@@ -245,6 +252,70 @@ def test_cada_consulta_de_risco_vai_para_a_auditoria(turma):
     # e aparecem na auditoria do painel, filtradas pelo agente "painel"
     pagina = client.get("/painel/auditoria?agente=painel").json()
     assert pagina["total"] == 2 and all(x["tipo"] == "consulta_painel" for x in pagina["registros"])
+
+
+# --- lista de alunos da visão geral (com códigos, só os campos permitidos) ---
+
+CAMPOS_DO_ALUNO = {"aluno_id", "perfil_id", "competencia_atual", "taxa_acerto", "situacao"}
+
+
+def test_lista_de_alunos_so_com_os_campos_permitidos(turma):
+    resposta = client.get("/painel/alunos")
+    r = resposta.json()
+    assert [a["aluno_id"] for a in r["alunos"]] == [f"DEMO-P{n:02d}" for n in range(1, 13)]
+    # minimização (R08): código, perfil, competência atual, acerto e situação; nada além
+    assert all(set(a) == CAMPOS_DO_ALUNO for a in r["alunos"])
+    assert set(painel.AlunoTurma.model_fields) == CAMPOS_DO_ALUNO
+    texto = resposta.text.lower()
+    for proibido in ("nome", "objetivo", "pergunta", "resposta", "dialogo", "[demonstração]"):
+        assert proibido not in texto, proibido
+    for pergunta, resposta_dialogo, *_ in dados_painel.DIALOGOS:
+        assert pergunta.lower() not in texto and resposta_dialogo.lower() not in texto
+    ementa = {c["id"] for c in client.get("/conteudo/ementa").json()}
+    assert all(a["competencia_atual"] in ementa for a in r["alunos"] if a["competencia_atual"])
+
+
+def test_situacao_de_cada_aluno_segue_os_alertas(turma):
+    por_id = {a["aluno_id"]: a for a in client.get("/painel/alunos").json()["alunos"]}
+    risco = {a["aluno_id"]: {m["tipo"] for m in a["motivos"]} for a in
+             client.get("/painel/alunos-em-risco").json()["alunos"]}
+    for codigo, aluno in por_id.items():
+        if codigo in risco:
+            assert aluno["situacao"] in risco[codigo], codigo  # o motivo mais urgente
+        else:
+            assert aluno["situacao"] in ("no_ritmo", "trilha_concluida"), codigo
+    # P08: queda e desempenho baixo -> queda (mais urgente); P02 concluiu a trilha
+    assert por_id["DEMO-P08"]["situacao"] == "desempenho_em_queda"
+    assert (por_id["DEMO-P02"]["situacao"], por_id["DEMO-P02"]["competencia_atual"]) == ("trilha_concluida", None)
+    assert por_id["DEMO-P10"]["taxa_acerto"] is None  # recém-matriculado, sem respostas
+    assert {a["perfil_id"] for a in client.get("/painel/alunos?perfil_id=iniciante").json()["alunos"]} == {"iniciante"}
+
+
+def test_cada_consulta_da_lista_de_alunos_vai_para_a_auditoria(turma):
+    assert consultas_auditadas("alunos") == []
+    r = client.get("/painel/alunos").json()
+    registros = consultas_auditadas("alunos")
+    assert len(registros) == 1 and registros[0]["id"] == r["auditoria_id"]
+    assert registros[0]["aluno_id"] is None and "12 aluno(s) exibido(s)" in registros[0]["motivo"]
+    assert "DEMO-P01" in registros[0]["motivo"] and "DEMO-P12" in registros[0]["motivo"]
+    assert client.get("/painel/alunos?perfil_id=a b").status_code == 422
+
+
+def test_contador_da_revisao_so_numero_e_sem_auditoria(turma):
+    conexao = obter_conexao()
+    try:
+        antes = conexao.execute("SELECT COUNT(*) FROM auditoria").fetchone()[0]
+        resposta = client.get("/painel/revisao/contagem?origem=LLM")
+        depois = conexao.execute("SELECT COUNT(*) FROM auditoria").fetchone()[0]
+    finally:
+        conexao.close()
+    assert resposta.status_code == 200 and resposta.json() == {"a_revisar": resposta.json()["a_revisar"]}
+    assert "DEMO-P" not in resposta.text and depois == antes  # nenhum código e nenhuma linha de auditoria
+    # mesmo número que a lista da revisão com o mesmo filtro
+    lista = client.get("/painel/revisao?origem=LLM").json()
+    assert resposta.json()["a_revisar"] == lista["total"] > 0
+    assert client.get("/painel/revisao/contagem").json()["a_revisar"] >= lista["total"]
+    assert client.get("/painel/revisao/contagem?origem=docente").status_code == 422
 
 
 # --- regra do grupo mínimo (R08) ---
@@ -451,8 +522,50 @@ def test_dados_painel_nao_duplica(turma, capsys):
     assert capsys.readouterr().out.count("já existe no banco") == 12
 
 
+def test_turma_ampliada_para_demonstracao(monkeypatch):
+    """O que python -m tia.web.dados_painel cria (01/11/2026): 20+ alunos, os dois perfis acima do grupo
+    mínimo, todas as situações, reforço em andamento, erro repetido, fila de revisão longa e datas variadas."""
+    from tia import orquestrador
+
+    def falha_imediata(*args, **kwargs):
+        raise requests.ConnectionError("teste sem LLM")
+    monkeypatch.setattr(llm_client.requests, "post", falha_imediata)
+    criados = dados_painel.criar_turma_ampliada(datetime.now())
+    assert len(criados) == len(dados_painel.ALUNOS) + len(dados_painel.ALUNOS_AMPLIACAO) + 1 >= 20
+    assert all(re.fullmatch(r"DEMO-P\d\d", c) for c in criados)
+    assert dados_painel.criar_turma_ampliada() == []  # rodar de novo não duplica
+
+    alunos = client.get("/painel/alunos").json()["alunos"]
+    por_perfil = {p: sum(a["perfil_id"] == p for a in alunos) for p in ("iniciante", "intermediario")}
+    assert min(por_perfil.values()) >= RELATORIO_MIN_GRUPO, por_perfil
+    for perfil in por_perfil:  # nenhum perfil oculto
+        assert not client.get(f"/relatorio/turma?perfil_id={perfil}&narrativa=false").json()["suprimido"]
+    assert {a["situacao"] for a in alunos} >= {"no_ritmo", "desempenho_em_queda", "desempenho_baixo",
+                                               "conclusao_sem_dominio", "inatividade", "trilha_concluida"}
+    assert orquestrador.proxima("DEMO-P20").reforco  # reforço em andamento (fluxo real)
+
+    competencias = client.get("/painel/competencias").json()
+    assert len({i["competencia_id"] for i in competencias["itens_fracos"]}) >= 2
+    assert any(c["suprimido"] for c in competencias["competencias"])  # a regra do grupo mínimo continua visível
+
+    dialogos = client.get("/painel/revisao?tipo=dialogo&origem=LLM&por_pagina=10").json()
+    assert dialogos["total"] > 20  # mais de 2 páginas de 10 só de respostas do diálogo
+    assert {d[3] for d in dados_painel.DIALOGOS} == {"LLM", "guarda", "fallback"}
+    assert client.get("/painel/revisao/contagem?origem=LLM").json()["a_revisar"] > 100
+
+    conexao = obter_conexao()
+    try:
+        datas = [datetime.fromisoformat(l[0]) for l in conexao.execute(
+            "SELECT criado_em FROM orquestrador_matriculas WHERE aluno_id LIKE 'DEMO-P%'")]
+    finally:
+        conexao.close()
+    assert (max(datas) - min(datas)).days >= 30
+
+
 def test_dados_painel_sem_nomes():
     codigos = [aluno[0] for aluno in dados_painel.ALUNOS]
     assert len(codigos) == 12 and all(re.fullmatch(r"DEMO-P\d\d", c) for c in codigos)
+    ampliacao = [aluno[0] for aluno in dados_painel.ALUNOS_AMPLIACAO] + [dados_painel.ALUNO_REFORCO[0]]
+    assert all(re.fullmatch(r"DEMO-P\d\d", c) for c in ampliacao) and not set(ampliacao) & set(codigos)
     assert all("[demonstração]" in d[1] for d in dados_painel.DIALOGOS)
     assert json.dumps(dados_painel.DIALOGOS, ensure_ascii=False).count("@") == 0

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Primeiro acesso: confirmação</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a:focus-visible,button:focus-visible{outline:3px solid #C9A227;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height:760px;box-sizing:border-box;padding:48px 16px;display:flex;align-items:center;justify-content:center;background-color:#F4F1E6;background-image:linear-gradient(#E3E0CF 1px,transparent 1px),linear-gradient(90deg,#E3E0CF 1px,transparent 1px);background-size:48px 48px;color:#1F2A17;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+
+  <main style="width:100%;max-width:640px;box-sizing:border-box;background:#FFFFFF;border-radius:24px;padding:36px;display:flex;flex-direction:column;gap:28px;box-shadow:0 12px 40px rgba(59,74,42,.14)">
+
+    <ol aria-label="Etapas do primeiro acesso" style="list-style:none;margin:0;padding:0;display:flex;gap:8px">
+      <sc-for list="{{ etapas }}" as="e" hint-placeholder-count="4">
+        <li style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <span style="{{ e.barra }}"></span>
+          <span style="{{ e.rotulo }}">{{ e.nome }}</span>
+        </li>
+      </sc-for>
+    </ol>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <h1 style="margin:0;font-size:28px;line-height:1.2;font-weight:800">Confira antes de começar</h1>
+      <p style="margin:0;font-size:16px;color:#55604A">Seu plano só será criado depois que você confirmar.</p>
+    </div>
+
+    <dl style="margin:0;display:flex;flex-direction:column;border-radius:18px;background:#F4F1E6;padding:6px 20px">
+      <div style="display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:space-between;padding:14px 0;border-bottom:1px solid #E3E0CF">
+        <dt style="font-size:15px;color:#55604A">Trilha</dt>
+        <dd style="margin:0;font-size:16px;font-weight:700">Desenvolvimento de software</dd>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:space-between;padding:14px 0;border-bottom:1px solid #E3E0CF">
+        <dt style="font-size:15px;color:#55604A">Tempo por semana</dt>
+        <dd style="margin:0;font-size:16px;font-weight:700">6 horas</dd>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:space-between;padding:14px 0;border-bottom:1px solid #E3E0CF">
+        <dt style="font-size:15px;color:#55604A">Dias de estudo</dt>
+        <dd style="margin:0;font-size:16px;font-weight:700">Segunda a sexta</dd>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:space-between;padding:14px 0">
+        <dt style="font-size:15px;color:#55604A">Seu objetivo</dt>
+        <dd style="margin:0;font-size:16px;font-weight:700">Entender complexidade de algoritmos</dd>
+      </div>
+    </dl>
+
+    <p style="margin:0;font-size:15px;line-height:1.5;color:#55604A">As informações acima foram ditas por você. Se algo estiver errado, escolha corrigir.</p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center">
+      <a href="PrimeiroAcesso.dc.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;box-sizing:border-box;border-radius:14px;border:2px solid #D8D6C6;color:#1F2A17;font-size:16px;font-weight:700;text-decoration:none">Não, quero corrigir</a>
+      <a href="Main.dc.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 32px;box-sizing:border-box;border-radius:14px;background:#3B4A2A;color:#FFFFFF;font-size:16px;font-weight:700;text-decoration:none">Sim, criar meu plano</a>
+    </div>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const nomes = ['Senha', 'Trilha', 'Tempo', 'Confirmar'];
+    const atual = 3;
+    const etapas = nomes.map((nome, i) => ({
+      nome,
+      barra: 'height:6px;border-radius:999px;background:' + (i <= atual ? '#5C7040' : '#D8D6C6'),
+      rotulo: 'font-size:13px;' + (i === atual ? 'font-weight:800;color:#1F2A17' : 'font-weight:500;color:#55604A')
+    }));
+    return { etapas };
+  }
+}
+</script>
+</body>
+</html>

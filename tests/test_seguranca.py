@@ -274,7 +274,8 @@ def test_leitura_nao_precisa_do_token(pessoas):
 
 LEITURAS_DO_ALUNO = ["/aluno/{a}/estado", "/aluno/{a}/proximo", "/alunos/{a}/trilha", "/alunos/{a}/dialogo",
                      "/alunos/{a}/feedbacks", "/relatorio/aluno/{a}?narrativa=false", "/aluno/{a}/primeiro-acesso"]
-ROTAS_DO_DOCENTE = ["/painel/alunos-em-risco", "/painel/competencias", "/painel/revisao", "/painel/auditoria",
+ROTAS_DO_DOCENTE = ["/painel/alunos-em-risco", "/painel/alunos", "/painel/competencias", "/painel/revisao",
+                    "/painel/revisao/contagem", "/painel/auditoria",
                     "/painel/exportar/indicadores.csv", "/relatorio/turma?narrativa=false", "/auditoria/A2026-S01"]
 
 
@@ -514,7 +515,7 @@ def test_provedor_trocavel(pessoas, monkeypatch):
 
 
 def test_usuarios_de_demonstracao():
-    assert usuarios.criar_usuarios_demonstracao() == ["DEMO-W01", "DEMO-DOCENTE"]
+    assert usuarios.criar_usuarios_demonstracao() == ["DEMO-W01", "DEMO-W02", "DEMO-W03", "DEMO-DOCENTE"]
     assert usuarios.criar_usuarios_demonstracao() == []
     aluno, _ = logado("DEMO-W01", usuarios.SENHA_DEMONSTRACAO)
     assert aluno.get("/auth/eu").json()["usuario"] == {"id": "DEMO-W01", "papel": "aluno", "aluno_id": "DEMO-W01",

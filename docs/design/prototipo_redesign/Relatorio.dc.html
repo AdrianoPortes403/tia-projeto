@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Meu relatório</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a:focus-visible,button:focus-visible{outline:3px solid #C9A227;outline-offset:2px}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;min-height:860px;background:#F4F1E6;color:#1F2A17;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+
+  <aside style="flex:0 0 240px;box-sizing:border-box;background:#3B4A2A;color:#F4F1E6;padding:28px 16px;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;align-items:center;gap:12px;padding:0 8px">
+      <div style="width:40px;height:40px;border-radius:12px;background:#A8B88A;color:#2A3720;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">T</div>
+      <div style="display:flex;flex-direction:column">
+        <span style="font-weight:700;font-size:18px">TIA</span>
+        <span style="font-size:12px;color:#D9DEC8">Trilha de aprendizagem</span>
+      </div>
+    </div>
+    <nav aria-label="Principal" style="display:flex;flex-direction:column;gap:6px">
+      <a href="Main.dc.html" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:#F4F1E6;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        Início
+      </a>
+      <a href="Trilha.dc.html" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:#F4F1E6;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 0 0 0-8h-4a4 4 0 0 1 0-8h6"/></svg>
+        Trilha
+      </a>
+      <a href="Estudar.dc.html" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;color:#F4F1E6;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/></svg>
+        Estudar
+      </a>
+      <a href="Relatorio.dc.html" aria-current="page" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#F4F1E6;color:#2A3720;font-weight:700;font-size:15px;text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+        Meu relatório
+      </a>
+    </nav>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px 8px;border-top:1px solid #5C7040">
+      <div style="width:36px;height:36px;border-radius:50%;background:#A8B88A;color:#2A3720;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">AP</div>
+      <div style="display:flex;flex-direction:column;flex-grow:1">
+        <span style="font-size:14px;font-weight:600">Adriano</span>
+        <a href="Entrar.dc.html" style="font-size:13px;color:#D9DEC8">Sair</a>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:999 1 560px;min-width:0;box-sizing:border-box;padding:36px 44px;display:flex;flex-direction:column;gap:24px">
+
+    <header style="display:flex;flex-direction:column;gap:6px">
+      <h1 style="margin:0;font-size:34px;line-height:1.15;font-weight:800">Meu relatório</h1>
+      <p style="margin:0;font-size:16px;color:#55604A">Seu desempenho por competência, em linguagem simples.</p>
+    </header>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <div style="flex:1 1 200px;background:#FFFFFF;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:#55604A">Questões respondidas</span>
+        <span style="font-size:40px;line-height:1;font-weight:800">21</span>
+      </div>
+      <div style="flex:1 1 200px;background:#FFFFFF;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:#55604A">Taxa de acerto</span>
+        <span style="font-size:40px;line-height:1;font-weight:800;color:#3B4A2A">81%</span>
+      </div>
+      <div style="flex:1 1 200px;background:#FFFFFF;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:#55604A">Competências concluídas</span>
+        <span style="font-size:40px;line-height:1;font-weight:800">3 <span style="font-size:20px;font-weight:600;color:#55604A">de 7</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+
+      <section aria-labelledby="comp" style="flex:2 1 420px;min-width:0;background:#FFFFFF;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:20px">
+        <h2 id="comp" style="margin:0;font-size:20px;font-weight:800">Por competência</h2>
+        <sc-for list="{{ competencias }}" as="c" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;gap:12px;font-size:16px">
+              <span style="font-weight:600">{{ c.nome }}</span>
+              <span style="color:#55604A">{{ c.texto }}</span>
+            </div>
+            <div role="progressbar" aria-valuenow="{{ c.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ c.nome }}" style="height:12px;border-radius:999px;background:#ECE9DC">
+              <div style="{{ c.barra }}"></div>
+            </div>
+          </div>
+        </sc-for>
+      </section>
+
+      <section aria-label="Avisos" style="flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:16px">
+        <div style="background:#E6E9D2;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:8px">
+          <span style="font-size:13px;font-weight:700;color:#55604A">Sobre os textos do tutor</span>
+          <span style="font-size:15px;line-height:1.5">26 de 27 textos foram escritos pelo tutor (explicações e respostas às suas perguntas).</span>
+        </div>
+        <div style="background:#FBF3D4;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:8px">
+          <span style="font-size:13px;font-weight:700;color:#6B5200">Correções do professor</span>
+          <span style="font-size:15px;line-height:1.5;color:#3C3000">Nenhuma correção nova por enquanto.</span>
+        </div>
+        <a href="Estudar.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:52px;box-sizing:border-box;border-radius:14px;background:#3B4A2A;color:#FFFFFF;font-size:16px;font-weight:700;text-decoration:none">Voltar a estudar</a>
+      </section>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dados = [
+      { nome: 'Variáveis e tipos', acertos: 6, total: 6 },
+      { nome: 'Condicionais', acertos: 5, total: 6 },
+      { nome: 'Repetição', acertos: 4, total: 5 },
+      { nome: 'Funções', acertos: 2, total: 4 }
+    ];
+    const competencias = dados.map((d) => {
+      const pct = Math.round((d.acertos / d.total) * 100);
+      return {
+        nome: d.nome,
+        pct,
+        texto: d.acertos + ' de ' + d.total + ' (' + pct + '%)',
+        barra: 'height:12px;border-radius:999px;width:' + pct + '%;background:' + (pct >= 80 ? '#5C7040' : '#C9A227')
+      };
+    });
+    return { competencias };
+  }
+}
+</script>
+</body>
+</html>

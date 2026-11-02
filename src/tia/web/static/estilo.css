@@ -331,3 +331,672 @@ progress { width: 100%; height: 1rem; accent-color: var(--cor-primaria); }
   .botao { width: 100%; }
   .botao--link { width: auto; }
 }
+
+/* ======================================================================
+ * Aplicação do ALUNO (redesenho de 01/11/2026, docs/design/prototipo_redesign/).
+ * Tudo sob body.app-aluno. A estrutura (menu lateral, área, formas dos componentes e peças comuns)
+ * vale também para o painel do docente, body.app-docente (parte 2); o específico do painel está em painel/painel.css.
+ * ====================================================================== */
+
+/* foco: anel duplo (contorno escuro + dourado), visível sobre o creme, o branco e o menu */
+:is(.app-aluno, .app-docente) :focus-visible {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--cor-foco-contorno);
+}
+
+:is(.app-aluno, .app-docente) h1 { font-size: 2.125rem; font-weight: 800; letter-spacing: 0; margin: 0 0 var(--espaco-2); }
+:is(.app-aluno, .app-docente) h2 { font-size: 1.25rem; font-weight: 800; }
+:is(.app-aluno, .app-docente) h3 { font-weight: 700; }
+
+/* --- estrutura: menu lateral + área de conteúdo --- */
+:is(.app-aluno, .app-docente) .leiaute { display: flex; min-height: 100vh; }
+/* a coluna do menu vai até o fim da página, mesmo quando o conteúdo é mais alto que a janela */
+:is(.app-aluno, .app-docente) .leiaute:has(.menu:not([hidden]) #abas:not([hidden])) {
+  background: linear-gradient(to right, var(--cor-oliva) var(--largura-menu), transparent var(--largura-menu));
+}
+:is(.app-aluno, .app-docente) .menu {
+  flex: 0 0 var(--largura-menu);
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding: 1.75rem var(--espaco-3);
+  background: var(--cor-oliva);
+  color: var(--cor-sobre-menu);
+}
+/* sem aluno aberto (login, primeiro acesso), não há menu */
+:is(.app-aluno, .app-docente) .menu:has(#abas[hidden]) { display: none; }
+
+:is(.app-aluno, .app-docente) .marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 var(--espaco-2);
+  font-family: var(--fonte-texto);
+  font-size: 1.125rem;
+  letter-spacing: 0;
+}
+:is(.app-aluno, .app-docente) .marca__icone {
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--raio-pequeno);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor-verde-claro);
+  color: var(--cor-oliva-escuro);
+  font-weight: 800;
+}
+:is(.app-aluno, .app-docente) .marca__texto { display: flex; flex-direction: column; font-weight: 700; line-height: 1.2; }
+:is(.app-aluno, .app-docente) .marca__sub { margin: 0; font-size: 0.75rem; font-weight: 400; color: var(--cor-sobre-menu-suave); }
+
+:is(.app-aluno, .app-docente) .abas { flex-direction: column; gap: 0.375rem; margin: 0; max-width: none; }
+:is(.app-aluno, .app-docente) .aba {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 0.875rem;
+  border: none;
+  border-radius: var(--raio-pequeno);
+  background: none;
+  color: var(--cor-sobre-menu);
+  font-size: 0.9375rem;
+  text-align: left;
+}
+:is(.app-aluno, .app-docente) .aba:hover { background: var(--cor-oliva-escuro); color: var(--cor-sobre-menu); }
+:is(.app-aluno, .app-docente) .aba[aria-current="page"] {
+  background: var(--cor-creme);
+  color: var(--cor-oliva-escuro);
+  font-weight: 700;
+  border: none;
+}
+:is(.app-aluno, .app-docente) .aba__icone, :is(.app-aluno, .app-docente) .avatar svg, :is(.app-aluno, .app-docente) .icone {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+:is(.app-aluno, .app-docente) .menu__rodape { margin-top: auto; border-top: 1px solid var(--cor-verde); padding-top: 0.75rem; }
+:is(.app-aluno, .app-docente) .usuario, :is(.app-aluno, .app-docente) .aluno {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 var(--espaco-2);
+  font-size: 0.875rem;
+  color: var(--cor-sobre-menu-suave);
+}
+:is(.app-aluno, .app-docente) .usuario strong, :is(.app-aluno, .app-docente) .aluno strong { color: var(--cor-sobre-menu); font-weight: 600; }
+:is(.app-aluno, .app-docente) .avatar {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor-verde-claro);
+  color: var(--cor-oliva-escuro);
+}
+:is(.app-aluno, .app-docente) .usuario__dados { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--espaco-1); min-width: 0; }
+:is(.app-aluno, .app-docente) .usuario__dados strong { overflow-wrap: anywhere; }
+:is(.app-aluno, .app-docente) .usuario__papel { font-size: 0.8125rem; }
+:is(.app-aluno, .app-docente) .menu .botao--link {
+  flex-basis: 100%;
+  margin: 0;
+  padding: var(--espaco-1) 0;
+  min-height: 1.5rem;
+  text-align: left;
+  color: var(--cor-sobre-menu-suave);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+:is(.app-aluno, .app-docente) .area { flex: 1 1 auto; min-width: 0; padding: 2.25rem 2.75rem; }
+:is(.app-aluno, .app-docente) main, :is(.app-aluno, .app-docente) .aviso-prototipo, :is(.app-aluno, .app-docente) .carregando, :is(.app-aluno, .app-docente) .erro {
+  max-width: var(--largura-max);
+  margin-left: auto;
+  margin-right: auto;
+}
+:is(.app-aluno, .app-docente) main { padding: 0; }
+:is(.app-aluno, .app-docente) .aviso-prototipo { margin-top: 0; margin-bottom: var(--espaco-3); border-radius: var(--raio-pequeno); }
+:is(.app-aluno, .app-docente) .carregando, :is(.app-aluno, .app-docente) .erro { margin-top: 0; margin-bottom: var(--espaco-3); border-radius: var(--raio-pequeno); }
+
+/* --- componentes com a forma nova --- */
+:is(.app-aluno, .app-docente) .cartao { border: none; border-radius: var(--raio); padding: 1.75rem; }
+:is(.app-aluno, .app-docente) .botao {
+  min-height: var(--altura-botao);
+  padding: 0.75rem 1.75rem;
+  border-radius: var(--raio-medio);
+  font-size: 1rem;
+  font-weight: 700;
+}
+:is(.app-aluno, .app-docente) .botao--secundario { border-color: var(--cor-borda-campo); color: var(--cor-texto); background: var(--cor-superficie); }
+:is(.app-aluno, .app-docente) .botao--secundario:hover:not(:disabled) { background: var(--cor-creme); color: var(--cor-texto); border-color: var(--cor-oliva); }
+:is(.app-aluno, .app-docente) .botao--link { min-height: 0; padding: 0 var(--espaco-1); border: none; border-radius: 0; color: var(--cor-oliva); }
+:is(.app-aluno, .app-docente) label { font-size: 0.875rem; font-weight: 700; }
+:is(.app-aluno, .app-docente) input, :is(.app-aluno, .app-docente) select, :is(.app-aluno, .app-docente) textarea {
+  min-height: 3rem;
+  padding: 0.75rem 0.875rem;
+  border: 2px solid var(--cor-borda-campo);
+  border-radius: var(--raio-pequeno);
+}
+:is(.app-aluno, .app-docente) .aviso { border-left: none; border-radius: var(--raio-medio); padding: 0.875rem 1.125rem; background: var(--cor-verde-suave); }
+:is(.app-aluno, .app-docente) .aviso--alerta { background: var(--cor-aviso-fundo); color: var(--cor-aviso-texto); }
+:is(.app-aluno, .app-docente) .selo { border-radius: 999px; padding: 0.125rem 0.625rem; }
+:is(.app-aluno, .app-docente) .erro { border-left: 4px solid var(--cor-terracota); }
+
+/* --- telas estreitas: o menu empilha no topo --- */
+@media (max-width: 56rem) {
+  :is(.app-aluno, .app-docente) .leiaute { flex-direction: column; }
+  :is(.app-aluno, .app-docente) .leiaute:has(.menu:not([hidden]) #abas:not([hidden])) { background: none; }
+  :is(.app-aluno, .app-docente) .menu {
+    position: static;
+    height: auto;
+    flex: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem var(--espaco-3);
+    padding: 0.75rem var(--espaco-3);
+  }
+  :is(.app-aluno, .app-docente) .marca { padding: 0; }
+  :is(.app-aluno, .app-docente) .menu__rodape { order: 2; margin: 0 0 0 auto; border: none; padding: 0; }
+  :is(.app-aluno, .app-docente) .menu .botao--link { flex-basis: auto; }
+  :is(.app-aluno, .app-docente) .abas {
+    order: 3;
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: var(--espaco-1);
+  }
+  :is(.app-aluno, .app-docente) .abas[hidden] { display: none; }
+  :is(.app-aluno, .app-docente) .aba { min-height: 2.75rem; padding: var(--espaco-2) 0.75rem; }
+  :is(.app-aluno, .app-docente) .area { padding: var(--espaco-4) var(--espaco-3); }
+}
+@media (max-width: 30rem) {
+  :is(.app-aluno, .app-docente) h1 { font-size: 1.625rem; }
+  :is(.app-aluno, .app-docente) .cartao { padding: 1.25rem; }
+  :is(.app-aluno, .app-docente) .marca__sub { display: none; }
+  :is(.app-aluno, .app-docente) .aba { flex: initial; }
+}
+
+/* --- peças comuns das telas do aluno --- */
+:is(.app-aluno, .app-docente) .tela { display: flex; flex-direction: column; gap: 1.5rem; }
+:is(.app-aluno, .app-docente) .tela[hidden] { display: none; }
+:is(.app-aluno, .app-docente) .tela > * { margin-top: 0; margin-bottom: 0; }
+:is(.app-aluno, .app-docente) .cabeca { display: flex; flex-direction: column; gap: 0.375rem; }
+:is(.app-aluno, .app-docente) .cabeca h1 { margin: 0; line-height: 1.15; }
+:is(.app-aluno, .app-docente) .cabeca__sub { margin: 0; color: var(--cor-texto-suave); }
+:is(.app-aluno, .app-docente) .rotulo {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+}
+:is(.app-aluno, .app-docente) .botao--grande {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  min-height: 3.5rem;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  font-size: 1.125rem;
+  margin-top: 0;
+}
+:is(.app-aluno, .app-docente) .colunas { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-start; }
+:is(.app-aluno, .app-docente) .coluna-larga { flex: 2 1 23rem; min-width: 0; margin: 0; }
+:is(.app-aluno, .app-docente) .coluna-estreita { flex: 1 1 16rem; min-width: 0; display: flex; flex-direction: column; gap: 1rem; }
+:is(.app-aluno, .app-docente) .coluna-estreita h2 { margin: 0; }
+:is(.app-aluno, .app-docente) .pilha { display: flex; flex-direction: column; gap: 1rem; }
+:is(.app-aluno, .app-docente) .pilha:empty { display: none; }
+:is(.app-aluno, .app-docente) .cartao__cabeca { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1.125rem; }
+:is(.app-aluno, .app-docente) .cartao__cabeca h2 { margin: 0; }
+:is(.app-aluno, .app-docente) .cartao__cabeca .botao--link { margin: 0; font-size: 0.9375rem; font-weight: 600; }
+:is(.app-aluno, .app-docente) .cartao--mini { margin: 0; padding: 1.25rem; border-radius: 18px; display: flex; flex-direction: column; gap: 0.375rem; }
+:is(.app-aluno, .app-docente) .cartao--mini .rotulo { letter-spacing: 0; text-transform: none; }
+:is(.app-aluno, .app-docente) .cartao--mini .botao--link { margin: 0; padding: 0; align-self: flex-start; font-size: 0.9375rem; font-weight: 600; }
+:is(.app-aluno, .app-docente) .cartao__titulo { margin: 0; font-weight: 700; }
+:is(.app-aluno, .app-docente) .cartao__texto { margin: 0; font-size: 0.875rem; color: var(--cor-texto-suave); }
+
+/* barra de progresso (role=progressbar; a largura vem do app.js) */
+.app-aluno .barra { flex: 1 1 auto; height: 0.75rem; border-radius: 999px; background: var(--cor-superficie); overflow: hidden; }
+.app-aluno .barra__valor { display: block; height: 100%; border-radius: 999px; background: var(--cor-verde); }
+.app-aluno .barra__valor--atencao { background: var(--cor-dourado-escuro); }
+.app-aluno .cartao .barra { background: var(--cor-creme-escuro); }
+.app-aluno .progresso-linha { display: flex; align-items: center; gap: 0.875rem; max-width: 26rem; }
+.app-aluno .progresso-linha__numero { font-weight: 700; white-space: nowrap; }
+
+/* marcador de etapa: concluída, atual (dourado, número) ou bloqueada */
+.app-aluno .marcador {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9375rem;
+}
+.app-aluno .marcador .icone { width: 1.125rem; height: 1.125rem; stroke-width: 3; }
+.app-aluno .marcador--feito { background: var(--cor-verde); color: var(--cor-sobre-primaria); }
+.app-aluno .marcador--atual { background: var(--cor-dourado); color: var(--cor-oliva-escuro); border: 2px solid var(--cor-dourado-escuro); }
+.app-aluno .marcador--bloqueado { border: 2px solid var(--cor-bloqueado); color: var(--cor-bloqueado); background: var(--cor-creme); }
+.app-aluno .marcador--bloqueado .icone { stroke-width: 2.2; }
+
+/* --- início --- */
+.app-aluno .destaque {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  border-radius: var(--raio-grande);
+  background: var(--cor-verde-suave);
+}
+.app-aluno .destaque__texto { flex: 1 1 20rem; min-width: 0; display: flex; flex-direction: column; gap: 0.875rem; }
+.app-aluno .destaque h2 { margin: 0; font-size: 1.75rem; line-height: 1.2; }
+.app-aluno .destaque p { margin: 0; max-width: 46ch; }
+.app-aluno .destaque .botao--grande { flex: 0 0 auto; }
+
+.app-aluno .resumo-trilha { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.app-aluno .resumo-trilha__item { display: flex; align-items: center; gap: 0.875rem; }
+.app-aluno .resumo-trilha__nome { flex: 1 1 auto; min-width: 0; }
+.app-aluno .resumo-trilha__estado { font-size: 0.8125rem; color: var(--cor-texto-suave); white-space: nowrap; }
+.app-aluno .resumo-trilha__item--atual {
+  margin: 0 -0.875rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: var(--raio-medio);
+  background: var(--cor-dourado-suave);
+}
+.app-aluno .resumo-trilha__item--atual .resumo-trilha__nome { font-weight: 700; }
+.app-aluno .resumo-trilha__item--atual .resumo-trilha__estado { font-weight: 700; color: var(--cor-aviso-texto); }
+.app-aluno .resumo-trilha__item--bloqueado .resumo-trilha__nome,
+.app-aluno .resumo-trilha__item--bloqueado .resumo-trilha__estado { color: var(--cor-bloqueado); }
+
+@media (max-width: 30rem) {
+  .app-aluno .destaque { padding: 1.25rem; }
+  .app-aluno .destaque h2 { font-size: 1.375rem; }
+  .app-aluno .destaque .botao--grande { width: 100%; }
+}
+
+/* --- trilha: lista vertical numerada, ligada por uma linha --- */
+.app-aluno .cabeca--com-progresso { flex-direction: row; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+.app-aluno .cabeca--com-progresso > .cabeca { flex: 1 1 20rem; }
+.app-aluno #trilha-progresso { flex: 0 1 18rem; min-width: 15rem; }
+.app-aluno .percurso { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.app-aluno .passo__grupo { padding: 1.25rem 0 0.75rem; letter-spacing: 0.08em; }
+.app-aluno .passo:first-child .passo__grupo { padding-top: 0; }
+.app-aluno .passo__linha { display: flex; gap: 1.25rem; align-items: stretch; }
+.app-aluno .passo__trilho { flex: 0 0 2.75rem; display: flex; flex-direction: column; align-items: center; }
+.app-aluno .passo .marcador { width: 2.75rem; height: 2.75rem; font-size: 1.0625rem; }
+.app-aluno .passo .marcador .icone { width: 1.375rem; height: 1.375rem; }
+.app-aluno .passo--atual .marcador { box-shadow: 0 0 0 6px var(--cor-dourado-suave); }
+.app-aluno .passo__conector { flex: 1 1 auto; width: 4px; min-height: 1.5rem; margin: 0.25rem 0; border-radius: 2px; background: var(--cor-trilha); }
+.app-aluno .passo--feito .passo__conector { background: var(--cor-verde); }
+.app-aluno .passo__cartao {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 18px;
+  border: 2px solid transparent;
+  background: var(--cor-superficie);
+}
+.app-aluno .passo--atual .passo__cartao { border-color: var(--cor-dourado-escuro); }
+.app-aluno .passo--bloqueado .passo__cartao { background: var(--cor-creme-escuro); }
+.app-aluno .passo__cabeca { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.app-aluno .passo__texto { flex: 1 1 15rem; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.app-aluno .passo__texto h3 { margin: 0; font-size: 1.125rem; }
+.app-aluno .passo__dados { margin: 0; font-size: 0.875rem; color: var(--cor-texto-suave); }
+.app-aluno .passo__estado { font-size: 0.875rem; font-weight: 700; color: var(--cor-oliva); }
+.app-aluno .passo--bloqueado h3, .app-aluno .passo--bloqueado .passo__estado,
+.app-aluno .passo--bloqueado .passo__dados { color: var(--cor-bloqueado); font-weight: 600; }
+.app-aluno .passo__cabeca .botao { margin: 0; min-height: 3rem; }
+.app-aluno .passo__porque { margin-top: 0.75rem; font-size: 0.9375rem; }
+.app-aluno .passo__porque summary { cursor: pointer; font-weight: 600; color: var(--cor-oliva); font-size: 0.875rem; }
+.app-aluno .passo--bloqueado .passo__porque summary { color: var(--cor-bloqueado); }
+.app-aluno .passo__porque p { margin: 0.5rem 0 0; }
+.app-aluno .passo__porque .etapa__dados, .app-aluno .passo__porque .origem { color: var(--cor-texto-suave); }
+.app-aluno .passo--bloqueado .passo__porque .etapa__dados,
+.app-aluno .passo--bloqueado .passo__porque .origem { color: var(--cor-bloqueado); }
+.app-aluno #trilha-botoes .botao { margin-top: 0; }
+
+@media (max-width: 30rem) {
+  .app-aluno .passo__linha { gap: 0.75rem; }
+  .app-aluno .passo__trilho { flex-basis: 2.25rem; }
+  .app-aluno .passo .marcador { width: 2.25rem; height: 2.25rem; }
+  .app-aluno .passo__cartao { padding: 1rem; }
+  .app-aluno .passo__cabeca .botao { width: 100%; }
+  .app-aluno #trilha-progresso { min-width: 0; flex-basis: 100%; }
+}
+
+/* --- estudar: questão em cartão, alternativas como botões, balão do tutor --- */
+.app-aluno .estudo-principal { display: flex; flex-direction: column; gap: 1rem; }
+.app-aluno .pilha-estudo { display: flex; flex-direction: column; gap: 1rem; }
+.app-aluno .pilha-estudo > .botao { align-self: flex-start; margin: 0; }
+.app-aluno .questao { margin: 0; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.app-aluno .questao h2 { margin: 0; }
+.app-aluno .questao p { margin: 0; }
+.app-aluno .questao .botao--grande { align-self: flex-start; }
+.app-aluno .enunciado { font-size: 1.125rem; line-height: 1.45; font-weight: 600; font-family: var(--fonte-texto); }
+.app-aluno .alternativas { margin: 0; display: flex; flex-direction: column; gap: 0.625rem; }
+.app-aluno .alternativas legend { padding: 0; margin-bottom: 0.625rem; font-size: 0.875rem; color: var(--cor-texto-suave); }
+.app-aluno .alternativa {
+  position: relative;
+  align-items: center;
+  gap: 0.875rem;
+  min-height: 3rem;
+  margin: 0;
+  padding: 0.875rem 1.125rem;
+  border: 2px solid var(--cor-borda-campo);
+  border-radius: var(--raio-medio);
+  font-size: 1rem;
+  font-weight: 400;
+}
+/* o rádio continua no lugar (foco e leitor de tela), só não aparece */
+.app-aluno .alternativa input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+.app-aluno .alternativa:has(input:focus-visible) { outline: 3px solid var(--cor-foco); outline-offset: 2px; box-shadow: 0 0 0 2px var(--cor-foco-contorno); }
+.app-aluno .alternativa:hover { border-color: var(--cor-oliva); }
+.app-aluno .alternativa:has(input:checked) {
+  border-color: var(--cor-verde);
+  background: var(--cor-verde-suave);
+  box-shadow: none;
+  font-weight: 700;
+}
+.app-aluno .alternativa__letra {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--cor-borda-campo);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+.app-aluno .alternativa:has(input:checked) .alternativa__letra { background: var(--cor-oliva); border-color: var(--cor-oliva); color: var(--cor-sobre-primaria); }
+.app-aluno .alternativa__texto { flex: 1 1 auto; white-space: pre-wrap; }
+.app-aluno .alternativa--correta, .app-aluno .alternativa--correta:has(input:checked) { border-color: var(--cor-verde); background: var(--cor-verde-suave); }
+.app-aluno .alternativa--errada, .app-aluno .alternativa--errada:has(input:checked) { border-color: var(--cor-terracota); background: var(--cor-terracota-fundo); }
+.app-aluno .alternativa input:disabled { cursor: default; }
+.app-aluno .alternativa:has(input:disabled) { cursor: default; }
+.app-aluno .selo--erro { color: var(--cor-terracota-texto); background: var(--cor-superficie); border-color: var(--cor-terracota); }
+
+.app-aluno .resposta-tutor { display: flex; flex-direction: column; gap: 1rem; }
+.app-aluno .resposta-tutor > .botao { align-self: flex-start; margin: 0; }
+.app-aluno .balao { display: flex; gap: 0.75rem; align-items: flex-start; }
+.app-aluno .balao__avatar {
+  flex: 0 0 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor-oliva);
+  color: var(--cor-sobre-menu);
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+.app-aluno .balao__corpo {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1.125rem 1.25rem;
+  border-radius: 18px;
+  background: var(--cor-verde-suave);
+}
+.app-aluno .balao__corpo p { margin: 0; }
+.app-aluno .veredito { font-family: var(--fonte-texto); font-size: 1.0625rem; }
+.app-aluno .veredito--erro { color: var(--cor-terracota-texto); }
+.app-aluno .ver-fonte summary { cursor: pointer; font-size: 0.875rem; font-weight: 600; color: var(--cor-oliva); }
+.app-aluno .ver-fonte .fontes { margin-top: 0.5rem; padding-top: 0; border-top: none; color: var(--cor-texto); }
+.app-aluno .origem, .app-aluno .balao__corpo .etapa__dados { color: var(--cor-texto-suave); }
+
+.app-aluno .pergunta-tutor { margin: 0; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.375rem; }
+.app-aluno .pergunta-tutor label { margin: 0; }
+.app-aluno .pergunta-tutor .dica { margin: 0; }
+.app-aluno .pergunta-tutor__linha { display: flex; gap: 0.75rem; align-items: flex-end; }
+.app-aluno .pergunta-tutor__linha textarea { flex: 1 1 auto; min-width: 0; max-width: none; resize: vertical; }
+.app-aluno .botao--icone {
+  flex: none;
+  margin: 0;
+  width: 3rem;
+  min-height: 3rem;
+  height: 3rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app-aluno .botao--icone .icone { width: 1.375rem; height: 1.375rem; stroke-width: 2.2; }
+.app-aluno .pergunta-tutor__extra { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.app-aluno .pergunta-tutor__extra .dica { flex: 1 1 10rem; }
+.app-aluno .pergunta-tutor__extra label { font-weight: 600; }
+.app-aluno .pergunta-tutor__extra select { width: auto; max-width: 100%; min-height: 2.5rem; padding: 0.375rem 0.625rem; }
+.app-aluno #titulo-conversa { margin: 0.5rem 0 0.75rem; font-size: 1.0625rem; }
+
+.app-aluno .conversa { display: flex; flex-direction: column; gap: 1rem; }
+.app-aluno .conversa:empty::after { content: "Nenhuma pergunta ainda."; color: var(--cor-texto-suave); font-size: 0.875rem; }
+.app-aluno .conversa__item { display: flex; flex-direction: column; gap: 0.5rem; }
+.app-aluno .conversa__item:focus { outline: none; }
+.app-aluno .conversa__pergunta {
+  align-self: flex-end;
+  max-width: 85%;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 18px 18px 4px 18px;
+  background: var(--cor-superficie);
+  font-weight: 600;
+}
+.app-aluno .rotulo--professor { color: var(--cor-aviso-texto); letter-spacing: 0; text-transform: none; }
+
+.app-aluno .numero-medio { margin: 0; font-size: 1.25rem; font-weight: 800; }
+.app-aluno .rotulo--espaco { margin-top: 0.75rem; }
+.app-aluno #estudo-ritmo .barra { flex: none; }
+.app-aluno .cartao--aviso { background: var(--cor-aviso-fundo); }
+.app-aluno .cartao--aviso .rotulo { color: var(--cor-aviso-texto); }
+.app-aluno .cartao--aviso .cartao__texto { color: var(--cor-texto); }
+.app-aluno .coluna-estreita > .botao--link { align-self: flex-start; margin: 0; font-weight: 600; }
+
+@media (max-width: 30rem) {
+  .app-aluno .questao { padding: 1.125rem; }
+  .app-aluno .questao .botao--grande, .app-aluno .resposta-tutor > .botao { width: 100%; }
+  .app-aluno .balao__avatar { display: none; }
+  .app-aluno .pergunta-tutor__extra .dica { flex-basis: 100%; }
+}
+
+/* --- meu relatório: três números, barras por competência, avisos --- */
+.app-aluno .numeros { display: flex; flex-wrap: wrap; gap: 1rem; }
+.app-aluno .numero {
+  flex: 1 1 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1.375rem;
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+}
+.app-aluno .numero__rotulo { font-size: 0.875rem; color: var(--cor-texto-suave); }
+.app-aluno .numero__valor { font-size: 2.5rem; line-height: 1; font-weight: 800; color: var(--cor-texto); }
+.app-aluno .numero__complemento { font-size: 1.25rem; font-weight: 600; color: var(--cor-texto-suave); }
+.app-aluno .coluna-larga.pilha { gap: 1.5rem; }
+.app-aluno .coluna-larga .cartao { margin: 0; }
+.app-aluno .coluna-larga .cartao h2 { margin-top: 0; }
+.app-aluno .competencias { display: flex; flex-direction: column; gap: 1.25rem; margin: 1.25rem 0; }
+.app-aluno .competencia { display: flex; flex-direction: column; gap: 0.5rem; }
+.app-aluno .competencia__linha { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 0.75rem; }
+.app-aluno .competencia__nome { font-weight: 600; }
+.app-aluno .competencia__numero { color: var(--cor-texto-suave); white-space: nowrap; }
+.app-aluno .competencia .barra { flex: none; }
+.app-aluno .etapas-relatorio { border-top: 1px solid var(--cor-linha); padding-top: 1rem; }
+.app-aluno .etapas-relatorio ul, .app-aluno .cartao--mini ul { margin: 0.25rem 0 0; padding-left: 1.25rem; font-size: 0.9375rem; }
+.app-aluno .cartao--mini h3.rotulo { margin: 0; font-family: var(--fonte-texto); }
+.app-aluno .cartao--mini h2.rotulo { margin: 0; font-family: var(--fonte-texto); font-size: 0.8125rem; }
+.app-aluno #relatorio-avisos .aviso { margin: 0; }
+.app-aluno .correcoes { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; }
+.app-aluno .correcao { padding-top: 0.75rem; border-top: 1px solid var(--cor-linha); font-size: 0.9375rem; }
+.app-aluno .correcao p { margin: 0 0 0.25rem; }
+.app-aluno .correcao .enunciado { font-size: 0.9375rem; }
+.app-aluno .correcao .veredito { font-size: 0.9375rem; }
+.app-aluno .correcao .etapa__dados, .app-aluno .correcao .origem { color: var(--cor-texto); font-size: 0.8125rem; }
+.app-aluno #relatorio-estudar { width: 100%; }
+
+@media (max-width: 30rem) {
+  .app-aluno .numero { flex-basis: 100%; padding: 1.125rem; }
+  .app-aluno .numero__valor { font-size: 2.125rem; }
+}
+.app-aluno .cartao--mini ul.correcoes { padding-left: 0; list-style: none; }
+
+/* --- login e primeiro acesso: cartão central, barra de etapas, cartões de escolha --- */
+/* sem menu (login, primeiro acesso): fundo creme quadriculado */
+.app-aluno .leiaute:has(#abas[hidden]) {
+  background-color: var(--cor-fundo);
+  background-image: linear-gradient(var(--cor-linha) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cor-linha) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+:is(.app-aluno, .app-docente) .tela--central { align-items: center; padding: 1.5rem 0; }
+:is(.app-aluno, .app-docente) #tela-entrada:has(#form-entrada[hidden]) #titulo-entrada { display: none; }
+:is(.app-aluno, .app-docente) .cartao--central {
+  width: 100%;
+  max-width: 40rem;
+  margin: 0;
+  padding: 2.25rem;
+  border-radius: var(--raio-grande);
+  box-shadow: var(--sombra-cartao-alto);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+:is(.app-aluno, .app-docente) .cartao--central[hidden] { display: none; }
+:is(.app-aluno, .app-docente) .cartao--login { max-width: 26.25rem; }
+.app-aluno .cartao--central h2#titulo-primeiro-acesso { margin: 0; font-size: 1.75rem; line-height: 1.2; }
+:is(.app-aluno, .app-docente) .marca-central { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; text-align: center; }
+:is(.app-aluno, .app-docente) .marca-central h1 { margin: 0; font-size: 1.75rem; }
+:is(.app-aluno, .app-docente) .marca__icone--grande {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  background: var(--cor-oliva);
+  color: var(--cor-sobre-menu);
+  font-size: 1.625rem;
+}
+:is(.app-aluno, .app-docente) .formulario { display: flex; flex-direction: column; gap: 1.125rem; }
+:is(.app-aluno, .app-docente) .formulario[hidden] { display: none; }
+:is(.app-aluno, .app-docente) .campo { display: flex; flex-direction: column; gap: 0.375rem; }
+:is(.app-aluno, .app-docente) .campo label { margin: 0; }
+:is(.app-aluno, .app-docente) .campo input { max-width: none; }
+:is(.app-aluno, .app-docente) .campo .dica { margin: 0; }
+.app-aluno .campo-senha { position: relative; }
+.app-aluno .campo-senha input { padding-right: 3.25rem; }
+.app-aluno .botao-olho {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--cor-texto-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.app-aluno .botao-olho[aria-pressed="true"] { color: var(--cor-oliva); background: var(--cor-verde-suave); }
+:is(.app-aluno, .app-docente) .botao--largo { width: 100%; margin-top: 0.25rem; }
+:is(.app-aluno, .app-docente) .dica--centro { text-align: center; margin: 0; }
+:is(.app-aluno, .app-docente) .formulario .linha-botoes .botao { margin-top: 0; }
+
+/* barra de etapas: Senha, Trilha, Tempo, Confirmar, Diagnóstico */
+.app-aluno .etapas-acesso { list-style: none; margin: 0; padding: 0; display: flex; gap: 0.5rem; }
+.app-aluno .etapas-acesso__item { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.8125rem; color: var(--cor-texto-suave); }
+.app-aluno .etapas-acesso__barra { height: 6px; border-radius: 999px; background: var(--cor-borda-suave); }
+.app-aluno .etapas-acesso__item--feito .etapas-acesso__barra,
+.app-aluno .etapas-acesso__item--atual .etapas-acesso__barra { background: var(--cor-verde); }
+.app-aluno .etapas-acesso__item--atual { font-weight: 800; color: var(--cor-texto); }
+/* na tela de login, a barra só aparece na troca da senha temporária */
+.app-aluno .cartao--login:not(:has(#form-senha:not([hidden]))) .etapas-acesso--senha { display: none; }
+
+.app-aluno .conversa--acesso { gap: 0.5rem; }
+.app-aluno .acesso-opcoes { display: flex; flex-direction: column; gap: 1rem; }
+.app-aluno .acesso-opcoes:empty { display: none; }
+.app-aluno .acesso-opcoes .botao--link { align-self: flex-start; margin: 0; padding: 0; font-weight: 600; font-size: 0.9375rem; }
+.app-aluno .escolhas { border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.app-aluno .escolhas legend { padding: 0; margin-bottom: 0.75rem; }
+.app-aluno .escolha {
+  position: relative;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin: 0;
+  padding: 1.25rem;
+  border: 2px solid var(--cor-borda-campo);
+  border-radius: 18px;
+  background: var(--cor-superficie);
+  font-weight: 400;
+  cursor: pointer;
+}
+.app-aluno .escolha input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.app-aluno .escolha:hover { border-color: var(--cor-oliva); }
+.app-aluno .escolha:has(input:focus-visible) { outline: 3px solid var(--cor-foco); outline-offset: 2px; box-shadow: 0 0 0 2px var(--cor-foco-contorno); }
+.app-aluno .escolha:has(input:checked) { border-color: var(--cor-verde); background: var(--cor-verde-suave); }
+.app-aluno .escolha__marca { flex: 0 0 1.75rem; height: 1.75rem; border-radius: 50%; border: 2px solid var(--cor-borda-campo); background: var(--cor-superficie); }
+.app-aluno .escolha:has(input:checked) .escolha__marca { border: 7px solid var(--cor-oliva); }
+.app-aluno .escolha__texto { display: flex; flex-direction: column; gap: 0.25rem; }
+.app-aluno .escolha__titulo { font-size: 1.125rem; font-weight: 800; }
+.app-aluno .escolha__descricao { font-size: 0.9375rem; line-height: 1.45; color: var(--cor-texto-suave); }
+.app-aluno .linha-botoes--fim { justify-content: flex-end; }
+.app-aluno .linha-botoes--separadas { justify-content: space-between; align-items: center; }
+.app-aluno .linha-botoes--separadas .botao, .app-aluno .linha-botoes--fim .botao { margin-top: 0; }
+
+.app-aluno .resumo { margin: 0; display: flex; flex-direction: column; padding: 0.375rem 1.25rem; border-radius: 18px; background: var(--cor-creme); }
+.app-aluno .resumo__linha { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; padding: 0.875rem 0; border-bottom: 1px solid var(--cor-linha); }
+.app-aluno .resumo__linha:last-child { border-bottom: none; }
+.app-aluno .resumo dt { font-size: 0.9375rem; color: var(--cor-texto-suave); }
+.app-aluno .resumo dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+
+.app-aluno .questao--diagnostico { padding: 0; }
+.app-aluno #titulo-diagnostico, .app-aluno #diagnostico-progresso { margin: 0; }
+.app-aluno #primeiro-acesso > .linha-botoes { justify-content: space-between; align-items: center; }
+.app-aluno #primeiro-acesso > .linha-botoes .botao { margin-top: 0; }
+
+@media (max-width: 30rem) {
+  :is(.app-aluno, .app-docente) .cartao--central { padding: 1.25rem; gap: 1.125rem; }
+  .app-aluno .etapas-acesso { gap: 0.25rem; }
+  .app-aluno .etapas-acesso__item { font-size: 0.6875rem; }
+  .app-aluno .cartao--central h2#titulo-primeiro-acesso { font-size: 1.375rem; }
+  .app-aluno .linha-botoes--separadas { flex-direction: column-reverse; align-items: stretch; }
+  .app-aluno .linha-botoes--separadas .botao { width: 100%; }
+}
+.app-aluno .cartao .conversa__pergunta { background: var(--cor-creme); }
+.app-aluno .linha-botoes:not(:has(.botao:not([hidden]))) { display: none; }

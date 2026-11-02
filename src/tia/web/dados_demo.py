@@ -19,8 +19,8 @@ ORQ_ACERTO_MIN_AVANCO (decisão D9 da arquitetura; 15/10/2026).
 
 Aluno que já existe no banco é mantido como está (rodar de novo não duplica).
 Para refazer com regras novas, guarde o banco antigo e rode num DB_PATH vazio.
-Cria também os usuários FICTÍCIOS do login (1.4.6): o aluno DEMO-W01 e o
-docente DEMO-DOCENTE, com a senha de demonstração (fictícia, pública,
+Cria também os usuários FICTÍCIOS do login (1.4.6): os alunos DEMO-W01,
+DEMO-W02 e DEMO-W03 e o docente DEMO-DOCENTE, com a senha de demonstração (fictícia, pública,
 impressa no fim; só para máquina de desenvolvimento).
 Por padrão NÃO chama o Ollama (rápido: os agentes gravam os textos fixos,
 origem "fallback"); com --com-llm, chama (pode levar vários minutos em CPU).

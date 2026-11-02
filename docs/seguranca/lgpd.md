@@ -37,6 +37,7 @@ Todos ficam no banco SQLite (`DB_PATH`, padrão `data/tia.db`), salvo indicaçã
 | Resultado guardado de cada evento (repete o feedback) | `orquestrador_eventos` | idempotência | apagado após 180 dias |
 | Decisões e reforços do orquestrador | `orquestrador_decisoes`, `orquestrador_reforcos` | explicar decisões ao aluno e ao docente | desvinculados após 365 dias |
 | Auditoria (quem, quando, o quê; códigos de aluno e de usuário; nunca texto livre: no primeiro acesso, só o passo, os **nomes** dos campos coletados e o acerto por item do diagnóstico) | `auditoria` | prestação de contas (R11, R12) | **nunca apagada**; códigos anonimizados após `RETENCAO_AUDITORIA_DIAS` (730) |
+| Lista de alunos do painel (`GET /painel/alunos`, 01/11/2026): código, perfil, competência atual, acerto e situação de cada aluno; **nunca** nome, objetivo do cadastro ou texto do diálogo (há teste). Calculada na hora a partir das tabelas acima, nada novo é guardado | só a linha `consulta_painel` da `auditoria`, com os códigos exibidos (aparece na exportação do titular) | o docente acompanhar a turma (visão geral) | a da auditoria |
 | Usuário: login (código), papel, hash da senha (scrypt), situação | `usuarios` | autenticação | enquanto ativo; na eliminação, desativado, com a ligação e a senha apagadas |
 | Sessões de login (hash do token) | `auth_sessoes` | manter o login | 30 min sem uso ou 8 h (apagadas pela limpeza) |
 | Tentativas de login (login digitado, **IP**, sucesso) | `auth_tentativas` | limite de tentativas | `AUTH_RETENCAO_IP_DIAS` (30) |
@@ -65,7 +66,7 @@ teste para isso.
 | Papel | Acesso |
 |---|---|
 | aluno | só os próprios dados (trilha, estudo, diálogo, relatório) |
-| docente | painel: agregados (sem código), alunos em risco e revisão (com código e texto, auditados), dados de um aluno para leitura; não age em nome do aluno |
+| docente | painel: agregados (sem código), alunos em risco, lista de alunos (código, perfil, competência atual, acerto e situação) e revisão (com código e texto), todos auditados; o contador "a revisar" é só um número (sem código, não auditado); dados de um aluno para leitura; não age em nome do aluno |
 | admin | só gestão de usuários (comando ou `/admin/usuarios`); não vê dados de estudo |
 | operador do servidor (sistema) | banco, cópias, comandos de retenção e do titular; tudo que apaga ou exporta vai para a auditoria |
 | LLM local | recebe o texto da pergunta e trechos do material, na máquina ou na rede interna; nada é guardado pelo Ollama além da memória da chamada |

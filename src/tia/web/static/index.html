@@ -10,32 +10,59 @@
   <script src="comum.js" defer></script>
   <script src="app.js" defer></script>
 </head>
-<body>
+<body class="app-aluno">
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 
-  <header class="topo">
-    <div class="topo__linha">
-      <p class="marca">TIA <span class="marca__sub">Tutoria Inteligente</span></p>
-      <p class="aluno" id="aluno-atual" hidden>
-        Aluno: <strong id="aluno-codigo"></strong>
-        <button type="button" class="botao botao--link" id="trocar-aluno">Trocar</button>
-      </p>
+  <div class="leiaute">
+  <!-- menu lateral (em tela estreita, empilha no topo); some no login e no primeiro acesso -->
+  <aside class="menu" aria-label="Menu do aluno">
+    <p class="marca">
+      <span class="marca__icone" aria-hidden="true">T</span>
+      <span class="marca__texto">TIA <span class="marca__sub">Tutoria Inteligente</span></span>
+    </p>
+    <nav class="abas" id="abas" aria-label="Principal" hidden>
+      <button type="button" class="aba" data-tela="inicio">
+        <svg class="aba__icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        <span>Início</span>
+      </button>
+      <button type="button" class="aba" data-tela="trilha">
+        <svg class="aba__icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 0 0 0-8h-4a4 4 0 0 1 0-8h6"/></svg>
+        <span>Trilha</span>
+      </button>
+      <button type="button" class="aba" data-tela="estudo">
+        <svg class="aba__icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/></svg>
+        <span>Estudar</span>
+      </button>
+      <button type="button" class="aba" data-tela="relatorio">
+        <svg class="aba__icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+        <span>Meu relatório</span>
+      </button>
+    </nav>
+    <!-- quem está conectado: o código (R08: nunca o nome) -->
+    <div class="menu__rodape">
       <p class="usuario" id="usuario-barra" hidden>
-        Conectado: <strong id="usuario-nome"></strong> <span id="usuario-papel"></span>
-        <button type="button" class="botao botao--link" id="sair">Sair</button>
+        <span class="avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        </span>
+        <span class="usuario__dados">
+          <strong id="usuario-nome"></strong> <span id="usuario-papel" class="usuario__papel"></span>
+          <button type="button" class="botao botao--link" id="sair">Sair</button>
+        </span>
+      </p>
+      <p class="aluno" id="aluno-atual" hidden>
+        <span class="usuario__dados">
+          Aluno: <strong id="aluno-codigo"></strong>
+          <button type="button" class="botao botao--link" id="trocar-aluno">Trocar</button>
+        </span>
       </p>
     </div>
-    <p class="aviso-prototipo" id="aviso-dev" role="note" hidden>
-      Modo de desenvolvimento: autenticação desligada (TIA_AUTH=desligada). Qualquer pessoa entra com qualquer
-      código; use só dados fictícios.
-    </p>
-    <nav class="abas" id="abas" aria-label="Telas" hidden>
-      <button type="button" class="aba" data-tela="trilha">Trilha</button>
-      <button type="button" class="aba" data-tela="estudo">Estudo</button>
-      <button type="button" class="aba" data-tela="dialogo">Perguntar ao tutor</button>
-      <button type="button" class="aba" data-tela="relatorio">Meu relatório</button>
-    </nav>
-  </header>
+  </aside>
+
+  <div class="area">
+  <p class="aviso-prototipo" id="aviso-dev" role="note" hidden>
+    Modo de desenvolvimento: autenticação desligada (TIA_AUTH=desligada). Qualquer pessoa entra com qualquer
+    código; use só dados fictícios.
+  </p>
 
   <!-- indicador de carregamento: o LLM local leva de 20 a 70 s -->
   <div class="carregando" id="carregando" role="status" aria-live="polite" hidden>
@@ -52,124 +79,267 @@
   <main id="conteudo" tabindex="-1">
 
     <!-- Login (1.4.6): usuário e senha; a sessão fica num cookie HttpOnly -->
-    <section class="tela" id="tela-login" aria-labelledby="titulo-login" hidden>
-      <h1 id="titulo-login">Entrar no TIA</h1>
-      <p class="aviso aviso--alerta" id="login-mensagem" role="status" hidden></p>
-      <form id="form-login" class="cartao" novalidate>
-        <label for="campo-login">Usuário</label>
-        <input id="campo-login" name="login" type="text" required autocomplete="username" spellcheck="false"
-               maxlength="64">
-        <label for="campo-senha">Senha</label>
-        <input id="campo-senha" name="senha" type="password" required autocomplete="current-password"
-               maxlength="256">
-        <button type="submit" class="botao acao">Entrar</button>
-      </form>
-      <!-- troca obrigatória da senha temporária (criada ou redefinida pelo admin) -->
-      <form id="form-senha" class="cartao" novalidate hidden>
-        <label for="campo-senha-atual">Senha atual (temporária)</label>
-        <input id="campo-senha-atual" name="senha_atual" type="password" required autocomplete="current-password"
-               maxlength="256">
-        <label for="campo-senha-nova">Nova senha</label>
-        <input id="campo-senha-nova" name="nova_senha" type="password" required autocomplete="new-password"
-               maxlength="256" aria-describedby="dica-senha">
-        <p class="dica" id="dica-senha">Use uma senha longa, que não seja comum nem contenha o seu usuário.</p>
-        <label for="campo-senha-repetir">Repita a nova senha</label>
-        <input id="campo-senha-repetir" name="repetir_senha" type="password" required autocomplete="new-password"
-               maxlength="256">
-        <button type="submit" class="botao acao">Trocar a senha</button>
-      </form>
-      <p class="dica" id="login-painel" hidden>Docentes: o painel fica em <a href="/app/painel/">/app/painel/</a>.</p>
+    <section class="tela tela--central" id="tela-login" aria-labelledby="titulo-login" hidden>
+      <div class="cartao cartao--central cartao--login">
+        <!-- na troca da senha temporária (primeiro acesso), a barra de etapas aparece no passo "Senha" -->
+        <ol class="etapas-acesso etapas-acesso--senha" aria-label="Etapas do primeiro acesso">
+          <li class="etapas-acesso__item etapas-acesso__item--atual" data-passo="senha" aria-current="step"><span class="etapas-acesso__barra"></span>Senha</li>
+          <li class="etapas-acesso__item" data-passo="trilha"><span class="etapas-acesso__barra"></span>Trilha</li>
+          <li class="etapas-acesso__item" data-passo="tempo"><span class="etapas-acesso__barra"></span>Tempo</li>
+          <li class="etapas-acesso__item" data-passo="confirmar"><span class="etapas-acesso__barra"></span>Confirmar</li>
+          <li class="etapas-acesso__item" data-passo="diagnostico"><span class="etapas-acesso__barra"></span>Diagnóstico</li>
+        </ol>
+        <div class="marca-central">
+          <span class="marca__icone marca__icone--grande" aria-hidden="true">T</span>
+          <h1 id="titulo-login">Entrar no TIA</h1>
+          <p class="cabeca__sub">Sua trilha de aprendizagem personalizada.</p>
+        </div>
+        <p class="aviso aviso--alerta" id="login-mensagem" role="status" hidden></p>
+        <form id="form-login" class="formulario" novalidate>
+          <div class="campo">
+            <label for="campo-login">Usuário</label>
+            <input id="campo-login" name="login" type="text" required autocomplete="username" spellcheck="false"
+                   maxlength="64">
+          </div>
+          <div class="campo">
+            <label for="campo-senha">Senha</label>
+            <div class="campo-senha">
+              <input id="campo-senha" name="senha" type="password" required autocomplete="current-password"
+                     maxlength="256">
+              <button type="button" class="botao-olho" id="mostrar-senha" aria-label="Mostrar senha" aria-pressed="false"
+                      aria-controls="campo-senha">
+                <svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="botao botao--largo acao">Entrar</button>
+          <p class="dica dica--centro">Primeiro acesso? Entre com a senha temporária que você recebeu.</p>
+        </form>
+        <!-- troca obrigatória da senha temporária (criada ou redefinida pelo admin) -->
+        <form id="form-senha" class="formulario" novalidate hidden>
+          <div class="campo">
+            <label for="campo-senha-atual">Senha atual (temporária)</label>
+            <input id="campo-senha-atual" name="senha_atual" type="password" required autocomplete="current-password"
+                   maxlength="256">
+          </div>
+          <div class="campo">
+            <label for="campo-senha-nova">Nova senha</label>
+            <input id="campo-senha-nova" name="nova_senha" type="password" required autocomplete="new-password"
+                   maxlength="256" aria-describedby="dica-senha">
+            <p class="dica" id="dica-senha">Use uma senha longa, que não seja comum nem contenha o seu usuário.</p>
+          </div>
+          <div class="campo">
+            <label for="campo-senha-repetir">Repita a nova senha</label>
+            <input id="campo-senha-repetir" name="repetir_senha" type="password" required autocomplete="new-password"
+                   maxlength="256">
+          </div>
+          <button type="submit" class="botao botao--largo acao">Trocar a senha</button>
+        </form>
+        <p class="dica dica--centro" id="login-painel" hidden>Docentes: o painel fica em <a href="/app/painel/">/app/painel/</a>.</p>
+      </div>
     </section>
 
-    <!-- a) Entrada (modo de desenvolvimento: código do aluno; com login, só a matrícula) -->
-    <section class="tela" id="tela-entrada" aria-labelledby="titulo-entrada" hidden>
+    <!-- a) Entrada (modo de desenvolvimento: código do aluno) e primeiro acesso em etapas -->
+    <section class="tela tela--central" id="tela-entrada" aria-labelledby="titulo-entrada" hidden>
       <h1 id="titulo-entrada">Entrar</h1>
-      <form id="form-entrada" class="cartao" novalidate>
-        <label for="campo-aluno">Código do aluno</label>
-        <p class="dica" id="dica-aluno">Letras sem acento, números, "-" ou "_" (até 32). Exemplo: DEMO-W01.</p>
-        <input id="campo-aluno" name="aluno" type="text" required autocomplete="off" spellcheck="false"
-               maxlength="32" pattern="[A-Za-z0-9_\-]{1,32}" aria-describedby="dica-aluno">
-        <button type="submit" class="botao acao">Entrar</button>
+      <form id="form-entrada" class="cartao cartao--central formulario" novalidate>
+        <div class="campo">
+          <label for="campo-aluno">Código do aluno</label>
+          <p class="dica" id="dica-aluno">Letras sem acento, números, "-" ou "_" (até 32). Exemplo: DEMO-W01.</p>
+          <input id="campo-aluno" name="aluno" type="text" required autocomplete="off" spellcheck="false"
+                 maxlength="32" pattern="[A-Za-z0-9_\-]{1,32}" aria-describedby="dica-aluno">
+        </div>
+        <button type="submit" class="botao botao--largo acao">Entrar</button>
       </form>
 
-      <div id="primeiro-acesso" class="cartao" hidden aria-labelledby="titulo-primeiro-acesso">
-        <h2 id="titulo-primeiro-acesso">Primeiro acesso: vamos montar sua trilha</h2>
-        <p class="dica">Três passos: uma conversa rápida com o tutor, um diagnóstico de cerca de 15 minutos e o
-          seu plano de estudo, montado pelo Planejador.</p>
-        <h3 id="titulo-onboarding">1. Conversa com o tutor</h3>
-        <ol class="conversa" id="onboarding-conversa" aria-live="polite" aria-labelledby="titulo-onboarding"></ol>
-        <form id="form-onboarding" novalidate>
-          <label for="campo-onboarding">Sua resposta</label>
-          <input id="campo-onboarding" name="resposta" type="text" maxlength="500" required autocomplete="off"
-                 aria-describedby="dica-onboarding">
-          <p class="dica" id="dica-onboarding">Responda do seu jeito. Não escreva dados pessoais.</p>
-          <button type="submit" class="botao acao">Enviar</button>
+      <!-- primeiro acesso: Senha (já feita no login) > Trilha > Tempo > Confirmar > Diagnóstico.
+           Cada escolha vira um texto na mesma conversa da API (/onboarding/mensagem): a matrícula
+           continua exigindo o "sim" explícito no servidor. -->
+      <div id="primeiro-acesso" class="cartao cartao--central cartao--acesso" hidden aria-labelledby="titulo-primeiro-acesso">
+        <ol class="etapas-acesso" id="acesso-etapas" aria-label="Etapas do primeiro acesso">
+          <li class="etapas-acesso__item" data-passo="senha"><span class="etapas-acesso__barra"></span>Senha</li>
+          <li class="etapas-acesso__item" data-passo="trilha"><span class="etapas-acesso__barra"></span>Trilha</li>
+          <li class="etapas-acesso__item" data-passo="tempo"><span class="etapas-acesso__barra"></span>Tempo</li>
+          <li class="etapas-acesso__item" data-passo="confirmar"><span class="etapas-acesso__barra"></span>Confirmar</li>
+          <li class="etapas-acesso__item" data-passo="diagnostico"><span class="etapas-acesso__barra"></span>Diagnóstico</li>
+        </ol>
+        <div class="cabeca">
+          <h2 id="titulo-primeiro-acesso">Primeiro acesso: vamos montar sua trilha</h2>
+          <p class="cabeca__sub" id="acesso-sub">Uma conversa rápida com o tutor, um diagnóstico de cerca de 15 minutos
+            e o seu plano de estudo, montado pelo Planejador.</p>
+        </div>
+        <h3 id="titulo-onboarding" class="rotulo">Conversa com o tutor</h3>
+        <ol class="conversa conversa--acesso" id="onboarding-conversa" aria-live="polite" aria-labelledby="titulo-onboarding"></ol>
+        <!-- escolhas da etapa atual (cartões de trilha, resumo para confirmar) -->
+        <div id="acesso-opcoes" class="acesso-opcoes"></div>
+        <form id="form-onboarding" class="formulario" novalidate>
+          <div class="campo">
+            <label for="campo-onboarding" id="rotulo-onboarding">Sua resposta</label>
+            <input id="campo-onboarding" name="resposta" type="text" maxlength="500" required autocomplete="off"
+                   aria-describedby="dica-onboarding">
+            <p class="dica" id="dica-onboarding">Responda do seu jeito. Não escreva dados pessoais.</p>
+          </div>
+          <div class="linha-botoes">
+            <button type="submit" class="botao acao" id="enviar-onboarding">Enviar</button>
+            <button type="button" class="botao botao--secundario acao" id="pular-onboarding" hidden>Pular</button>
+          </div>
         </form>
-        <h3 id="titulo-diagnostico" hidden>2. Diagnóstico</h3>
+        <h3 id="titulo-diagnostico" hidden>Diagnóstico</h3>
         <p class="dica" id="diagnostico-progresso" aria-live="polite" hidden></p>
         <div id="diagnostico-conteudo"></div>
         <div class="linha-botoes">
-          <button type="button" class="botao acao" id="concluir-primeiro-acesso" hidden>3. Montar minha trilha</button>
+          <button type="button" class="botao botao--grande acao" id="concluir-primeiro-acesso" hidden>Montar minha trilha</button>
           <button type="button" class="botao botao--secundario" id="cancelar-matricula">Voltar</button>
         </div>
       </div>
     </section>
 
+    <!-- Início: onde o aluno parou, a trilha resumida e os próximos passos -->
+    <section class="tela" id="tela-inicio" aria-labelledby="titulo-inicio" hidden>
+      <header class="cabeca">
+        <h1 id="titulo-inicio">Olá</h1>
+        <p class="cabeca__sub" id="inicio-situacao"></p>
+      </header>
+      <section class="destaque" aria-labelledby="inicio-etapa">
+        <div class="destaque__texto">
+          <p class="rotulo" id="inicio-rotulo">Continue de onde parou</p>
+          <h2 id="inicio-etapa"></h2>
+          <p id="inicio-detalhe"></p>
+          <div id="inicio-progresso"></div>
+        </div>
+        <button type="button" class="botao botao--grande acao" id="inicio-continuar">
+          Continuar
+          <svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+        </button>
+      </section>
+      <div class="colunas">
+        <section class="cartao coluna-larga" aria-labelledby="inicio-titulo-trilha">
+          <div class="cartao__cabeca">
+            <h2 id="inicio-titulo-trilha">Sua trilha</h2>
+            <button type="button" class="botao botao--link" id="inicio-ver-trilha">Ver trilha completa</button>
+          </div>
+          <ol class="resumo-trilha" id="inicio-trilha"></ol>
+        </section>
+        <section class="coluna-estreita" aria-labelledby="inicio-titulo-passos">
+          <h2 id="inicio-titulo-passos">Próximos passos</h2>
+          <div id="inicio-passos" class="pilha"></div>
+          <div class="cartao cartao--mini">
+            <p class="rotulo">Seu relatório</p>
+            <p class="cartao__titulo">Veja seu desempenho por competência</p>
+            <button type="button" class="botao botao--link" id="inicio-ver-relatorio">Abrir relatório</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
     <!-- b) Trilha -->
     <section class="tela" id="tela-trilha" aria-labelledby="titulo-trilha" hidden>
-      <h1 id="titulo-trilha">Sua trilha</h1>
-      <div id="trilha-avisos"></div>
-      <ol class="etapas" id="trilha-etapas"></ol>
+      <header class="cabeca cabeca--com-progresso">
+        <div class="cabeca">
+          <h1 id="titulo-trilha">Sua trilha</h1>
+          <p class="cabeca__sub" id="trilha-resumo">Siga na ordem. Cada etapa libera a próxima.</p>
+        </div>
+        <div id="trilha-progresso"></div>
+      </header>
+      <div id="trilha-avisos" class="pilha"></div>
+      <!-- o botão "Continuar" (ir-estudar) é levado para dentro da etapa atual pelo app.js -->
+      <ol class="percurso" id="trilha-etapas"></ol>
       <p class="rodape-tela" id="trilha-origem"></p>
-      <div class="linha-botoes">
-        <button type="button" class="botao acao" id="ir-estudar">Estudar agora</button>
+      <div class="linha-botoes" id="trilha-botoes">
+        <button type="button" class="botao acao" id="ir-estudar">Continuar</button>
         <button type="button" class="botao botao--secundario acao" id="atualizar-trilha">Atualizar</button>
       </div>
     </section>
 
-    <!-- c) Estudo -->
+    <!-- c) Estudar: questão, resposta do tutor e perguntas livres ao tutor (antes, a tela "Perguntar ao tutor") -->
     <section class="tela" id="tela-estudo" aria-labelledby="titulo-estudo" hidden>
-      <h1 id="titulo-estudo">Estudo</h1>
-      <div id="estudo-avisos" aria-live="polite"></div>
-      <div id="estudo-conteudo"></div>
-    </section>
+      <header class="cabeca">
+        <p class="rotulo" id="estudo-grupo"></p>
+        <h1 id="titulo-estudo">Estudar</h1>
+      </header>
+      <div id="estudo-avisos" class="pilha" aria-live="polite"></div>
+      <div class="colunas">
+        <div class="coluna-larga estudo-principal">
+          <div id="estudo-conteudo" class="pilha-estudo"></div>
 
-    <!-- d) Diálogo livre -->
-    <section class="tela" id="tela-dialogo" aria-labelledby="titulo-dialogo" hidden>
-      <h1 id="titulo-dialogo">Perguntar ao tutor</h1>
-      <p>O tutor responde só com o material do curso e cita a fonte. Se o material não cobrir a pergunta, ele avisa.</p>
-      <form id="form-dialogo" class="cartao" novalidate>
-        <label for="campo-pergunta">Sua pergunta</label>
-        <textarea id="campo-pergunta" name="pergunta" rows="3" maxlength="500" required
-                  aria-describedby="contador-pergunta dica-pergunta"></textarea>
-        <p class="dica" id="dica-pergunta">Não escreva dados pessoais na pergunta.</p>
-        <p class="dica" id="contador-pergunta" aria-live="polite">0 de 500 caracteres</p>
-        <label for="campo-competencia">Assunto</label>
-        <select id="campo-competencia" name="competencia">
-          <option value="">Todo o material</option>
-        </select>
-        <button type="submit" class="botao acao">Perguntar</button>
-      </form>
-      <h2>Conversa</h2>
-      <ol class="conversa" id="conversa"></ol>
+          <!-- d) pergunta livre ao tutor (mesmos ids da antiga tela de diálogo) -->
+          <form id="form-dialogo" class="cartao pergunta-tutor" novalidate>
+            <label for="campo-pergunta">Pergunte ao tutor</label>
+            <p class="dica" id="dica-pergunta">O tutor responde só com o material do curso e cita a fonte. Não escreva
+              dados pessoais.</p>
+            <div class="pergunta-tutor__linha">
+              <textarea id="campo-pergunta" name="pergunta" rows="2" maxlength="500" required
+                        aria-describedby="contador-pergunta dica-pergunta"></textarea>
+              <button type="submit" class="botao botao--icone acao" aria-label="Enviar pergunta">
+                <svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+              </button>
+            </div>
+            <div class="pergunta-tutor__extra">
+              <p class="dica" id="contador-pergunta" aria-live="polite">0 de 500 caracteres</p>
+              <label for="campo-competencia">Assunto</label>
+              <select id="campo-competencia" name="competencia">
+                <option value="">Todo o material</option>
+              </select>
+            </div>
+          </form>
+          <section aria-labelledby="titulo-conversa">
+            <h2 id="titulo-conversa">Suas perguntas ao tutor</h2>
+            <ol class="conversa" id="conversa"></ol>
+          </section>
+        </div>
+
+        <aside class="coluna-estreita" aria-label="Seu ritmo">
+          <div class="cartao cartao--mini" id="estudo-ritmo">
+            <p class="rotulo">Seu nível agora</p>
+            <p class="numero-medio" id="estudo-nivel">—</p>
+            <div id="estudo-nivel-barra"></div>
+            <p class="rotulo rotulo--espaco">Nesta visita</p>
+            <p class="cartao__texto" id="estudo-visita">Nenhuma resposta ainda.</p>
+          </div>
+          <div class="cartao cartao--mini cartao--aviso">
+            <p class="rotulo">Dica</p>
+            <p class="cartao__texto">Errou? Sem problema: o tutor explica o porquê, e as próximas perguntas se ajustam
+              ao seu nível.</p>
+          </div>
+          <button type="button" class="botao botao--link" id="estudo-voltar-trilha">Voltar à trilha</button>
+        </aside>
+      </div>
     </section>
 
     <!-- e) Meu relatório -->
     <section class="tela" id="tela-relatorio" aria-labelledby="titulo-relatorio" hidden>
-      <h1 id="titulo-relatorio">Meu relatório</h1>
-      <p class="dica">Indicadores provisórios, calculados a partir das suas respostas.</p>
-      <div id="relatorio-indicadores"></div>
-      <section class="cartao" aria-labelledby="titulo-correcoes">
-        <h2 id="titulo-correcoes">Correções do professor</h2>
-        <p class="dica">Explicações de questões que o professor revisou e corrigiu.</p>
-        <div id="relatorio-correcoes"></div>
-      </section>
-      <section class="cartao" aria-labelledby="titulo-narrativa">
-        <h2 id="titulo-narrativa">Resumo do tutor</h2>
-        <div id="relatorio-narrativa"></div>
-        <button type="button" class="botao botao--secundario acao" id="gerar-narrativa">Gerar resumo</button>
-      </section>
+      <header class="cabeca">
+        <h1 id="titulo-relatorio">Meu relatório</h1>
+        <p class="cabeca__sub">Seu desempenho por competência, em linguagem simples. Indicadores provisórios,
+          calculados a partir das suas respostas.</p>
+      </header>
+      <!-- os três números principais -->
+      <div id="relatorio-indicadores" class="numeros"></div>
+      <div class="colunas">
+        <div class="coluna-larga pilha">
+          <section class="cartao" aria-labelledby="titulo-competencias">
+            <h2 id="titulo-competencias">Por competência</h2>
+            <div id="relatorio-competencias"></div>
+          </section>
+          <section class="cartao" aria-labelledby="titulo-narrativa">
+            <h2 id="titulo-narrativa">Resumo do tutor</h2>
+            <div id="relatorio-narrativa"></div>
+            <button type="button" class="botao botao--secundario acao" id="gerar-narrativa">Gerar resumo</button>
+          </section>
+        </div>
+        <div class="coluna-estreita" aria-label="Avisos">
+          <section class="cartao cartao--mini cartao--aviso" aria-labelledby="titulo-correcoes">
+            <h2 id="titulo-correcoes" class="rotulo">Correções do professor</h2>
+            <p class="cartao__texto">Explicações de questões que o professor revisou e corrigiu.</p>
+            <div id="relatorio-correcoes"></div>
+          </section>
+          <div id="relatorio-avisos" class="pilha"></div>
+          <button type="button" class="botao botao--grande" id="relatorio-estudar">Voltar a estudar</button>
+        </div>
+      </div>
     </section>
   </main>
+  </div>
+  </div>
 </body>
 </html>

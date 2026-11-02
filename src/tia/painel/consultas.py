@@ -4,10 +4,14 @@ Consultas SOMENTE DE LEITURA do painel do docente (EAP 1.4.5).
     ementa(), perfis()                    conteúdo pedagógico (validado, Pessoa 4)
     alunos_em_risco(perfil_id)            alunos com inatividade, queda ou desempenho baixo,
                                           COM código; a consulta é auditada (R11)
+    listar_alunos_turma(perfil_id)        todos os alunos: código, perfil, competência atual,
+                                          acerto e situação; a consulta é auditada (R11)
     desempenho_competencias(perfil_id)    acerto e tendência por competência e itens com
                                           erro repetido; só agregados (grupo mínimo, R08)
     listar_revisao(situacao, origem, ...) respostas do diálogo e feedbacks das questões para
                                           aprovar ou vetar (R12); a consulta é auditada
+    contar_a_revisar(origem)              só o número de textos a revisar (sem códigos;
+                                          não auditada)
     exportar_indicadores_csv(perfil_id)   os indicadores agregados do Agente 3 em CSV
 
 Os números vêm das funções do Agente 3 (tia.agentes.relatorio.indicadores):
@@ -36,9 +40,9 @@ from tia.core import auditoria
 from tia.core.config import INATIVIDADE_DIAS, ORQ_ACERTO_MIN_AVANCO, PAINEL_DESEMPENHO_BAIXO, PAINEL_MIN_RESPOSTAS, \
     RELATORIO_MIN_GRUPO, RELATORIO_TENDENCIA_LIMIAR
 from tia.core.database import obter_conexao
-from tia.painel.modelos import (AlunoEmRisco, CompetenciaEmenta, CompetenciaTurma, ConsultaRisco,
-                                DesempenhoCompetencias, ItemRevisao, ItemTurma, ListaRevisao, MotivoRisco,
-                                PerfilResumo, ResumoRevisao)
+from tia.painel.modelos import (AlunoEmRisco, AlunoTurma, CompetenciaEmenta, CompetenciaTurma, ConsultaRisco,
+                                ContagemRevisao, DesempenhoCompetencias, ItemRevisao, ItemTurma, ListaAlunos,
+                                ListaRevisao, MotivoRisco, PerfilResumo, ResumoRevisao)
 
 ORIGENS = ("LLM", "guarda", "fallback")
 
@@ -139,6 +143,42 @@ def alunos_em_risco(perfil_id: str | None = None, agora: datetime | None = None)
                    "acerto_min_avanco": ORQ_ACERTO_MIN_AVANCO})
 
 
+# --- lista de alunos da visão geral ---
+
+# um aluno com vários motivos aparece pelo mais urgente
+PRIORIDADE_SITUACAO = ("desempenho_em_queda", "desempenho_baixo", "conclusao_sem_dominio", "inatividade")
+
+
+def situacao_do_aluno(dados, agora: datetime, nomes: dict[str, str]) -> AlunoTurma:
+    """Código, perfil, competência atual (a primeira etapa da trilha ainda não
+    concluída), acerto geral e situação, com as mesmas regras dos alertas de
+    risco (avaliar_risco). Nada além disso sai daqui (R08)."""
+    progresso = indicadores.progresso(dados, nomes)
+    atual = next((c.competencia_id for c in progresso.por_competencia if not c.concluida), None)
+    risco = avaliar_risco(dados, agora, nomes)
+    motivos = {m.tipo for m in risco.motivos} if risco else set()
+    if dados.trilha is None:
+        situacao = "sem_trilha"
+    else:
+        situacao = next((m for m in PRIORIDADE_SITUACAO if m in motivos),
+                        "trilha_concluida" if progresso.etapas and atual is None else "no_ritmo")
+    return AlunoTurma(aluno_id=dados.aluno_id, perfil_id=dados.perfil_id,
+                      competencia_atual=atual if dados.trilha is not None else None,
+                      taxa_acerto=indicadores.desempenho(dados.respostas).geral.taxa, situacao=situacao)
+
+
+def listar_alunos_turma(perfil_id: str | None = None, agora: datetime | None = None) -> ListaAlunos:
+    """Todos os alunos (ou os do perfil), em ordem de código. Mostra códigos:
+    a consulta é registrada na auditoria, com os códigos exibidos."""
+    agora = agora or datetime.now()
+    nomes = _nomes()
+    alunos = [situacao_do_aluno(d, agora, nomes) for d in (ler_dados_aluno(a) for a in listar_alunos(perfil_id)) if d]
+    codigos = ", ".join(a.aluno_id for a in alunos) or "nenhum"
+    auditoria_id = auditar_consulta(
+        "alunos", f"perfil={perfil_id or 'todos'}; {len(alunos)} aluno(s) exibido(s): {codigos}")
+    return ListaAlunos(gerado_em=_texto(agora), perfil_id=perfil_id, alunos=alunos, auditoria_id=auditoria_id)
+
+
 # --- desempenho por competência (só agregados) ---
 
 def desempenho_competencias(perfil_id: str | None = None, agora: datetime | None = None,
@@ -217,12 +257,9 @@ def _resumo(conexao, tipo: str):
                          taxa_veto=round(vetados / total, 3) if total else None)
 
 
-def listar_revisao(situacao: str = "a_revisar", origem: str | None = None, pagina: int = 1, por_pagina: int = 20,
-                   tipo: str | None = None, competencia_id: str | None = None) -> ListaRevisao:
-    """Respostas do diálogo e feedbacks das questões (mais recentes primeiro),
-    com o texto ORIGINAL do Tutor, a correção do docente e a situação. Mostra
-    códigos e textos: a consulta é auditada. Só para as telas do docente; as
-    visões agregadas nunca leem estes textos (R08)."""
+def _filtro_revisao(situacao: str, origem: str | None, tipo: str | None,
+                    competencia_id: str | None) -> tuple[str, list]:
+    """Condição SQL (sobre o apelido x de _TEXTOS) e parâmetros dos filtros da revisão."""
     # textos já anonimizados pela retenção ou pela eliminação a pedido do titular
     # (sem aluno ou sem texto) não têm o que revisar; continuam só nas contagens do resumo
     condicoes, parametros = [_FILTRO_SITUACAO[situacao], "x.aluno_id IS NOT NULL AND x.resposta IS NOT NULL"], []
@@ -230,7 +267,28 @@ def listar_revisao(situacao: str = "a_revisar", origem: str | None = None, pagin
         if valor is not None:
             condicoes.append(f"x.{campo} = ?")
             parametros.append(valor)
-    onde = " AND ".join(condicoes)
+    return " AND ".join(condicoes), parametros
+
+
+def contar_a_revisar(origem: str | None = None) -> ContagemRevisao:
+    """Quantos textos a revisar há, com o mesmo critério da lista da revisão.
+    Só o número (contador do menu): não mostra código, então não é auditada."""
+    onde, parametros = _filtro_revisao("a_revisar", origem, None, None)
+    conexao = obter_conexao()
+    try:
+        total = conexao.execute(f"SELECT COUNT(*) FROM ({_TEXTOS}) x WHERE {onde}", parametros).fetchone()[0]
+    finally:
+        conexao.close()
+    return ContagemRevisao(a_revisar=total)
+
+
+def listar_revisao(situacao: str = "a_revisar", origem: str | None = None, pagina: int = 1, por_pagina: int = 20,
+                   tipo: str | None = None, competencia_id: str | None = None) -> ListaRevisao:
+    """Respostas do diálogo e feedbacks das questões (mais recentes primeiro),
+    com o texto ORIGINAL do Tutor, a correção do docente e a situação. Mostra
+    códigos e textos: a consulta é auditada. Só para as telas do docente; as
+    visões agregadas nunca leem estes textos (R08)."""
+    onde, parametros = _filtro_revisao(situacao, origem, tipo, competencia_id)
     conexao = obter_conexao()
     try:
         total = conexao.execute(f"SELECT COUNT(*) FROM ({_TEXTOS}) x WHERE {onde}", parametros).fetchone()[0]

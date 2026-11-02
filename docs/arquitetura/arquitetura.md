@@ -29,7 +29,7 @@ flowchart LR
         RTUT["/tutor/sessao · resposta · perguntar<br/>/tutor/dialogo/{id}/veto · /tutor/feedback/{id}/veto<br/>/alunos/{id}/feedbacks · /tutor/incentivo"]
         RREL["/relatorio/aluno/{id} · /relatorio/turma"]
         RAUD["/auditoria/{id}"]
-        RPAI["/painel/alunos-em-risco · competencias · revisao<br/>auditoria · exportar/indicadores.csv<br/>/conteudo/ementa · perfis (só leitura)"]
+        RPAI["/painel/alunos-em-risco · alunos · competencias<br/>revisao · revisao/contagem · auditoria<br/>exportar/indicadores.csv · /conteudo/ementa · perfis (só leitura)"]
     end
 
     ORQ["Orquestrador 1.3.5<br/>fluxo · eventos · regras"]
@@ -257,67 +257,21 @@ para ir junto no `pip install`); a pasta `web/` da raiz ficou vazia.
 
 ### Telas e rotas consumidas
 
-| Tela | O que mostra | Rotas |
-|---|---|---|
-| Login / entrada | login com usuário e senha (1.4.6); o código do aluno vem da sessão. Só no modo de desenvolvimento (`TIA_AUTH=desligada`, com aviso): código do aluno validado com o padrão do R08. Código sem matrícula abre o formulário de matrícula (perfil e horas; diagnóstico vazio) | `GET /aluno/{id}/estado` (404 = sem matrícula), `POST /aluno/{id}/iniciar` |
-| Trilha | etapas em ordem, etapa atual destacada, concluídas marcadas, horas e semana, justificativa do Planejador com a origem (LLM ou texto padrão), origem e falha do último planejamento, aviso da última decisão e reforço em curso | `GET /aluno/{id}/estado`, `GET /alunos/{id}/trilha` |
-| Estudo | uma pergunta por vez com alternativas (rádio), envio, veredito fixo, explicação com a origem (LLM, guarda ou fallback) e o motivo da falha, fontes citadas (R03), nível, avisos do orquestrador (conclusão, reforço, retomada, incentivo). Abre a sessão só pelo orquestrador | `GET /aluno/{id}/proximo`, `POST /aluno/{id}/sessao`, `POST /aluno/{id}/evento` |
-| Perguntar ao tutor | pergunta livre (até 500 caracteres, filtro por competência da trilha), resposta com origem: `LLM` (ancorada no material, com fontes), `guarda` (trecho do material transcrito, com a fonte) ou `fallback` (mensagem fixa quando o material não cobre). Histórico com as correções do docente (R12) | `POST /tutor/perguntar`, `GET /alunos/{id}/dialogo` |
-| Meu relatório | os 5 indicadores em linguagem simples; o resumo (narrativa do LLM) só quando o aluno pede, porque leva até um minuto | `GET /relatorio/aluno/{id}?narrativa=false` e `?narrativa=true` |
-
-Comportamento comum: durante uma chamada, faixa "Aguardando…" com contador de segundos (`role=status`),
-botões de ação desativados e a página continua navegável. Espera máxima no navegador: 300 s (uma resposta
-pode acionar Tutor e Planejador, 120 s cada no servidor). Estouro de tempo, falta de conexão e erros da
-API aparecem numa faixa de erro (`role=alert`) com o `detail` da API. Uma resposta que falhou por rede é
-reenviada com o **mesmo `evento_id`** (o orquestrador não processa duas vezes). Nada vai para o console;
-o código do aluno fica só no `sessionStorage` da aba (para sobreviver a recarregar a página).
-
-### Mudança na API (indispensável)
-
-- `ProximaAcao.pergunta` (opcional, preenchida só em `continuar_sessao`, por `fluxo.proxima`): a pergunta
-  em aberto da sessão, sem gabarito. **Motivo:** nenhuma rota devolvia a pergunta de uma sessão já
-  aberta. Depois de recarregar a página, de voltar outro dia ou na retomada após um reforço (a última
-  resposta do reforço traz `proxima_pergunta = null`), o aluno ficava preso: `POST /aluno/{id}/sessao`
-  recusa (409, "continue-a") e o cliente não tinha a pergunta. O campo é opcional, então os clientes
-  atuais não mudam.
-
-### O que falta
-
-- ~~Login (1.4.6)~~ **Feito (etapa 1):** o aluno entra com usuário e senha e o código vem da sessão. A entrada
-  pelo código só existe no modo de desenvolvimento (`TIA_AUTH=desligada`).
-- **Visual do EBAULA:** cores, fontes, logotipo e componentes. Basta trocar `tema.css` (e, se preciso,
-  ajustar `estilo.css`); a estrutura HTML usa classes neutras.
-- **Plug-in EBAULA (1.4.3):** feito (`plugin-ebaula/README.md`). A CSP continua `frame-ancestors 'none'`
-  em toda a API; só as páginas `/app` liberam as origens listadas em `TIA_FRAME_ANCESTORS` (vazio = ninguém).
-  Falta validar no EBAULA real (cookies `SameSite=Strict` só funcionam se TIA e EBAULA forem do mesmo site).
-- **Diagnóstico na matrícula:** a tela não pergunta o diagnóstico (todas as notas 0). Depende de quem
-  aplica o diagnóstico (Pessoa 2/4).
-- **Nomes de competência fora da trilha:** o reforço de um pré-requisito dispensado aparece pelo código
-  (ex.: `repeticao`) no cartão de revisão; o aviso do orquestrador já traz o nome. A rota da ementa agora
-  existe (`GET /conteudo/ementa`, criada para o painel); falta o `app.js` usá-la.
-- **Roteiro de navegador automatizado:** o Playwright não está instalado; ver
-  `docs/relatorios/web_standalone.md`.
-
-## Painel do docente/instituição (EAP 1.4.5)
-
-HTML, CSS e JavaScript puros em `src/tia/web/static/painel/`, servidos em **`/app/painel/`** pelo mesmo
-`tia.web.montar` (mesma CSP, sem script inline). Reaproveita `tema.css`, `estilo.css` e o novo `comum.js`
-(utilidades extraídas de `app.js`: `el`/`svg` com `textContent`, `chamar` com contador de segundos e botões
-`.acao` desativados, faixa de erro). As consultas ficam em `src/tia/painel/` (só leitura) e as rotas em
-`tia.api.rotas_painel`. Dados de demonstração: `python -m tia.web.dados_painel` (12 alunos DEMO-P01..P12, sem LLM).
-
-### Telas e rotas consumidas
+Redesenho de 01/11/2026 (`docs/design/prototipo_redesign/PainelDocente`, `Revisar` e `RelatorioTurma`; relatório
+em `docs/relatorios/redesign_docente.md`): menu lateral verde-oliva com o mesmo shell e os mesmos tokens do
+aluno (`body.app-docente`), papel e usuário no rodapé. Três telas principais e duas secundárias:
 
 | Tela | O que mostra | Rotas |
 |---|---|---|
-| Visão geral | os 5 indicadores agregados do Agente 3 em cartões (progresso médio, acerto por nível, engajamento, pontos fracos, origem dos feedbacks e taxa de veto), alertas da turma só com contagens, regra do grupo mínimo explicada e a interpretação com a origem (LLM, guarda ou fallback) só quando o docente pede. Filtro por perfil no topo. Exportar CSV e Imprimir | `GET /relatorio/turma?narrativa=false` e `?narrativa=true`, `GET /painel/exportar/indicadores.csv` |
-| Alertas de risco | alunos em risco **com código** (nunca nome): inatividade, desempenho em queda, desempenho baixo, competência terminada sem domínio e sem acerto para avançar (D9), com o motivo em texto, dias sem atividade, acerto, tendência e progresso. Só docente; o rodapé avisa que cada consulta fica na auditoria em nome dele. Cada consulta grava `consulta_painel` na auditoria com os códigos exibidos. Atalho para a auditoria do aluno | `GET /painel/alunos-em-risco` |
-| Competências | barras SVG da taxa de acerto por competência (linha de referência em 50%), contagem de alunos por tendência e questões com erro repetido (com enunciado) | `GET /painel/competencias` |
-| Revisão docente (R12) | feedbacks das questões e respostas do diálogo com o texto original, a questão ou a pergunta, o veredito, a origem, as fontes, o texto barrado pela guarda e a correção; filtros por tipo, situação, origem e competência; Aprovar, Vetar (com a correção/motivo) e Retirar veto; taxa de vetos de cada tipo | `GET /painel/revisao`, `PATCH /tutor/dialogo/{id}/veto`, `PATCH /tutor/feedback/{id}/veto` |
-| Auditoria (R11) | tabela filtrável por agente (orquestrador, planejador, tutor, relatório, painel), código do aluno e período, paginada (25 por página) | `GET /painel/auditoria` |
+| Visão geral (inicial) | 4 números: alunos ativos (total menos os com alerta de inatividade), precisam de atenção (alunos com pelo menos um alerta), **progresso médio na trilha** (indicador 1 do Agente 3; no lugar de "concluíram esta semana", que não existe como indicador) e textos para revisar (atalho para a revisão). Alertas **por aluno, com código** (queda, desempenho baixo, concluída com ressalvas, inatividade; cor terracota para queda e desempenho baixo, dourada para ressalvas), filtro por motivo, critérios recolhidos e atalho para a auditoria do aluno. Tabela de alunos (código, competência atual, acerto, situação) com filtro por nível (perfil). Cada abertura grava `consulta_painel` duas vezes (alertas e lista) e o relatório agregado grava `relatorio_turma` | `GET /painel/alunos-em-risco`, `GET /painel/alunos`, `GET /relatorio/turma?narrativa=false`, `GET /painel/revisao/contagem` |
+| Revisar textos (R12) | fila à esquerda (código, competência, tipo, data) e, à direita, a questão ou a pergunta, o veredito, o texto do tutor com "Ver fonte" (fontes e origem), o texto barrado pela guarda (recolhido) e a correção atual. Campo de correção **obrigatório para vetar**; botões Aprovar e Vetar com correção (vetado: Salvar correção e Retirar veto). Filtros (tipo, situação, origem, competência) e taxa de vetos recolhidos. O contador do menu é o total "a revisar" de origem LLM | `GET /painel/revisao`, `GET /painel/revisao/contagem`, `PATCH /tutor/dialogo/{id}/veto`, `PATCH /tutor/feedback/{id}/veto` |
+| Relatório da turma | resumo escrito pela IA local (só quando o docente pede, com a origem), 4 números do Agente 3 (progresso médio, alunos com trilha, sessões por aluno, inativos), **desempenho por grupo** (progresso médio de cada perfil; perfil abaixo do mínimo aparece com cadeado e "oculto"), alertas da turma só com contagens e, recolhidos, os 5 indicadores completos. Filtro de grupo, Exportar CSV e Imprimir (a impressão abre os indicadores recolhidos). Sem códigos | `GET /relatorio/turma?narrativa=false` (grupo escolhido e cada perfil) e `?narrativa=true`, `GET /painel/exportar/indicadores.csv` |
+| Competências (secundária) | barras SVG da taxa de acerto por competência (linha de referência em 50%), contagem de alunos por tendência e questões com erro repetido (com enunciado) | `GET /painel/competencias` |
+| Auditoria (R11, secundária) | tabela filtrável por agente, código do aluno e período, paginada (25 por página) | `GET /painel/auditoria` |
 
 Todas as telas: carregamento com contador de segundos (`role=status`), botões desativados durante a
-chamada, erro com o `detail` da API (`role=alert`), aba atual no endereço (`/app/painel/#risco`). CSS de
+chamada, erro com o `detail` da API (`role=alert`), tela atual no endereço (`/app/painel/#revisao`; o antigo
+`#risco` abre a Visão geral). CSS de
 impressão: só a tela aberta, sem abas nem botões, sempre no tema claro (cores de impressão em `tema.css`).
 
 ### Rotas novas (somente leitura)
@@ -327,8 +281,10 @@ impressão: só a tela aberta, sem abas nem botões, sempre no tema claro (cores
 | `GET /conteudo/ementa` | competências (id, nome, pré-requisitos) | Validado (Pessoa 4). Resolve também a pendência da web do aluno |
 | `GET /conteudo/perfis` | perfis (id, nome) | Validado (Pessoa 4) |
 | `GET /painel/alunos-em-risco?perfil_id=` | `ConsultaRisco` com códigos | **auditada** a cada chamada |
+| `GET /painel/alunos?perfil_id=` | `ListaAlunos`: por aluno, **só** código, perfil, competência atual, acerto e situação (nunca nome, objetivo ou texto do diálogo) | **auditada** a cada chamada (01/11/2026) |
 | `GET /painel/competencias?perfil_id=` | `DesempenhoCompetencias` | só agregados (usa `indicadores.agregar_turma`) |
 | `GET /painel/revisao?situacao=&origem=&pagina=&por_pagina=` | `ListaRevisao` | **auditada**; mostra códigos e textos do diálogo |
+| `GET /painel/revisao/contagem?origem=` | `{"a_revisar": n}` | só o número (contador do menu): sem códigos, **não auditada** (01/11/2026) |
 | `GET /painel/auditoria?agente=&aluno_id=&desde=&ate=&pagina=&por_pagina=` | `PaginaAuditoria` | mais recente primeiro; `planejador` = decisões que acionaram o Planejador |
 | `GET /painel/exportar/indicadores.csv?perfil_id=` | CSV `;`, vírgula decimal, UTF-8 com BOM | sem códigos; células que começam com `= + - @` levam `'` (sem fórmula) |
 
@@ -417,7 +373,7 @@ Pacote `src/tia/seguranca/`, rotas em `tia.api.rotas_auth`. Só biblioteca padr�
 | `GET /aluno/{id}/estado \| proximo`, `GET /alunos/{id}/trilha \| dialogo \| feedbacks`, `GET /relatorio/aluno/{id}` | só o próprio | sim (leitura) | 403 | 401 |
 | Primeiro acesso (Agente 1): `POST /aluno/{id}/onboarding/iniciar \| mensagem`, `POST /aluno/{id}/diagnostico/iniciar \| responder`, `POST /aluno/{id}/primeiro-acesso/concluir` | só o próprio, com o token anti-CSRF | 403 (não age pelo aluno) | 403 | 401 |
 | `GET /aluno/{id}/primeiro-acesso` | só o próprio (com o objetivo) | sim, **sem o objetivo** (texto livre do aluno, R08) | 403 | 401 |
-| `/painel/*`, `GET /relatorio/turma`, `GET /auditoria/{id}`, `PATCH /tutor/dialogo/{id}/veto`, `PATCH /tutor/feedback/{id}/veto` | 403 | sim | 403 | 401 |
+| `/painel/*` (inclusive `/painel/alunos` e `/painel/revisao/contagem`), `GET /relatorio/turma`, `GET /auditoria/{id}`, `PATCH /tutor/dialogo/{id}/veto`, `PATCH /tutor/feedback/{id}/veto` | 403 | sim | 403 | 401 |
 | `POST /orquestrador/verificar-inatividade` | 403 | sim | sim | 401 |
 | `GET /conteudo/ementa \| perfis` | sim | sim | sim | 401 |
 | `/admin/usuarios` | 403 | 403 | sim | 401 |
@@ -452,8 +408,8 @@ escrever a classe, registrá-la em `PROVEDORES` e usar `AUTH_PROVEDOR=<nome>`. O
 login, a auditoria grava `sem_login` e as duas telas mostram
 "Modo de desenvolvimento: autenticação desligada". **Padrão: ligada.** Os testes que verificam os agentes
 pelas rotas usam esse modo (fixture `auth_desligada` no `conftest`); os de segurança (`test_seguranca.py`
-e `test_seguranca_etapa2.py`) ligam a autenticação. `python -m tia.web.dados_demo` e `python -m tia.web.dados_painel` criam o aluno
-DEMO-W01 e o docente DEMO-DOCENTE com uma senha de demonstração **fictícia e pública**, impressa pelo
+e `test_seguranca_etapa2.py`) ligam a autenticação. `python -m tia.web.dados_demo` e `python -m tia.web.dados_painel` criam os alunos
+DEMO-W01, DEMO-W02 e DEMO-W03 e o docente DEMO-DOCENTE com uma senha de demonstração **fictícia e pública**, impressa pelo
 próprio comando. Só serve para a máquina de desenvolvimento.
 
 ### LGPD e segurança geral (etapa 2 de 2)
