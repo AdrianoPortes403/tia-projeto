@@ -522,8 +522,50 @@ def test_dados_painel_nao_duplica(turma, capsys):
     assert capsys.readouterr().out.count("já existe no banco") == 12
 
 
+def test_turma_ampliada_para_demonstracao(monkeypatch):
+    """O que python -m tia.web.dados_painel cria (01/11/2026): 20+ alunos, os dois perfis acima do grupo
+    mínimo, todas as situações, reforço em andamento, erro repetido, fila de revisão longa e datas variadas."""
+    from tia import orquestrador
+
+    def falha_imediata(*args, **kwargs):
+        raise requests.ConnectionError("teste sem LLM")
+    monkeypatch.setattr(llm_client.requests, "post", falha_imediata)
+    criados = dados_painel.criar_turma_ampliada(datetime.now())
+    assert len(criados) == len(dados_painel.ALUNOS) + len(dados_painel.ALUNOS_AMPLIACAO) + 1 >= 20
+    assert all(re.fullmatch(r"DEMO-P\d\d", c) for c in criados)
+    assert dados_painel.criar_turma_ampliada() == []  # rodar de novo não duplica
+
+    alunos = client.get("/painel/alunos").json()["alunos"]
+    por_perfil = {p: sum(a["perfil_id"] == p for a in alunos) for p in ("iniciante", "intermediario")}
+    assert min(por_perfil.values()) >= RELATORIO_MIN_GRUPO, por_perfil
+    for perfil in por_perfil:  # nenhum perfil oculto
+        assert not client.get(f"/relatorio/turma?perfil_id={perfil}&narrativa=false").json()["suprimido"]
+    assert {a["situacao"] for a in alunos} >= {"no_ritmo", "desempenho_em_queda", "desempenho_baixo",
+                                               "conclusao_sem_dominio", "inatividade", "trilha_concluida"}
+    assert orquestrador.proxima("DEMO-P20").reforco  # reforço em andamento (fluxo real)
+
+    competencias = client.get("/painel/competencias").json()
+    assert len({i["competencia_id"] for i in competencias["itens_fracos"]}) >= 2
+    assert any(c["suprimido"] for c in competencias["competencias"])  # a regra do grupo mínimo continua visível
+
+    dialogos = client.get("/painel/revisao?tipo=dialogo&origem=LLM&por_pagina=10").json()
+    assert dialogos["total"] > 20  # mais de 2 páginas de 10 só de respostas do diálogo
+    assert {d[3] for d in dados_painel.DIALOGOS} == {"LLM", "guarda", "fallback"}
+    assert client.get("/painel/revisao/contagem?origem=LLM").json()["a_revisar"] > 100
+
+    conexao = obter_conexao()
+    try:
+        datas = [datetime.fromisoformat(l[0]) for l in conexao.execute(
+            "SELECT criado_em FROM orquestrador_matriculas WHERE aluno_id LIKE 'DEMO-P%'")]
+    finally:
+        conexao.close()
+    assert (max(datas) - min(datas)).days >= 30
+
+
 def test_dados_painel_sem_nomes():
     codigos = [aluno[0] for aluno in dados_painel.ALUNOS]
     assert len(codigos) == 12 and all(re.fullmatch(r"DEMO-P\d\d", c) for c in codigos)
+    ampliacao = [aluno[0] for aluno in dados_painel.ALUNOS_AMPLIACAO] + [dados_painel.ALUNO_REFORCO[0]]
+    assert all(re.fullmatch(r"DEMO-P\d\d", c) for c in ampliacao) and not set(ampliacao) & set(codigos)
     assert all("[demonstração]" in d[1] for d in dados_painel.DIALOGOS)
     assert json.dumps(dados_painel.DIALOGOS, ensure_ascii=False).count("@") == 0
