@@ -257,9 +257,63 @@ para ir junto no `pip install`); a pasta `web/` da raiz ficou vazia.
 
 ### Telas e rotas consumidas
 
+<<<<<<< Updated upstream
 Redesenho de 01/11/2026 (`docs/design/prototipo_redesign/PainelDocente`, `Revisar` e `RelatorioTurma`; relatório
 em `docs/relatorios/redesign_docente.md`): menu lateral verde-oliva com o mesmo shell e os mesmos tokens do
 aluno (`body.app-docente`), papel e usuário no rodapé. Três telas principais e duas secundárias:
+=======
+| Tela | O que mostra | Rotas |
+|---|---|---|
+| Login / entrada | login com usuário e senha (1.4.6); o código do aluno vem da sessão. Só no modo de desenvolvimento (`TIA_AUTH=desligada`, com aviso): código do aluno validado com o padrão do R08. Código sem matrícula abre o formulário de matrícula (perfil e horas; diagnóstico vazio) | `GET /aluno/{id}/estado` (404 = sem matrícula), `POST /aluno/{id}/iniciar` |
+| Trilha | etapas em ordem, etapa atual destacada, concluídas marcadas, horas e semana, justificativa do Planejador com a origem (LLM ou texto padrão), origem e falha do último planejamento, aviso da última decisão e reforço em curso | `GET /aluno/{id}/estado`, `GET /alunos/{id}/trilha` |
+| Estudo | uma pergunta por vez com alternativas (rádio), envio, veredito fixo, explicação com a origem (LLM, guarda ou fallback) e o motivo da falha, fontes citadas (R03), nível, avisos do orquestrador (conclusão, reforço, retomada, incentivo). Abre a sessão só pelo orquestrador | `GET /aluno/{id}/proximo`, `POST /aluno/{id}/sessao`, `POST /aluno/{id}/evento` |
+| Perguntar ao tutor | pergunta livre (até 500 caracteres, filtro por competência da trilha), resposta com origem: `LLM` (ancorada no material, com fontes), `guarda` (trecho do material transcrito, com a fonte) ou `fallback` (mensagem fixa quando o material não cobre). Histórico com as correções do docente (R12) | `POST /tutor/perguntar`, `GET /alunos/{id}/dialogo` |
+| Meu relatório | os 5 indicadores em linguagem simples; o resumo (narrativa do LLM) só quando o aluno pede, porque leva até um minuto | `GET /relatorio/aluno/{id}?narrativa=false` e `?narrativa=true` |
+
+Comportamento comum: durante uma chamada, faixa "Aguardando…" com contador de segundos (`role=status`),
+botões de ação desativados e a página continua navegável. Espera máxima no navegador: 300 s (uma resposta
+pode acionar Tutor e Planejador, 120 s cada no servidor). Estouro de tempo, falta de conexão e erros da
+API aparecem numa faixa de erro (`role=alert`) com o `detail` da API. Uma resposta que falhou por rede é
+reenviada com o **mesmo `evento_id`** (o orquestrador não processa duas vezes). Nada vai para o console;
+o código do aluno fica só no `sessionStorage` da aba (para sobreviver a recarregar a página).
+
+### Mudança na API (indispensável)
+
+- `ProximaAcao.pergunta` (opcional, preenchida só em `continuar_sessao`, por `fluxo.proxima`): a pergunta
+  em aberto da sessão, sem gabarito. **Motivo:** nenhuma rota devolvia a pergunta de uma sessão já
+  aberta. Depois de recarregar a página, de voltar outro dia ou na retomada após um reforço (a última
+  resposta do reforço traz `proxima_pergunta = null`), o aluno ficava preso: `POST /aluno/{id}/sessao`
+  recusa (409, "continue-a") e o cliente não tinha a pergunta. O campo é opcional, então os clientes
+  atuais não mudam.
+
+### O que falta
+
+- ~~Login (1.4.6)~~ **Feito (etapa 1):** o aluno entra com usuário e senha e o código vem da sessão. A entrada
+  pelo código só existe no modo de desenvolvimento (`TIA_AUTH=desligada`).
+- **Visual do EBAULA:** cores, fontes, logotipo e componentes. Basta trocar `tema.css` (e, se preciso,
+  ajustar `estilo.css`); a estrutura HTML usa classes neutras.
+- **Plug-in EBAULA (1.4.3):** feito (`plugin-ebaula/README.md`). A CSP continua `frame-ancestors 'none'`
+  em toda a API; só as páginas `/app` liberam as origens listadas em `TIA_FRAME_ANCESTORS` (vazio = ninguém).
+  Falta validar no EBAULA real (cookies `SameSite=Strict` só funcionam se TIA e EBAULA forem do mesmo site).
+- **Diagnóstico na matrícula:** a tela não pergunta o diagnóstico (todas as notas 0). Depende de quem
+  aplica o diagnóstico (Pessoa 2/4).
+- **Nomes de competência fora da trilha:** o reforço de um pré-requisito dispensado aparece pelo código
+  (ex.: `repeticao`) no cartão de revisão; o aviso do orquestrador já traz o nome. A rota da ementa agora
+  existe (`GET /conteudo/ementa`, criada para o painel); falta o `app.js` usá-la.
+- **Roteiro de navegador automatizado:** o Playwright não está instalado; ver
+  `docs/relatorios/web_standalone.md`.
+
+## Painel do docente/instituição (EAP 1.4.5)
+
+HTML, CSS e JavaScript puros em `src/tia/web/static/painel/`, servidos em **`/app/painel/`** pelo mesmo
+`tia.web.montar` (mesma CSP, sem script inline). Reaproveita `tema.css`, `estilo.css` e o novo `comum.js`
+(utilidades extraídas de `app.js`: `el`/`svg` com `textContent`, `chamar` com contador de segundos e botões
+`.acao` desativados, faixa de erro). As consultas ficam em `src/tia/painel/` (só leitura) e as rotas em
+`tia.api.rotas_painel`. Dados de demonstração: `python -m tia.web.dados_painel` (26 alunos DEMO-P01..P26, sem LLM; os testes usam a
+turma-base de 12; ver `docs/relatorios/dados_demonstracao.md`).
+
+### Telas e rotas consumidas
+>>>>>>> Stashed changes
 
 | Tela | O que mostra | Rotas |
 |---|---|---|
