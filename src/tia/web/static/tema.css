@@ -91,15 +91,15 @@
 }
 
 /*
- * Aplicação do ALUNO (redesenho de 01/11/2026, docs/design/prototipo_redesign/): paleta própria,
- * só em body.app-aluno. O painel do docente (painel/) continua com os valores acima até a parte 2.
+ * Aplicação do ALUNO e painel do DOCENTE (redesenho de 01/11/2026, docs/design/prototipo_redesign/):
+ * paleta própria, em body.app-aluno e body.app-docente (parte 2). Os valores do :root ficam para o plug-in.
  * Redefine os tokens antigos (os componentes de estilo.css os usam) e acrescenta os novos.
  * Contraste conferido (WCAG AA; docs/relatorios/redesign_aluno.md): texto 4.5:1, bordas e
  * indicadores 3:1. Ajustes em relação à prévia: foco em anel duplo (dourado + contorno escuro),
  * dourado escuro nas barras e no contorno da etapa atual, texto de bloqueado e borda de campo mais escuros.
  * Só tema claro: color-scheme light (o escuro fica para depois, sem prioridade).
  */
-body.app-aluno {
+body.app-aluno, body.app-docente {
   color-scheme: light;
 
   /* paleta */

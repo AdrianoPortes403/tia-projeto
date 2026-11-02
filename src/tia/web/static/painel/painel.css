@@ -1,19 +1,36 @@
 /*
  * Layout do painel do docente (EAP 1.4.5), além de ../estilo.css.
+ * Redesenho de 01/11/2026 (docs/design/prototipo_redesign/PainelDocente, Revisar e
+ * RelatorioTurma): o menu lateral, os tokens e as formas vêm do redesenho do aluno
+ * (body.app-docente em tema.css e estilo.css); aqui fica só o que é do painel.
  * Usa só as variáveis de ../tema.css (nenhuma cor ou fonte fixa aqui);
  * as cores de impressão também ficam no tema.
  */
-body.painel { --largura-max: 72rem; }
 
-.cabeca-tela {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--espaco-2);
+/* --- menu: contador da revisão e itens secundários --- */
+.app-docente .contador {
+  margin-left: auto;
+  min-width: 1.5rem;
+  padding: 0.125rem 0.5rem;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--cor-dourado);
+  color: var(--cor-oliva-escuro);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
-.cabeca-tela h1 { margin: 0; }
-.cabeca-tela .botao { margin-top: 0; }
+.app-docente .contador[hidden] { display: none; }
+.app-docente .abas__separador { display: block; height: 1px; margin: 0.5rem 0.875rem; background: var(--cor-verde); }
+.app-docente .aba--secundaria { min-height: 2.5rem; padding-top: 0.5rem; padding-bottom: 0.5rem; font-size: 0.875rem; }
+.app-docente .filtro-grupo { justify-content: flex-end; max-width: var(--largura-max); margin: 0 auto var(--espaco-3); }
+.app-docente .filtro-grupo[hidden] { display: none; }
+@media (max-width: 56rem) {
+  .app-docente .abas__separador { display: none; }
+  .app-docente .filtro-grupo { justify-content: flex-start; }
+}
+
 a.botao { text-decoration: none; }
 
 .filtro-grupo { display: flex; align-items: center; gap: var(--espaco-2); }
@@ -48,9 +65,6 @@ a.botao { text-decoration: none; }
 .indicadores { margin-bottom: var(--espaco-3); }
 .indicador h2 { margin-top: 0; }
 .oculto { color: var(--cor-texto-suave); font-style: italic; }
-.lista-alertas, .motivos { list-style: none; padding: 0; margin: 0; }
-.lista-alertas li, .motivos li { margin-bottom: var(--espaco-2); }
-.selo--erro { color: var(--cor-erro); background: var(--cor-erro-fundo); border-color: transparent; }
 
 /* --- gráficos de barras (SVG; valor sempre também em texto) --- */
 .grafico, .indicadores .grafico { list-style: none; padding: 0; margin: var(--espaco-2) 0 0; }
@@ -92,15 +106,6 @@ a.botao { text-decoration: none; }
 .enunciado-curto { white-space: pre-wrap; display: block; max-width: 32rem; }
 
 /* --- revisão --- */
-.revisao { list-style: none; padding: 0; margin: 0; }
-.item-revisao__cabeca {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: var(--espaco-2);
-  align-items: baseline;
-}
-.rotulo { font-weight: 600; }
 .riscado { text-decoration: line-through; color: var(--cor-texto-suave); }
 .correcao {
   white-space: pre-wrap;
@@ -109,13 +114,9 @@ a.botao { text-decoration: none; }
   background: var(--cor-sucesso-fundo);
   border-radius: var(--raio);
 }
-.form-veto { margin-top: var(--espaco-3); }
-.form-veto textarea { max-width: none; }
-.resumo-revisao:focus { outline: none; }
 .resumo-revisao__tipos { display: grid; gap: var(--espaco-3); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
 .resumo-tipo h3 { margin-bottom: var(--espaco-1); }
 .veredito-texto { white-space: pre-wrap; font-weight: 600; }
-.conversa__pergunta, .conversa__resposta { white-space: pre-wrap; }
 .descartado {
   padding: var(--espaco-2) var(--espaco-3);
   border-left: 4px solid var(--cor-alerta);
@@ -129,11 +130,257 @@ a.botao { text-decoration: none; }
 .paginacao .botao { margin-top: 0; }
 .paginacao__texto { font-variant-numeric: tabular-nums; }
 
+/* --- peças comuns do redesenho (todas as telas) --- */
+.app-docente .cabeca--acoes { flex-direction: row; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.app-docente .cabeca--acoes .botao { margin: 0; }
+.app-docente .rodape-tela { font-size: var(--tamanho-pequeno); color: var(--cor-texto-suave); }
+.app-docente .tabela { font-size: 0.9375rem; background: transparent; }
+.app-docente .tabela thead th {
+  background: none;
+  color: var(--cor-texto-suave);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.625rem 0.5rem;
+  border-bottom: none;
+}
+.app-docente .tabela th, .app-docente .tabela td { padding: 0.875rem 0.5rem; border-bottom: none; border-top: 1px solid var(--cor-linha); }
+.app-docente .tabela tbody th { font-weight: 700; }
+.app-docente .tabela code { font-family: inherit; font-weight: 700; background: none; padding: 0; }
+.app-docente .filtros > div { min-width: 0; max-width: 100%; }
+.app-docente .filtros select, .app-docente .filtros input { max-width: 100%; }
+@media (min-width: 56.01rem) {
+  .app-docente .aba > span:not(.contador) { white-space: nowrap; }
+}
+.app-docente .cartao h2 { margin-top: 0; }
+.app-docente a.botao { display: inline-flex; align-items: center; justify-content: center; }
+.app-docente .filtros--compacto { margin: 0; gap: var(--espaco-2); align-items: center; }
+.app-docente .filtros--compacto label { margin: 0; }
+.app-docente .filtros--compacto select { min-width: 0; flex: 1 1 10rem; }
+
+/* chips de situação e botões de filtro (aria-pressed) */
+.app-docente .chip {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.app-docente .chip--ok { background: var(--cor-verde-suave); color: var(--cor-oliva-escuro); }
+.app-docente .chip--atencao { background: var(--cor-aviso-fundo); color: var(--cor-aviso-texto); }
+.app-docente .chip--alerta { background: var(--cor-terracota-fundo); color: var(--cor-terracota-texto); }
+.app-docente .chips { display: flex; flex-wrap: wrap; gap: var(--espaco-2); }
+.app-docente .chip-filtro {
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 2px solid var(--cor-borda-suave);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.app-docente .chip-filtro:hover { border-color: var(--cor-oliva); }
+.app-docente .chip-filtro[aria-pressed="true"] { border-color: var(--cor-oliva); background: var(--cor-oliva); color: var(--cor-sobre-primaria); font-weight: 700; }
+
+/* --- visão geral: 4 números --- */
+.app-docente .numeros { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 1rem; }
+.app-docente .numero {
+  flex: 1 1 12.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1.375rem;
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+}
+.app-docente .numero__botao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: -1.375rem;
+  padding: 1.375rem;
+  border: none;
+  border-radius: var(--raio);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.app-docente .numero__botao:hover .numero__rotulo { text-decoration: underline; }
+.app-docente .numero__rotulo { font-size: 0.875rem; color: var(--cor-texto-suave); }
+.app-docente .numero__valor { font-size: 2.5rem; line-height: 1; font-weight: 800; font-variant-numeric: tabular-nums; }
+.app-docente .numero__valor--texto { font-size: 1.5rem; line-height: 1.2; }
+.app-docente .numero__detalhe { font-size: 0.8125rem; color: var(--cor-texto-suave); }
+.app-docente .numero--alerta { background: var(--cor-terracota-fundo); }
+.app-docente .numero--alerta :is(.numero__rotulo, .numero__valor, .numero__detalhe) { color: var(--cor-terracota-texto); }
+.app-docente .numero--progresso .numero__valor { color: var(--cor-oliva); }
+.app-docente .numero--aviso { background: var(--cor-aviso-fundo); }
+.app-docente .numero--aviso :is(.numero__rotulo, .numero__detalhe) { color: var(--cor-aviso-texto); }
+
+/* --- visão geral: alertas --- */
+.app-docente .alertas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.app-docente .alerta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--raio-medio);
+  background: var(--cor-creme-escuro);
+}
+.app-docente .alerta--grave { background: var(--cor-terracota-fundo); }
+.app-docente .alerta--atencao { background: var(--cor-aviso-fundo); }
+.app-docente .alerta__aluno code { font-family: inherit; font-weight: 800; background: none; padding: 0; }
+.app-docente .alerta__titulo { font-weight: 700; }
+.app-docente .alerta__detalhe + .alerta__titulo { margin-top: 0.375rem; }
+.app-docente .alerta--grave .alerta__titulo { color: var(--cor-terracota-texto); }
+.app-docente .alerta__detalhe { font-size: 0.875rem; color: var(--cor-texto-suave); }
+.app-docente .alerta .botao--link { align-self: flex-start; margin: 0.25rem 0 0; padding: 0; font-size: 0.875rem; font-weight: 600; }
+.app-docente .criterios summary { cursor: pointer; font-size: 0.875rem; font-weight: 600; color: var(--cor-oliva); }
+.app-docente .criterios .dica { margin: var(--espaco-2) 0 0; }
+
+/* --- revisar textos: fila, texto selecionado, correção --- */
+.app-docente .recolhivel { padding: 1rem 1.5rem; }
+.app-docente .recolhivel > summary { cursor: pointer; font-weight: 700; color: var(--cor-oliva); }
+.app-docente .recolhivel[open] > summary { margin-bottom: var(--espaco-2); }
+.app-docente .fila { padding: 1.25rem; gap: 0.5rem; }
+.app-docente .fila h2 { margin: 0; padding: 0 0.5rem; font-size: 0.9375rem; color: var(--cor-texto-suave); }
+.app-docente .fila .dica { margin: 0; padding: 0 0.5rem; }
+.app-docente .fila__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.app-docente .fila__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid var(--cor-creme-escuro);
+  border-radius: var(--raio-medio);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.app-docente .fila__item:hover { border-color: var(--cor-verde); }
+.app-docente .fila__item[aria-current="true"] { background: var(--cor-verde-suave); border-color: var(--cor-verde); }
+.app-docente .fila__aluno code { font-family: inherit; font-weight: 800; background: none; padding: 0; }
+.app-docente .fila__competencia { font-size: 0.875rem; }
+.app-docente .fila__tipo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; font-size: 0.8125rem; color: var(--cor-texto-suave); }
+.app-docente .fila__tipo .chip { padding: 0.0625rem 0.5rem; font-size: 0.75rem; }
+.app-docente .fila .paginacao { margin: 0.5rem 0 0; gap: var(--espaco-2); }
+.app-docente .fila .paginacao .botao { min-height: 2.5rem; padding: 0.25rem 0.875rem; font-size: 0.875rem; }
+
+.app-docente .texto-revisao { display: flex; flex-direction: column; gap: 1.25rem; }
+.app-docente .texto-revisao:focus { outline: none; }
+.app-docente .texto-revisao__cabeca { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem 1rem; }
+.app-docente .texto-revisao__cabeca h2 { margin: 0; }
+.app-docente .texto-revisao__cabeca h2 code { font-family: inherit; background: none; padding: 0; }
+.app-docente .texto-revisao__cabeca .dica { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+.app-docente .bloco { display: flex; flex-direction: column; gap: 0.375rem; }
+.app-docente .bloco__rotulo { font-size: 0.8125rem; font-weight: 700; color: var(--cor-texto-suave); }
+.app-docente .bloco__texto { margin: 0; white-space: pre-wrap; line-height: 1.5; }
+.app-docente .texto-tutor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.125rem 1.25rem;
+  border-radius: 1rem;
+  background: var(--cor-verde-suave);
+}
+.app-docente .texto-tutor--vetado { background: var(--cor-creme-escuro); }
+.app-docente .texto-tutor__texto { margin: 0; white-space: pre-wrap; line-height: 1.55; }
+.app-docente .fonte summary, .app-docente .descartado summary { cursor: pointer; font-size: 0.875rem; font-weight: 600; color: var(--cor-oliva); }
+.app-docente .fonte ul { margin: 0.5rem 0 0; padding-left: 1.25rem; font-size: 0.875rem; }
+.app-docente .fonte p { margin: 0.5rem 0 0; font-size: 0.875rem; }
+.app-docente .descartado { border-left: none; border-radius: var(--raio-medio); padding: 0.875rem 1rem; margin: 0; }
+.app-docente .descartado summary { color: var(--cor-aviso-texto); }
+.app-docente .descartado .bloco__texto { margin-top: 0.5rem; }
+.app-docente .correcao { margin: 0; border-left: 4px solid var(--cor-verde); }
+.app-docente .campo-correcao { display: flex; flex-direction: column; gap: 0.5rem; }
+.app-docente .campo-correcao label { margin: 0; font-size: 0.9375rem; }
+.app-docente .campo-correcao textarea { width: 100%; max-width: none; box-sizing: border-box; resize: vertical; }
+.app-docente .texto-revisao__acoes { justify-content: flex-end; gap: 0.75rem; margin: 0; }
+.app-docente .texto-revisao__acoes .botao { margin: 0; }
+.app-docente .botao--vetar { background: var(--cor-superficie); color: var(--cor-terracota-texto); border: 2px solid var(--cor-terracota); }
+.app-docente .botao--vetar:hover:not(:disabled) { background: var(--cor-terracota-fundo); color: var(--cor-terracota-texto); }
+@media (max-width: 30rem) {
+  .app-docente .texto-revisao__acoes .botao { width: 100%; }
+}
+
+/* --- relatório da turma --- */
+.app-docente .resumo-turma {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 1.5rem 1.75rem;
+  border-radius: var(--raio);
+  background: var(--cor-verde-suave);
+}
+.app-docente .rotulo-secao {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+}
+.app-docente .resumo-turma__texto { margin: 0; font-size: 1.0625rem; line-height: 1.55; white-space: pre-wrap; max-width: 70ch; }
+.app-docente .resumo-turma .dica, .app-docente .resumo-turma .origem { margin: 0; }
+.app-docente .resumo-turma .botao { margin: 0; }
+.app-docente .numeros > .aviso { flex: 1 1 100%; list-style: none; }
+.app-docente .grupos { list-style: none; margin: 1.125rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.125rem; }
+.app-docente .grupo { display: flex; flex-direction: column; gap: 0.5rem; }
+.app-docente .grupo__linha { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 0.75rem; }
+.app-docente .grupo__nome { font-weight: 600; }
+.app-docente .grupo__valor { color: var(--cor-texto-suave); font-variant-numeric: tabular-nums; }
+.app-docente .barra-grupo { height: 0.75rem; border-radius: 999px; background: var(--cor-creme-escuro); overflow: hidden; }
+.app-docente .barra-grupo__valor { display: block; width: 0; height: 100%; border-radius: 999px; background: var(--cor-verde); }
+.app-docente .grupo-oculto {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.125rem 0 0;
+  padding: 0.875rem 1rem;
+  border-radius: var(--raio-medio);
+  background: var(--cor-creme-escuro);
+  color: var(--cor-texto-suave);
+}
+.app-docente .grupo-oculto .icone { flex: none; width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.app-docente .alertas--turma { margin-top: var(--espaco-2); }
+.app-docente #relatorio-detalhes .indicadores { margin: var(--espaco-3) 0 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
+.app-docente #relatorio-detalhes .indicador { margin: 0; padding: 1.25rem; background: var(--cor-creme); }
+.app-docente #relatorio-detalhes .indicador h2 { font-size: 1rem; }
+
+/* --- competências e auditoria --- */
+.app-docente .barra__trilho { fill: var(--cor-creme-escuro); stroke: none; }
+.app-docente .barra__valor { fill: var(--cor-verde); }
+.app-docente .grafico__item--oculto .grafico__nome { color: var(--cor-texto-suave); }
+.app-docente .filtros--cartao {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  align-items: start;
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+}
+.app-docente .filtros--cartao select, .app-docente .filtros--cartao input { width: 100%; min-width: 0; box-sizing: border-box; }
+.app-docente .filtros--cartao > .botao { grid-column: 1 / -1; justify-self: start; }
+.app-docente .filtros--cartao label { margin-top: 0; }
+.app-docente .filtros--cartao > div { display: flex; flex-direction: column; gap: 0.375rem; }
+.app-docente .filtros--cartao .dica { margin: 0; }
+#tela-auditoria .tabela { font-size: 0.875rem; }
+#tela-auditoria .paginacao { margin-bottom: 0; }
+
 /* --- impressão: só a tela aberta, sem navegação nem botões --- */
 @media print {
-  .nao-imprimir, .pular, .carregando, .erro, .linha-botoes, .botao { display: none !important; }
-  body { font-size: 11pt; }
-  .topo { border: none; padding: 0; }
+  .nao-imprimir, .pular, .carregando, .erro, .linha-botoes, .botao, .menu { display: none !important; }
+  body { font-size: 11pt; background: var(--cor-superficie); }
+  .app-docente .leiaute { display: block; background: none !important; min-height: 0; }
+  .app-docente .area { padding: 0; }
   main { padding: 0; max-width: none; }
   .cartao { box-shadow: none; break-inside: avoid; }
   .indicadores { grid-template-columns: repeat(2, 1fr); }
@@ -141,4 +388,5 @@ a.botao { text-decoration: none; }
   .tabela thead { display: table-header-group; }
   .tabela tr { break-inside: avoid; }
   .barra { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .barra-grupo, .numero, .resumo-turma, .alerta { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

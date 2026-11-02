@@ -2,6 +2,10 @@
 
 > Frente A3, 11/10/2026. Sem commit. Arquitetura, telas e rotas: `docs/arquitetura/arquitetura.md`, seção
 > "Painel do docente/instituição".
+>
+> **01/11/2026:** o visual e a organização das telas mudaram (menu lateral; Visão geral, Revisar textos e
+> Relatório da turma; rotas `GET /painel/alunos` e `GET /painel/revisao/contagem`). Ver
+> `docs/relatorios/redesign_docente.md`. O texto abaixo descreve a versão de 11/10.
 
 ## Resultado
 

@@ -11,35 +11,61 @@
   <script src="../comum.js" defer></script>
   <script src="painel.js" defer></script>
 </head>
-<body class="painel">
+<body class="app-docente painel">
   <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 
-  <header class="topo">
-    <div class="topo__linha">
-      <p class="marca">TIA <span class="marca__sub">Painel do docente</span></p>
-      <p class="usuario" id="usuario-barra" hidden>
-        Conectado: <strong id="usuario-nome"></strong> <span id="usuario-papel"></span>
-        <button type="button" class="botao botao--link nao-imprimir" id="sair">Sair</button>
-      </p>
-      <div class="filtro-grupo nao-imprimir" id="filtro-grupo" hidden>
-        <label for="campo-perfil">Grupo</label>
-        <select id="campo-perfil">
-          <option value="">Instituição inteira</option>
-        </select>
-      </div>
-    </div>
-    <p class="aviso-prototipo" id="aviso-dev" role="note" hidden>
-      Modo de desenvolvimento: autenticação desligada (TIA_AUTH=desligada). Qualquer pessoa com o endereço vê
-      estes dados; use só turmas fictícias.
+  <div class="leiaute">
+  <!-- menu lateral (em tela estreita, empilha no topo); some no login -->
+  <aside class="menu" aria-label="Menu do docente">
+    <p class="marca">
+      <span class="marca__icone" aria-hidden="true">T</span>
+      <span class="marca__texto">TIA <span class="marca__sub">Painel do docente</span></span>
     </p>
-    <nav class="abas nao-imprimir" id="abas" aria-label="Telas do painel" hidden>
-      <button type="button" class="aba" data-tela="geral">Visão geral</button>
-      <button type="button" class="aba" data-tela="risco">Alertas de risco</button>
-      <button type="button" class="aba" data-tela="competencias">Competências</button>
-      <button type="button" class="aba" data-tela="revisao">Revisão docente</button>
-      <button type="button" class="aba" data-tela="auditoria">Auditoria</button>
+    <nav class="abas" id="abas" aria-label="Principal" hidden>
+      <button type="button" class="aba" data-tela="geral">
+        <svg class="aba__icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        <span>Visão geral</span>
+      </button>
+      <button type="button" class="aba" data-tela="revisao">
+        <svg class="aba__icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h9"/></svg>
+        <span>Revisar textos</span>
+        <!-- só o número de textos a revisar (sem códigos; não grava auditoria) -->
+        <span class="contador" id="contador-revisao" hidden></span>
+      </button>
+      <button type="button" class="aba" data-tela="relatorio">
+        <svg class="aba__icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+        <span>Relatório da turma</span>
+      </button>
+      <!-- telas sem equivalente na prévia: continuam, abaixo das principais -->
+      <span class="abas__separador" aria-hidden="true"></span>
+      <button type="button" class="aba aba--secundaria" data-tela="competencias">
+        <svg class="aba__icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h10"/><path d="M4 12h16"/><path d="M4 18h7"/></svg>
+        <span>Competências</span>
+      </button>
+      <button type="button" class="aba aba--secundaria" data-tela="auditoria">
+        <svg class="aba__icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+        <span>Auditoria</span>
+      </button>
     </nav>
-  </header>
+    <!-- quem está conectado: o usuário e o papel -->
+    <div class="menu__rodape">
+      <p class="usuario" id="usuario-barra" hidden>
+        <span class="avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        </span>
+        <span class="usuario__dados">
+          <strong id="usuario-nome"></strong> <span id="usuario-papel" class="usuario__papel"></span>
+          <button type="button" class="botao botao--link nao-imprimir" id="sair">Sair</button>
+        </span>
+      </p>
+    </div>
+  </aside>
+
+  <div class="area">
+  <p class="aviso-prototipo" id="aviso-dev" role="note" hidden>
+    Modo de desenvolvimento: autenticação desligada (TIA_AUTH=desligada). Qualquer pessoa com o endereço vê
+    estes dados; use só turmas fictícias.
+  </p>
 
   <div class="carregando" id="carregando" role="status" aria-live="polite" hidden>
     <span class="carregando__giro" aria-hidden="true"></span>
@@ -52,96 +78,167 @@
     <button type="button" class="botao botao--secundario" id="erro-fechar">Fechar</button>
   </div>
 
+  <!-- grupo das visões agregadas (Relatório da turma e Competências) -->
+  <div class="filtro-grupo nao-imprimir" id="filtro-grupo" hidden>
+    <label for="campo-perfil">Grupo</label>
+    <select id="campo-perfil">
+      <option value="">Instituição inteira</option>
+    </select>
+  </div>
+
   <main id="conteudo" tabindex="-1">
 
     <!-- Login (1.4.6): só o papel docente usa o painel -->
-    <section class="tela" id="tela-login" aria-labelledby="titulo-login" hidden>
-      <h1 id="titulo-login">Painel do docente: entrar</h1>
-      <p class="aviso aviso--alerta" id="login-mensagem" role="status" hidden></p>
-      <form id="form-login" class="cartao" novalidate>
-        <label for="campo-login">Usuário</label>
-        <input id="campo-login" name="login" type="text" required autocomplete="username" spellcheck="false"
-               maxlength="64">
-        <label for="campo-senha">Senha</label>
-        <input id="campo-senha" name="senha" type="password" required autocomplete="current-password"
-               maxlength="256">
-        <button type="submit" class="botao acao">Entrar</button>
-      </form>
-      <!-- troca obrigatória da senha temporária (criada ou redefinida pelo admin) -->
-      <form id="form-senha" class="cartao" novalidate hidden>
-        <label for="campo-senha-atual">Senha atual (temporária)</label>
-        <input id="campo-senha-atual" name="senha_atual" type="password" required autocomplete="current-password"
-               maxlength="256">
-        <label for="campo-senha-nova">Nova senha</label>
-        <input id="campo-senha-nova" name="nova_senha" type="password" required autocomplete="new-password"
-               maxlength="256" aria-describedby="dica-senha">
-        <p class="dica" id="dica-senha">Use uma senha longa, que não seja comum nem contenha o seu usuário.</p>
-        <label for="campo-senha-repetir">Repita a nova senha</label>
-        <input id="campo-senha-repetir" name="repetir_senha" type="password" required autocomplete="new-password"
-               maxlength="256">
-        <button type="submit" class="botao acao">Trocar a senha</button>
-      </form>
+    <section class="tela tela--central" id="tela-login" aria-labelledby="titulo-login" hidden>
+      <div class="cartao cartao--central cartao--login">
+        <div class="marca-central">
+          <span class="marca__icone marca__icone--grande" aria-hidden="true">T</span>
+          <h1 id="titulo-login">Painel do docente</h1>
+          <p class="cabeca__sub">Entre com o seu usuário de docente.</p>
+        </div>
+        <p class="aviso aviso--alerta" id="login-mensagem" role="status" hidden></p>
+        <!-- logado com outro papel (o menu, com o Sair, não aparece): sair ou ir para a aplicação do aluno -->
+        <div class="formulario" id="login-outro-papel" hidden>
+          <button type="button" class="botao botao--largo" id="sair-outro-papel">Sair</button>
+          <a class="botao botao--secundario botao--largo" href="../">Ir para a aplicação do aluno</a>
+        </div>
+        <form id="form-login" class="formulario" novalidate>
+          <div class="campo">
+            <label for="campo-login">Usuário</label>
+            <input id="campo-login" name="login" type="text" required autocomplete="username" spellcheck="false"
+                   maxlength="64">
+          </div>
+          <div class="campo">
+            <label for="campo-senha">Senha</label>
+            <input id="campo-senha" name="senha" type="password" required autocomplete="current-password"
+                   maxlength="256">
+          </div>
+          <button type="submit" class="botao botao--largo acao">Entrar</button>
+        </form>
+        <!-- troca obrigatória da senha temporária (criada ou redefinida pelo admin) -->
+        <form id="form-senha" class="formulario" novalidate hidden>
+          <div class="campo">
+            <label for="campo-senha-atual">Senha atual (temporária)</label>
+            <input id="campo-senha-atual" name="senha_atual" type="password" required autocomplete="current-password"
+                   maxlength="256">
+          </div>
+          <div class="campo">
+            <label for="campo-senha-nova">Nova senha</label>
+            <input id="campo-senha-nova" name="nova_senha" type="password" required autocomplete="new-password"
+                   maxlength="256" aria-describedby="dica-senha">
+            <p class="dica" id="dica-senha">Use uma senha longa, que não seja comum nem contenha o seu usuário.</p>
+          </div>
+          <div class="campo">
+            <label for="campo-senha-repetir">Repita a nova senha</label>
+            <input id="campo-senha-repetir" name="repetir_senha" type="password" required autocomplete="new-password"
+                   maxlength="256">
+          </div>
+          <button type="submit" class="botao botao--largo acao">Trocar a senha</button>
+        </form>
+      </div>
     </section>
 
-    <!-- 1) Visão geral: os 5 indicadores agregados do Agente 3 -->
+    <!-- Visão geral: COM código de aluno (nunca nome); cada abertura é auditada -->
     <section class="tela" id="tela-geral" aria-labelledby="titulo-geral" hidden>
-      <div class="cabeca-tela">
-        <h1 id="titulo-geral">Visão geral</h1>
+      <div class="cabeca cabeca--acoes">
+        <div class="cabeca">
+          <h1 id="titulo-geral">Visão geral da turma</h1>
+          <p class="cabeca__sub">Quem precisa da sua atenção primeiro.</p>
+        </div>
+        <button type="button" class="botao botao--secundario acao nao-imprimir" id="atualizar-geral">Atualizar</button>
+      </div>
+
+      <ul class="numeros" id="geral-numeros" aria-label="Resumo da turma"></ul>
+
+      <div class="colunas">
+        <section class="cartao coluna-estreita" aria-labelledby="titulo-alertas">
+          <div class="cartao__cabeca">
+            <h2 id="titulo-alertas">Alertas</h2>
+          </div>
+          <div class="filtros filtros--compacto nao-imprimir">
+            <label for="filtro-motivo">Mostrar</label>
+            <select id="filtro-motivo">
+              <option value="">Todos os motivos</option>
+              <option value="desempenho_em_queda">Desempenho em queda</option>
+              <option value="desempenho_baixo">Desempenho baixo</option>
+              <option value="conclusao_sem_dominio">Concluída com ressalvas</option>
+              <option value="inatividade">Inatividade</option>
+            </select>
+          </div>
+          <ul class="alertas" id="geral-alertas" aria-live="polite"></ul>
+          <details class="criterios">
+            <summary>Critérios dos alertas</summary>
+            <p class="dica" id="risco-criterios"></p>
+          </details>
+        </section>
+
+        <section class="cartao coluna-larga" aria-labelledby="titulo-alunos">
+          <div class="cartao__cabeca">
+            <h2 id="titulo-alunos">Alunos</h2>
+            <div class="chips nao-imprimir" id="filtro-nivel" role="group" aria-label="Filtrar por nível"></div>
+          </div>
+          <div id="geral-alunos"></div>
+        </section>
+      </div>
+
+      <p class="rodape-tela">
+        Esta tela mostra códigos de aluno (nunca nomes) e cada consulta é registrada na auditoria em seu nome.
+        O relatório da turma nunca mostra códigos. <span id="geral-auditoria"></span>
+      </p>
+    </section>
+
+    <!-- Relatório da turma: indicadores agregados do Agente 3 (sem códigos; grupo mínimo, R08) -->
+    <section class="tela" id="tela-relatorio" aria-labelledby="titulo-relatorio" hidden>
+      <div class="cabeca cabeca--acoes">
+        <div class="cabeca">
+          <h1 id="titulo-relatorio">Relatório da turma</h1>
+          <p class="cabeca__sub">Indicadores calculados pelo sistema, com resumo escrito pelo tutor.</p>
+        </div>
         <div class="linha-botoes nao-imprimir">
           <a class="botao botao--secundario" id="exportar-csv" href="/painel/exportar/indicadores.csv" download>
-            Exportar indicadores (CSV)</a>
+            Exportar CSV</a>
           <button type="button" class="botao botao--secundario" id="imprimir">Imprimir</button>
-          <button type="button" class="botao botao--secundario acao" id="atualizar-geral">Atualizar</button>
+          <button type="button" class="botao botao--secundario acao" id="atualizar-relatorio">Atualizar</button>
         </div>
       </div>
-      <p class="dica" id="geral-grupo"></p>
-      <div id="geral-indicadores"></div>
+      <p class="dica" id="relatorio-grupo"></p>
+
+      <section class="resumo-turma" aria-labelledby="titulo-narrativa">
+        <h2 class="rotulo-secao" id="titulo-narrativa">Resumo da turma (texto do tutor)</h2>
+        <div id="relatorio-narrativa"></div>
+        <button type="button" class="botao botao--secundario acao nao-imprimir" id="gerar-narrativa">
+          Gerar resumo (IA local)</button>
+      </section>
+
+      <ul class="numeros" id="relatorio-numeros" aria-label="Indicadores da turma"></ul>
+
+      <section class="cartao" aria-labelledby="titulo-grupos">
+        <div class="cabeca">
+          <h2 id="titulo-grupos">Desempenho por grupo</h2>
+          <p class="cabeca__sub" id="grupos-regra">Grupos com poucos alunos ficam ocultos para proteger a privacidade.</p>
+        </div>
+        <div id="relatorio-grupos"></div>
+      </section>
+
       <section class="cartao" aria-labelledby="titulo-alertas-turma">
         <h2 id="titulo-alertas-turma">Alertas da turma (só contagens)</h2>
-        <div id="geral-alertas"></div>
+        <div id="relatorio-alertas"></div>
       </section>
-      <section class="cartao" aria-labelledby="titulo-narrativa">
-        <h2 id="titulo-narrativa">Interpretação</h2>
-        <div id="geral-narrativa"></div>
-        <button type="button" class="botao botao--secundario acao nao-imprimir" id="gerar-narrativa">
-          Gerar interpretação (IA local)</button>
-      </section>
-    </section>
 
-    <!-- 2) Alertas de risco: COM código de aluno; cada consulta é auditada -->
-    <section class="tela" id="tela-risco" aria-labelledby="titulo-risco" hidden>
-      <div class="cabeca-tela">
-        <h1 id="titulo-risco">Alertas de risco</h1>
-        <div class="linha-botoes nao-imprimir">
-          <button type="button" class="botao botao--secundario acao" id="atualizar-risco">Atualizar</button>
-        </div>
-      </div>
-      <p class="aviso aviso--alerta" role="note">
-        Esta tela mostra códigos de aluno (nunca nomes) e cada consulta é registrada na auditoria em seu nome.
-        O relatório agregado nunca mostra códigos.
-      </p>
-      <div class="filtros nao-imprimir">
-        <label for="filtro-motivo">Mostrar</label>
-        <select id="filtro-motivo">
-          <option value="">Todos os motivos</option>
-          <option value="inatividade">Inatividade</option>
-          <option value="desempenho_em_queda">Desempenho em queda</option>
-          <option value="desempenho_baixo">Desempenho baixo</option>
-          <option value="conclusao_sem_dominio">Concluída com ressalvas</option>
-        </select>
-      </div>
-      <p class="dica" id="risco-criterios"></p>
-      <div id="risco-lista"></div>
-      <p class="rodape-tela" id="risco-auditoria"></p>
+      <details class="cartao recolhivel" id="relatorio-detalhes">
+        <summary>Todos os indicadores do Agente 3</summary>
+        <div id="relatorio-indicadores"></div>
+      </details>
     </section>
 
     <!-- 3) Desempenho por competência: só agregados -->
     <section class="tela" id="tela-competencias" aria-labelledby="titulo-competencias" hidden>
-      <div class="cabeca-tela">
-        <h1 id="titulo-competencias">Desempenho por competência</h1>
-        <div class="linha-botoes nao-imprimir">
-          <button type="button" class="botao botao--secundario acao" id="atualizar-competencias">Atualizar</button>
+      <div class="cabeca cabeca--acoes">
+        <div class="cabeca">
+          <h1 id="titulo-competencias">Desempenho por competência</h1>
+          <p class="cabeca__sub">Acerto agregado por competência e questões com erro repetido. Sem códigos de aluno.</p>
         </div>
+        <button type="button" class="botao botao--secundario acao nao-imprimir" id="atualizar-competencias">Atualizar</button>
       </div>
       <p class="dica" id="competencias-grupo"></p>
       <section class="cartao" aria-labelledby="titulo-barras">
@@ -155,63 +252,77 @@
       </section>
     </section>
 
-    <!-- 4) Revisão docente (R12): aprovar ou vetar respostas do diálogo -->
+    <!-- Revisar textos (R12): aprovar ou vetar com correção o feedback das questões e as respostas do diálogo -->
     <section class="tela" id="tela-revisao" aria-labelledby="titulo-revisao" hidden>
-      <div class="cabeca-tela">
-        <h1 id="titulo-revisao">Revisão docente</h1>
+      <div class="cabeca">
+        <h1 id="titulo-revisao">Revisar textos do tutor</h1>
+        <p class="cabeca__sub">Aprove o texto ou vete com uma correção. O aluno passa a ver a sua correção.</p>
       </div>
       <p class="aviso aviso--alerta" role="note">
         Os textos abaixo podem conter o que o aluno escreveu. Cada consulta, aprovação e veto vai para a auditoria
         em seu nome.
       </p>
-      <div id="revisao-resumo"></div>
-      <form class="filtros nao-imprimir" id="form-revisao" novalidate>
-        <div>
-          <label for="filtro-tipo">Texto</label>
-          <select id="filtro-tipo">
-            <option value="">Feedback das questões e diálogo</option>
-            <option value="feedback">Feedback das questões</option>
-            <option value="dialogo">Respostas do diálogo</option>
-          </select>
-        </div>
-        <div>
-          <label for="filtro-situacao">Situação</label>
-          <select id="filtro-situacao">
-            <option value="a_revisar">A revisar</option>
-            <option value="aprovadas">Aprovadas</option>
-            <option value="vetadas">Vetadas</option>
-            <option value="todas">Todas</option>
-          </select>
-        </div>
-        <div>
-          <label for="filtro-origem">Origem</label>
-          <select id="filtro-origem">
-            <option value="LLM">Escritas pela IA (LLM)</option>
-            <option value="guarda">Barradas pela verificação (guarda)</option>
-            <option value="fallback">Texto fixo (fallback)</option>
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <div>
-          <label for="filtro-competencia">Competência</label>
-          <select id="filtro-competencia">
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <button type="submit" class="botao acao">Filtrar</button>
-      </form>
-      <h2>Textos do tutor</h2>
-      <p class="dica" id="revisao-total" aria-live="polite"></p>
-      <ol class="revisao" id="revisao-lista"></ol>
-      <nav class="paginacao nao-imprimir" id="revisao-paginas" aria-label="Páginas da revisão"></nav>
+
+      <details class="cartao recolhivel nao-imprimir" id="revisao-filtros">
+        <summary>Filtros e taxa de vetos</summary>
+        <form class="filtros" id="form-revisao" novalidate>
+          <div>
+            <label for="filtro-tipo">Texto</label>
+            <select id="filtro-tipo">
+              <option value="">Feedback das questões e diálogo</option>
+              <option value="feedback">Feedback das questões</option>
+              <option value="dialogo">Respostas do diálogo</option>
+            </select>
+          </div>
+          <div>
+            <label for="filtro-situacao">Situação</label>
+            <select id="filtro-situacao">
+              <option value="a_revisar">A revisar</option>
+              <option value="aprovadas">Aprovadas</option>
+              <option value="vetadas">Vetadas</option>
+              <option value="todas">Todas</option>
+            </select>
+          </div>
+          <div>
+            <label for="filtro-origem">Origem</label>
+            <select id="filtro-origem">
+              <option value="LLM">Escritas pela IA (LLM)</option>
+              <option value="guarda">Barradas pela verificação (guarda)</option>
+              <option value="fallback">Texto fixo (fallback)</option>
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div>
+            <label for="filtro-competencia">Competência</label>
+            <select id="filtro-competencia">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <button type="submit" class="botao acao">Filtrar</button>
+        </form>
+        <div id="revisao-resumo"></div>
+      </details>
+
+      <div class="colunas">
+        <section class="cartao coluna-estreita fila" aria-labelledby="titulo-fila">
+          <h2 id="titulo-fila">Aguardando revisão</h2>
+          <p class="dica" id="revisao-total" aria-live="polite"></p>
+          <ol class="fila__lista" id="revisao-lista"></ol>
+          <nav class="paginacao nao-imprimir" id="revisao-paginas" aria-label="Páginas da revisão"></nav>
+        </section>
+
+        <section class="cartao coluna-larga texto-revisao" id="revisao-detalhe" aria-live="polite"
+                 aria-label="Texto selecionado"></section>
+      </div>
     </section>
 
     <!-- 5) Auditoria (R11) -->
     <section class="tela" id="tela-auditoria" aria-labelledby="titulo-auditoria" hidden>
-      <div class="cabeca-tela">
+      <div class="cabeca">
         <h1 id="titulo-auditoria">Auditoria</h1>
+        <p class="cabeca__sub">O que cada agente e cada usuário fez, do mais recente para o mais antigo (R11).</p>
       </div>
-      <form class="filtros nao-imprimir" id="form-auditoria" novalidate>
+      <form class="cartao filtros filtros--cartao nao-imprimir" id="form-auditoria" novalidate>
         <div>
           <label for="filtro-agente">Agente</label>
           <select id="filtro-agente">
@@ -240,10 +351,15 @@
         </div>
         <button type="submit" class="botao acao">Filtrar</button>
       </form>
-      <p class="dica" id="auditoria-total" aria-live="polite"></p>
-      <div id="auditoria-tabela"></div>
-      <nav class="paginacao nao-imprimir" id="auditoria-paginas" aria-label="Páginas da auditoria"></nav>
+      <section class="cartao" aria-labelledby="titulo-registros">
+        <h2 id="titulo-registros">Registros</h2>
+        <p class="dica" id="auditoria-total" aria-live="polite"></p>
+        <div id="auditoria-tabela"></div>
+        <nav class="paginacao nao-imprimir" id="auditoria-paginas" aria-label="Páginas da auditoria"></nav>
+      </section>
     </section>
   </main>
+  </div>
+  </div>
 </body>
 </html>

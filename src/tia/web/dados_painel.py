@@ -1,15 +1,27 @@
 """
 Turma fictícia para demonstrar o painel do docente (EAP 1.4.5), sem LLM.
 
-Cria, no banco configurado (DB_PATH, padrão data/tia.db), 12 alunos
-fictícios DEMO-P01..DEMO-P12 (só códigos, nunca nomes, R08): 8 no perfil
-intermediário e 4 no iniciante (abaixo do grupo mínimo de 5: o filtro por
-perfil "iniciante" mostra o grupo suprimido). Situações variadas:
+Dois conjuntos, no banco configurado (DB_PATH, padrão data/tia.db), só com
+códigos, nunca nomes (R08):
 
-    ativos e indo bem, concluídos, inativos (5, 9 e 20 dias), em queda,
-    com desempenho baixo, recém-matriculado sem atividade, e uma competência
-    terminada sem domínio e sem acerto para avançar (DEMO-P06: concluída com
-    ressalvas, recomeça a competência)
+- criar_turma(): a turma-BASE dos testes, 12 alunos DEMO-P01..DEMO-P12, 8 no
+  perfil intermediário e 4 no iniciante (abaixo do grupo mínimo de 5: o perfil
+  "iniciante" sai suprimido). Os testes conferem estes números; não mudar.
+- criar_turma_ampliada() (01/11/2026; é o que o comando roda): a base mais
+  DEMO-P13..DEMO-P26, 26 alunos, 10 iniciantes e 16 intermediários (os dois
+  perfis acima do mínimo; a regra do grupo mínimo continua visível nas
+  competências e questões com menos de 5 alunos). Situações:
+
+    no ritmo, trilha concluída (P02, P19), queda (P03, P08, P18, P24, P25),
+    desempenho baixo, concluída com ressalvas sem acerto para avançar (P06,
+    P16, P25), inativos de 3 a 20 dias (P04, P05, P11, P14, P17, P23, P26),
+    recém-matriculado sem atividade (P10) e reforço em andamento (P20, pelo
+    fluxo real do orquestrador, como o DEMO-W03 do dados_demo)
+
+  com questões com erro repetido em mais de uma competência, matrículas de 4 a
+  35 dias atrás e cerca de 30 respostas do diálogo e 200 feedbacks a revisar.
+
+Relatório: docs/relatorios/dados_demonstracao.md.
 
 Regras do Tutor do 1.2.5 (15/10/2026): o nível das respostas segue os limiares
 TUTOR_ACERTOS_SUBIR / TUTOR_ERROS_DESCER, e a sessão concluída grava com_ressalvas
@@ -91,6 +103,44 @@ ALUNOS = [
                                    ("repeticao", "1111", 0, False)], [("repeticao", 0, 8)]),
 ]
 
+# Ampliação (01/11/2026): mesmos campos de ALUNOS. Dados FICTÍCIOS. A 1ª resposta de cada sessão é
+# sempre o 1º item da competência (nível 1): erros ali criam as "questões com erro repetido".
+ALUNOS_AMPLIACAO = [
+    # --- iniciante (com a base: 10 alunos) ---
+    ("DEMO-P13", "iniciante", 22, [("variaveis_tipos", "111011", 18, True), ("condicionais", "011111", 12, True),
+                                   ("repeticao", "11101", 2, False)],
+     [("condicionais", 11, 10), ("repeticao", 2, 9)]),                                       # no ritmo
+    ("DEMO-P14", "iniciante", 18, [("variaveis_tipos", "0101", 14, False), ("variaveis_tipos", "011", 4, False)],
+     [("variaveis_tipos", 13, 11), ("variaveis_tipos", 4, 12)]),                             # inativo 4 dias, baixo
+    ("DEMO-P15", "iniciante", 25, [("variaveis_tipos", "1111", 20, True), ("condicionais", "0111", 15, True),
+                                   ("repeticao", "11110", 8, True), ("funcoes", "111", 1, False)],
+     [("repeticao", 8, 9), ("funcoes", 1, 0)]),                                              # no ritmo, longe
+    ("DEMO-P16", "iniciante", 7, [("variaveis_tipos", "011010", 1, True)],
+     [("variaveis_tipos", 1, 13)]),          # concluída com ressalvas (50%, abaixo de 60%): recomeça a competência
+    ("DEMO-P17", "iniciante", 30, [("variaveis_tipos", "011111", 28, True), ("condicionais", "1111", 24, True),
+                                   ("repeticao", "11111", 20, False)], [("repeticao", 21, 14)]),  # inativo 20 dias
+    ("DEMO-P18", "iniciante", 12, [("variaveis_tipos", "1111", 9, True), ("condicionais", "11111", 5, True),
+                                   ("repeticao", "0010", 1, False)], [("repeticao", 1, 15)]),  # queda
+    # --- intermediário (com a base e o DEMO-P20 do reforço: 16 alunos) ---
+    ("DEMO-P19", "intermediario", 35, [("funcoes", "1111111", 30, True), ("listas_strings", "110111", 22, True),
+                                       ("recursao", "11011", 16, True)],
+     [("listas_strings", 23, 1), ("recursao", 17, 16)]),                                    # concluiu a trilha
+    ("DEMO-P21", "intermediario", 20, [("funcoes", "1101111", 15, True), ("listas_strings", "111011", 7, True),
+                                       ("recursao", "1101", 2, False)], [("recursao", 2, 17), ("recursao", 2, 4)]),
+    ("DEMO-P22", "intermediario", 9, [("funcoes", "0110", 8, False), ("funcoes", "0111011", 2, True)],
+     [("funcoes", 8, 18), ("funcoes", 2, 3)]),                                               # no ritmo, subindo
+    ("DEMO-P23", "intermediario", 28, [("funcoes", "1101111", 24, True), ("listas_strings", "1110", 18, False)],
+     [("listas_strings", 18, 19)]),                                                          # inativo 18 dias
+    ("DEMO-P24", "intermediario", 11, [("funcoes", "1111111", 9, True), ("listas_strings", "11111", 6, False),
+                                       ("listas_strings", "1000", 0, False)], [("listas_strings", 0, 20)]),  # queda
+    ("DEMO-P25", "intermediario", 6, [("funcoes", "0011", 5, False), ("funcoes", "001001", 2, True)],
+     [("funcoes", 2, 6), ("funcoes", 2, 0)]),                    # concluída com ressalvas (33%) e desempenho baixo
+    ("DEMO-P26", "intermediario", 4, [("funcoes", "1101", 3, False)], [("funcoes", 3, 21)]),  # inativo 3 dias
+]
+# reforço em andamento pelo fluxo REAL do orquestrador (Tutor sem LLM), como o DEMO-W03 do dados_demo:
+# conclui Funções e erra 2 em Listas e strings -> revisão (reforço) de Repetição pendente
+ALUNO_REFORCO = ("DEMO-P20", "intermediario", ["111111", "00"])
+
 # (pergunta, resposta, fonte, origem). Textos de EXEMPLO para a tela de revisão.
 DIALOGOS = [
     ("Para que serve o return?", "[demonstração] O return encerra a função e devolve um valor para quem a chamou.",
@@ -112,6 +162,34 @@ DIALOGOS = [
     ("Quando uso elif?", "[demonstração] Use elif para testar outra condição quando a anterior for falsa.",
      "condicionais.txt", "LLM"),
     ("O que faz o range(3)?", "[demonstração] range(3) gera os números 0, 1 e 2.", "repeticao.txt", "LLM"),
+    # ampliação (01/11/2026): mais textos para a fila, a paginação e os filtros da revisão
+    ("Quando o while para?", "[demonstração] O while para quando a condição fica falsa.", "repeticao.txt", "LLM"),
+    ("Posso usar and e or juntos?",
+     "[demonstração] Sim. O and é avaliado antes do or; use parênteses para deixar claro.", "condicionais.txt",
+     "LLM"),
+    ("Qual a diferença entre int e float?",
+     "[demonstração] int guarda números inteiros e float guarda números com parte decimal.",
+     "variaveis_tipos.txt", "LLM"),
+    ("Por que input() devolve texto?",
+     "[demonstração] O material não cobre esta pergunta. Procure o professor.", None, "fallback"),
+    ("O else é obrigatório depois do if?", "[demonstração] Sim, todo if precisa de um else.",
+     "condicionais.txt", "LLM"),
+    ("O for percorre uma string?",
+     "[demonstração] Sim. Trecho do material: \"o for percorre cada elemento de uma sequência\".",
+     "repeticao.txt", "guarda"),
+    ("Toda recursão precisa de caso base?",
+     "[demonstração] Sim: sem caso base a função chama a si mesma sem parar.", "exemplo_recursao.txt", "LLM"),
+    ("Como junto duas listas?", "[demonstração] Use o operador +: [1, 2] + [3] dá [1, 2, 3].",
+     "listas_strings.txt", "LLM"),
+    ("Uma função pode devolver dois valores?",
+     "[demonstração] Sim, separados por vírgula: o Python devolve uma tupla.", "funcoes.txt", "LLM"),
+    ("Strings podem ser alteradas?",
+     "[demonstração] Sim, dá para trocar uma letra com texto[0] = \"a\".", "listas_strings.txt", "LLM"),
+    ("O que é fatiamento?", "[demonstração] lista[1:3] pega os elementos das posições 1 e 2.",
+     "listas_strings.txt", "LLM"),
+    ("Recursão é sempre melhor que laço?",
+     "[demonstração] O material não cobre esta comparação. Procure o professor.", None, "fallback"),
+    ("O que acontece se a função não tem return?", "[demonstração] Ela devolve None.", "funcoes.txt", "LLM"),
 ]
 # respostas de exemplo propositalmente erradas: a 6 já sai vetada (pela função do veto, R12);
 # a 3 fica para o docente vetar na demonstração
@@ -220,8 +298,29 @@ def recuar_matricula(aluno_id: str, quando: datetime):
         conexao.close()
 
 
-def criar_turma(agora: datetime | None = None, semente: int = 7) -> list[str]:
-    """Cria os alunos que ainda não existem; devolve os códigos criados."""
+def criar_reforco(aluno_id: str, perfil: str, sequencias: list[str], agora: datetime) -> bool:
+    """Aluno com reforço em andamento pelo fluxo real do orquestrador e do Tutor
+    (sem LLM: textos fixos), com matrícula recuada 10 dias. False se já existe."""
+    from tia.web.dados_demo import estudar  # mesmo roteiro do DEMO-W03
+    try:
+        orquestrador.iniciar(aluno_id, MATRICULAS[perfil], agora=agora - timedelta(days=10))
+    except orquestrador.JaMatriculado:
+        print(f"{aluno_id}: já existe no banco; mantido como está.")
+        return False
+    recuar_matricula(aluno_id, agora - timedelta(days=10))
+    gabarito = {i["id"]: i["indice_correto"] for i in carregar_itens()}
+    for sequencia in sequencias:
+        estudar(aluno_id, sequencia, gabarito)
+    proxima = orquestrador.proxima(aluno_id)
+    print(f"{aluno_id}: criado ({perfil}, fluxo real). Próxima ação: {proxima.acao} em "
+          f"'{proxima.competencia_id}'{' (reforço)' if proxima.reforco else ''}.")
+    return True
+
+
+def criar_turma(agora: datetime | None = None, semente: int = 7, alunos: list | None = None,
+                reforco: tuple | None = None) -> list[str]:
+    """Cria os alunos que ainda não existem (padrão: a turma-base ALUNOS); devolve
+    os códigos criados. reforco: (código, perfil, sequências) pelo fluxo real."""
     agora = agora or datetime.now()
     database.criar_tabelas()
     sorteio = random.Random(semente)
@@ -229,7 +328,7 @@ def criar_turma(agora: datetime | None = None, semente: int = 7) -> list[str]:
     for item in sorted(carregar_itens(), key=lambda i: (i["nivel"], i["id"])):
         itens.setdefault(item["competencia_id"], []).append(item)
     criados = []
-    for aluno_id, perfil, dias_matricula, sessoes, dialogos in ALUNOS:
+    for aluno_id, perfil, dias_matricula, sessoes, dialogos in (ALUNOS if alunos is None else alunos):
         matriculado_em = agora - timedelta(days=dias_matricula)
         try:
             orquestrador.iniciar(aluno_id, MATRICULAS[perfil], agora=matriculado_em)
@@ -240,6 +339,8 @@ def criar_turma(agora: datetime | None = None, semente: int = 7) -> list[str]:
         gravar_atividade(aluno_id, sessoes, dialogos, agora, sorteio, itens)
         criados.append(aluno_id)
         print(f"{aluno_id}: criado ({perfil}, {len(sessoes)} sessão(ões), {len(dialogos)} pergunta(s) ao tutor).")
+    if reforco and criar_reforco(*reforco, agora):
+        criados.append(reforco[0])
     if criados:
         verificacao = orquestrador.verificar_inatividade(agora)
         acoes = [d.decisao.acao for d in verificacao.decisoes if d.aluno_id in criados]
@@ -248,12 +349,17 @@ def criar_turma(agora: datetime | None = None, semente: int = 7) -> list[str]:
     return criados
 
 
+def criar_turma_ampliada(agora: datetime | None = None, semente: int = 7) -> list[str]:
+    """A turma-base mais a ampliação (26 alunos; ver o topo do módulo)."""
+    return criar_turma(agora, semente, ALUNOS + ALUNOS_AMPLIACAO, ALUNO_REFORCO)
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.ERROR, format="%(levelname)s %(name)s: %(message)s")
     sem_llm()
     inicio = time.perf_counter()
     print(f"Banco: {database.DB_PATH}")
-    criar_turma()
+    criar_turma_ampliada()
     mostrar_usuarios_demonstracao()
     print(f"Tempo gasto: {time.perf_counter() - inicio:.1f} s")
     print("Suba a API (uvicorn tia.api.main:app --reload) e abra http://localhost:8000/app/painel/")

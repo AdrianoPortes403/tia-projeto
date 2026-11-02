@@ -274,7 +274,8 @@ def test_leitura_nao_precisa_do_token(pessoas):
 
 LEITURAS_DO_ALUNO = ["/aluno/{a}/estado", "/aluno/{a}/proximo", "/alunos/{a}/trilha", "/alunos/{a}/dialogo",
                      "/alunos/{a}/feedbacks", "/relatorio/aluno/{a}?narrativa=false", "/aluno/{a}/primeiro-acesso"]
-ROTAS_DO_DOCENTE = ["/painel/alunos-em-risco", "/painel/competencias", "/painel/revisao", "/painel/auditoria",
+ROTAS_DO_DOCENTE = ["/painel/alunos-em-risco", "/painel/alunos", "/painel/competencias", "/painel/revisao",
+                    "/painel/revisao/contagem", "/painel/auditoria",
                     "/painel/exportar/indicadores.csv", "/relatorio/turma?narrativa=false", "/auditoria/A2026-S01"]
 
 
