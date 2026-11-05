@@ -394,7 +394,7 @@
       (situacao.acertou === null ? "" : situacao.acertou ? " · você acertou a anterior" : "");
     const grupo = alternativas("alternativa-diagnostico", p.alternativas);
     const form = el("form", { classe: "questao questao--diagnostico", novalidate: true, onsubmit: responderDiagnostico },
-      el("h4", { classe: "enunciado", id: "enunciado-diagnostico", texto: p.enunciado }),
+      blocoEnunciado("h4", "enunciado-diagnostico", p.enunciado),
       grupo,
       el("button", { type: "submit", classe: "botao botao--grande acao", texto: "Responder",
         disabled: TIA.estaOcupado() }));
@@ -451,9 +451,36 @@
   function barra(valor, maximo, rotulo, classe) {
     const fracao = maximo > 0 ? Math.max(0, Math.min(1, valor / maximo)) : 0;
     const preenchida = el("span", { classe: "barra__valor" + (classe ? " " + classe : "") });
-    preenchida.style.width = Math.round(fracao * 100) + "%";
+    const alvo = Math.round(fracao * 100) + "%";
+    preenchida.style.width = "0%";
+    if (typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => { preenchida.style.width = alvo; });
+      });
+    } else {
+      preenchida.style.width = alvo;
+    }
     return el("div", { classe: "barra", role: "progressbar", "aria-valuenow": valor, "aria-valuemin": 0,
       "aria-valuemax": maximo, "aria-label": rotulo }, preenchida);
+  }
+
+  function textoComCodigo(texto) {
+    const partes = String(texto || "").split(/(`[^`\n]+`)/g);
+    return partes.filter(Boolean).map((parte) =>
+      parte.startsWith("`") && parte.endsWith("`") && parte.length > 2
+        ? el("code", { classe: "codigo-inline", texto: parte.slice(1, -1) })
+        : parte);
+  }
+
+  function blocoEnunciado(tag, id, texto) {
+    const bruto = String(texto || "");
+    const blocos = bruto.split(/\n\n+/);
+    if (blocos.length > 1 && /[=:()[\]{}+*/]|^\s{2,}|\b(def|for|while|if|return|print)\b/m.test(blocos.slice(1).join("\n\n"))) {
+      return el(tag, { classe: "enunciado", id },
+        el("span", {}, ...textoComCodigo(blocos[0])),
+        el("pre", { classe: "bloco-codigo" }, el("code", { texto: blocos.slice(1).join("\n\n") })));
+    }
+    return el(tag, { classe: "enunciado", id }, ...textoComCodigo(bruto));
   }
 
   const ICONES = {
@@ -756,7 +783,7 @@
     atualizarRitmo(p.competencia_id, p.nivel, reforco);
     const form = el("form", { classe: "cartao questao", novalidate: true, onsubmit: enviarResposta },
       el("p", { classe: "rotulo" }, "Nível " + p.nivel + (reforco ? " · revisão" : "")),
-      el("h2", { classe: "enunciado", id: "enunciado", texto: p.enunciado }),
+      blocoEnunciado("h2", "enunciado", p.enunciado),
       alternativas("alternativa", p.alternativas),
       el("button", { type: "submit", classe: "botao botao--grande acao", texto: "Enviar resposta",
         disabled: TIA.estaOcupado() }));
@@ -839,7 +866,7 @@
       balaoDoTutor(
         el("p", { classe: "veredito " + (f.acertou ? "veredito--acerto" : "veredito--erro"),
           texto: (f.acertou ? "✓ " : "✗ ") + f.veredito }),
-        el("p", { classe: "explicacao", texto: f.explicacao }),
+        el("p", { classe: "explicacao" }, ...textoComCodigo(f.explicacao)),
         el("p", { classe: "origem" }, "Origem da explicação: " + f.origem + ". " + (ORIGEM_FEEDBACK[f.origem] || "") +
           (f.falha_llm ? " Motivo: " + (FALHA[f.falha_llm] || f.falha_llm) + "." : "") + tempo(f.tempo_ms)),
         verFonte(blocoFontes(f.fontes)),
@@ -875,7 +902,7 @@
       el("p", { classe: "conversa__pergunta", texto: item.pergunta }),
       balaoDoTutor(
         vetada ? el("p", { classe: "rotulo rotulo--professor", texto: "Corrigida pelo professor" }) : null,
-        el("p", { classe: "conversa__resposta", texto: item.resposta }),
+        el("p", { classe: "conversa__resposta" }, ...textoComCodigo(item.resposta)),
         el("p", { classe: "origem" }, "Origem: " + (vetada ? "professor" : item.origem) + ". " +
           (ORIGEM_FEEDBACK[vetada ? "docente" : item.origem] || "") +
           (item.falha_llm ? " Motivo: " + (FALHA[item.falha_llm] || item.falha_llm) + "." : "") + tempo(item.tempo_ms)),
@@ -1024,7 +1051,7 @@
           (f.item_id || "") }),
         f.enunciado ? el("p", { classe: "enunciado", texto: f.enunciado }) : null,
         f.veredito ? el("p", { classe: "veredito", texto: f.veredito }) : null,
-        el("p", { classe: "explicacao", texto: f.explicacao }),
+        el("p", { classe: "explicacao" }, ...textoComCodigo(f.explicacao)),
         el("p", { classe: "origem", texto: "Origem: professor. " + ORIGEM_FEEDBACK.docente }))))
       : el("p", { classe: "cartao__texto", texto: "Nenhuma explicação corrigida pelo professor." }));
   }

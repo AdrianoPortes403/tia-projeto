@@ -1000,3 +1000,514 @@ progress { width: 100%; height: 1rem; accent-color: var(--cor-primaria); }
 }
 .app-aluno .cartao .conversa__pergunta { background: var(--cor-creme); }
 .app-aluno .linha-botoes:not(:has(.botao:not([hidden]))) { display: none; }
+
+
+/* ======================================================================
+ * Estética Institucional Moderna (SaaS Executivo), Precisão de Cartões,
+ * Barras de Progresso, Indicadores & Micro-interações
+ * (Usa exclusivamente variáveis de tema.css)
+ * ====================================================================== */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:is(.app-aluno, .app-docente) h1 {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.028em;
+  line-height: 1.18;
+}
+:is(.app-aluno, .app-docente) h2 {
+  font-size: 1.1875rem;
+  font-weight: 700;
+  letter-spacing: -0.018em;
+}
+:is(.app-aluno, .app-docente) h3 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+@keyframes surgirTela {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes surgirSuave {
+  from { opacity: 0; transform: translateY(6px) scale(0.992); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pulsarAnel {
+  0%, 100% { box-shadow: 0 0 0 4px var(--cor-dourado-suave), 0 0 0 7px var(--cor-anel-dourado); }
+  50% { box-shadow: 0 0 0 5px var(--cor-dourado-suave), 0 0 0 11px var(--cor-anel-dourado-zero); }
+}
+
+@keyframes deslizarBrilho {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(200%); }
+}
+
+/* Transição fluida ao abrir qualquer tela */
+:is(.app-aluno, .app-docente) .tela:not([hidden]) {
+  animation: surgirTela var(--transicao-media) both;
+}
+
+/* Menu lateral executivo com gradiente profundo e abas de precisão */
+:is(.app-aluno, .app-docente) .menu {
+  background: var(--gradiente-menu);
+  border-right: 1px solid var(--cor-menu-borda);
+  box-shadow: 4px 0 24px var(--cor-borda-cartao);
+  padding: 1.5rem 1rem;
+  gap: 1.5rem;
+}
+:is(.app-aluno, .app-docente) .marca {
+  padding: 0.25rem 0.5rem;
+}
+:is(.app-aluno, .app-docente) .marca__icone {
+  border-radius: var(--raio-pequeno);
+  box-shadow: var(--sombra-botao);
+  transition: transform var(--transicao-rapida);
+}
+:is(.app-aluno, .app-docente) .marca:hover .marca__icone {
+  transform: scale(1.05);
+}
+:is(.app-aluno, .app-docente) .aba {
+  position: relative;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--raio-pequeno);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color var(--transicao-rapida), color var(--transicao-rapida),
+    transform var(--transicao-rapida), box-shadow var(--transicao-rapida);
+}
+:is(.app-aluno, .app-docente) .aba .aba__icone {
+  width: 1.125rem;
+  height: 1.125rem;
+  transition: transform var(--transicao-rapida);
+}
+:is(.app-aluno, .app-docente) .aba:hover:not([aria-current="page"]) {
+  background: var(--cor-menu-item-hover);
+  transform: translateX(2px);
+}
+:is(.app-aluno, .app-docente) .aba:hover .aba__icone {
+  transform: scale(1.06);
+}
+:is(.app-aluno, .app-docente) .aba[aria-current="page"] {
+  background: var(--cor-superficie);
+  color: var(--cor-oliva-escuro);
+  font-weight: 700;
+  box-shadow: var(--sombra-aba-ativa);
+}
+:is(.app-aluno, .app-docente) .menu__rodape {
+  border-top-color: var(--cor-menu-borda);
+  padding-top: 1rem;
+}
+:is(.app-aluno, .app-docente) .menu__rodape .usuario,
+:is(.app-aluno, .app-docente) .menu__rodape .aluno {
+  background: var(--cor-menu-item-hover);
+  border: 1px solid var(--cor-menu-borda);
+  border-radius: var(--raio-medio);
+  padding: 0.625rem 0.75rem;
+}
+
+/* Cartões executivos com borda de precisão, cabeçalho estruturado e elevação */
+:is(.app-aluno, .app-docente) .cartao {
+  border: 1px solid var(--cor-borda-cartao);
+  border-radius: var(--raio);
+  padding: 1.5rem 1.625rem;
+  box-shadow: var(--sombra);
+  transition: box-shadow var(--transicao-media), border-color var(--transicao-media),
+    transform var(--transicao-media);
+}
+:is(.app-aluno, .app-docente) .cartao--mini {
+  border-radius: var(--raio);
+  padding: 1.25rem 1.375rem;
+}
+:is(.app-aluno, .app-docente) .cartao__cabeca {
+  padding-bottom: 0.875rem;
+  margin-bottom: 1.125rem;
+  border-bottom: 1px solid var(--cor-linha);
+}
+:is(.app-aluno, .app-docente) .cartao--central {
+  border: 1px solid var(--cor-borda-cartao);
+  border-radius: var(--raio-grande);
+  box-shadow: var(--sombra-cartao-alto);
+}
+
+/* Botões com proporção SaaS, gradiente sutil e física tátil */
+:is(.app-aluno, .app-docente) .botao {
+  background: var(--gradiente-primario);
+  border-width: 1px;
+  border-radius: var(--raio-medio);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  box-shadow: var(--sombra-botao);
+  transition: transform var(--transicao-rapida), box-shadow var(--transicao-rapida),
+    background var(--transicao-rapida), border-color var(--transicao-rapida),
+    color var(--transicao-rapida);
+}
+:is(.app-aluno, .app-docente) .botao--grande {
+  min-height: 3.125rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--raio-medio);
+  font-size: 1rem;
+}
+:is(.app-aluno, .app-docente) .botao:hover:not(:disabled) {
+  background: var(--gradiente-primario-hover);
+  box-shadow: var(--sombra-botao-hover);
+  transform: translateY(-1px);
+}
+:is(.app-aluno, .app-docente) .botao:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+:is(.app-aluno, .app-docente) .botao .icone {
+  transition: transform var(--transicao-rapida);
+}
+:is(.app-aluno, .app-docente) .botao:hover:not(:disabled) .icone {
+  transform: translateX(3px);
+}
+:is(.app-aluno, .app-docente) .botao--secundario {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda-campo);
+  box-shadow: var(--sombra);
+}
+:is(.app-aluno, .app-docente) .botao--secundario:hover:not(:disabled) {
+  background: var(--cor-creme);
+  border-color: var(--cor-oliva);
+  box-shadow: var(--sombra-cartao-hover);
+}
+:is(.app-aluno, .app-docente) .botao--link {
+  background: none;
+  box-shadow: none;
+  text-underline-offset: 3px;
+}
+:is(.app-aluno, .app-docente) .botao--link:hover:not(:disabled) {
+  background: none;
+  box-shadow: none;
+  transform: translateX(2px);
+}
+
+/* Campos de formulário com borda fina de precisão */
+:is(.app-aluno, .app-docente) input,
+:is(.app-aluno, .app-docente) select,
+:is(.app-aluno, .app-docente) textarea {
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--cor-borda-campo);
+  border-radius: var(--raio-pequeno);
+  font-size: 0.9375rem;
+  box-shadow: inset 0 1px 2px var(--cor-borda-cartao);
+  transition: border-color var(--transicao-rapida), box-shadow var(--transicao-rapida),
+    background-color var(--transicao-rapida);
+}
+:is(.app-aluno, .app-docente) input:hover,
+:is(.app-aluno, .app-docente) select:hover,
+:is(.app-aluno, .app-docente) textarea:hover {
+  border-color: var(--cor-oliva);
+}
+
+/* HUD de carregamento com Glassmorphism e brilho contínuo */
+:is(.app-aluno, .app-docente) .carregando {
+  position: sticky;
+  top: var(--espaco-3);
+  z-index: 20;
+  overflow: hidden;
+  background: var(--cor-vidro-fundo);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--cor-vidro-borda);
+  border-left: 4px solid var(--cor-oliva);
+  padding: 0.75rem 1.125rem;
+  box-shadow: var(--sombra-hud);
+  animation: surgirSuave var(--transicao-rapida) both;
+}
+:is(.app-aluno, .app-docente) .carregando::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gradiente-shimmer);
+  animation: deslizarBrilho 2.2s infinite;
+  pointer-events: none;
+}
+:is(.app-aluno, .app-docente) .carregando__segundos {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--cor-verde-suave);
+  color: var(--cor-oliva-escuro);
+  font-size: 0.8125rem;
+}
+
+/* Banner de destaque (Início) executivo */
+.app-aluno .destaque {
+  background: var(--gradiente-destaque);
+  border: 1px solid var(--cor-borda-destaque);
+  border-left: 4px solid var(--cor-verde);
+  border-radius: var(--raio);
+  padding: 1.625rem 1.875rem;
+  box-shadow: var(--sombra-destaque);
+  transition: transform var(--transicao-media), box-shadow var(--transicao-media);
+}
+.app-aluno .destaque h2 {
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+.app-aluno .destaque:hover {
+  box-shadow: var(--sombra-cartao-hover);
+}
+
+/* Barras de progresso de alta precisão e indicadores numéricos */
+.app-aluno .barra {
+  height: 0.625rem;
+  background: var(--cor-creme-escuro);
+  box-shadow: inset 0 1px 2px var(--cor-borda-cartao);
+}
+.app-aluno .barra__valor {
+  position: relative;
+  overflow: hidden;
+  background: var(--gradiente-barra);
+  transition: width var(--transicao-barra);
+}
+.app-aluno .barra__valor--atencao {
+  background: var(--gradiente-barra-atencao);
+}
+.app-aluno .progresso-linha__numero,
+.app-aluno .competencia__numero {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-linha);
+  color: var(--cor-texto);
+}
+.app-aluno .competencias {
+  gap: 0.875rem;
+}
+.app-aluno .competencia {
+  padding: 0.875rem 1rem;
+  border-radius: var(--raio-medio);
+  background: var(--cor-creme);
+  border: 1px solid var(--cor-linha);
+  gap: 0.625rem;
+  transition: border-color var(--transicao-rapida), background-color var(--transicao-rapida);
+}
+.app-aluno .competencia:hover {
+  border-color: var(--cor-borda-suave);
+  background: var(--cor-superficie);
+}
+
+/* Resumo da trilha e percurso completo com animações em cascata (stagger) */
+.app-aluno .resumo-trilha {
+  gap: 0.5rem;
+}
+.app-aluno .resumo-trilha__item {
+  padding: 0.5rem 0.75rem;
+  margin: 0 -0.5rem;
+  border-radius: var(--raio-pequeno);
+  transition: background-color var(--transicao-rapida), transform var(--transicao-rapida);
+}
+.app-aluno .resumo-trilha__item:hover:not(.resumo-trilha__item--bloqueado) {
+  background: var(--cor-creme);
+  transform: translateX(2px);
+}
+.app-aluno .resumo-trilha__item--atual {
+  background: var(--gradiente-dourado-suave);
+  border: 1px solid var(--cor-borda-destaque);
+  box-shadow: var(--sombra);
+}
+
+.app-aluno .passo {
+  animation: surgirSuave var(--transicao-media) both;
+}
+.app-aluno .passo:nth-child(2) { animation-delay: 40ms; }
+.app-aluno .passo:nth-child(3) { animation-delay: 80ms; }
+.app-aluno .passo:nth-child(4) { animation-delay: 120ms; }
+.app-aluno .passo:nth-child(5) { animation-delay: 160ms; }
+.app-aluno .passo:nth-child(6) { animation-delay: 200ms; }
+
+.app-aluno .passo__cartao {
+  border: 1px solid var(--cor-borda-cartao);
+  border-radius: var(--raio);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--sombra);
+  transition: transform var(--transicao-rapida), box-shadow var(--transicao-rapida),
+    border-color var(--transicao-rapida);
+}
+.app-aluno .passo:not(.passo--bloqueado) .passo__cartao:hover {
+  transform: translateY(-1.5px);
+  border-color: var(--cor-borda-cartao-hover);
+  box-shadow: var(--sombra-cartao-hover);
+}
+.app-aluno .passo--atual .passo__cartao {
+  border: 1px solid var(--cor-dourado-escuro);
+  border-left: 4px solid var(--cor-dourado-escuro);
+  background: var(--gradiente-dourado-suave);
+  box-shadow: var(--sombra-etapa-atual);
+}
+.app-aluno .passo--atual .marcador {
+  animation: pulsarAnel 2.8s infinite;
+}
+
+/* Acordeões (<details>) refinados */
+.app-aluno .passo__porque summary,
+.app-aluno .ver-fonte summary,
+.app-docente .criterios summary,
+.app-docente .fonte summary,
+.app-docente .descartado summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  margin-left: -0.625rem;
+  border-radius: 6px;
+  transition: background-color var(--transicao-rapida), color var(--transicao-rapida);
+}
+.app-aluno .passo__porque summary:hover,
+.app-aluno .ver-fonte summary:hover,
+.app-docente .criterios summary:hover,
+.app-docente .fonte summary:hover {
+  background: var(--cor-verde-suave);
+}
+.app-aluno details[open] > *:not(summary),
+.app-docente details[open] > *:not(summary) {
+  animation: surgirSuave var(--transicao-rapida) both;
+}
+
+/* Alternativas de questão e cartões de escolha com precisão técnica */
+.app-aluno .questao {
+  animation: surgirSuave var(--transicao-media) both;
+}
+.app-aluno .alternativa,
+.app-aluno .escolha {
+  border-width: 1px;
+  border-radius: var(--raio-medio);
+  box-shadow: var(--sombra);
+  transition: transform var(--transicao-rapida), border-color var(--transicao-rapida),
+    background-color var(--transicao-rapida), box-shadow var(--transicao-rapida);
+}
+.app-aluno .alternativa:hover:not(:has(input:disabled)),
+.app-aluno .escolha:hover {
+  transform: translateY(-1px) translateX(2px);
+  box-shadow: var(--sombra-cartao-hover);
+  border-color: var(--cor-oliva);
+}
+.app-aluno .alternativa:has(input:checked),
+.app-aluno .escolha:has(input:checked) {
+  border-color: var(--cor-verde);
+  box-shadow: inset 3px 0 0 var(--cor-verde), var(--sombra);
+}
+.app-aluno .alternativa:active:not(:has(input:disabled)),
+.app-aluno .escolha:active {
+  transform: scale(0.992);
+}
+.app-aluno .alternativa__letra,
+.app-aluno .escolha__marca {
+  border-width: 1.5px;
+  border-radius: var(--raio-pequeno);
+  transition: transform var(--curva-mola) 240ms, background-color var(--transicao-rapida),
+    border-color var(--transicao-rapida), color var(--transicao-rapida);
+}
+.app-aluno .alternativa:has(input:checked) .alternativa__letra {
+  transform: scale(1.06);
+}
+
+/* Balões do tutor e conversa com entrada suave */
+.app-aluno .resposta-tutor,
+.app-aluno .conversa__item {
+  animation: surgirSuave var(--transicao-media) both;
+}
+.app-aluno .balao__avatar {
+  border-radius: var(--raio-pequeno);
+  box-shadow: var(--sombra-botao);
+}
+.app-aluno .balao__corpo {
+  border-radius: var(--raio);
+  background: var(--gradiente-balao-tutor);
+  border: 1px solid var(--cor-borda-destaque);
+  box-shadow: var(--sombra);
+}
+.app-aluno .conversa__pergunta {
+  border-radius: var(--raio) var(--raio) 4px var(--raio);
+  border: 1px solid var(--cor-borda-cartao);
+  box-shadow: var(--sombra);
+}
+
+/* Formatação rica para blocos de código Python e código inline */
+:is(.app-aluno, .app-docente) .bloco-codigo {
+  margin: 0.75rem 0 0.25rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--raio-medio);
+  background: var(--cor-bloco-codigo-fundo);
+  color: var(--cor-bloco-codigo-texto);
+  border: 1px solid var(--cor-bloco-codigo-borda);
+  font-family: var(--fonte-codigo);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  box-shadow: inset 0 2px 6px var(--cor-borda-cartao);
+}
+:is(.app-aluno, .app-docente) .bloco-codigo code {
+  font-family: inherit;
+  font-size: inherit;
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+:is(.app-aluno, .app-docente) .codigo-inline {
+  font-family: var(--fonte-codigo);
+  font-size: 0.875em;
+  font-weight: 600;
+  padding: 0.125rem 0.4rem;
+  border-radius: 5px;
+  background: var(--cor-codigo-fundo);
+  border: 1px solid var(--cor-codigo-borda);
+}
+
+/* Cartões KPI (.numero) com topo de destaque e tipografia tabular executiva */
+:is(.app-aluno, .app-docente) .numero {
+  position: relative;
+  border: 1px solid var(--cor-borda-cartao);
+  border-top: 3px solid var(--cor-oliva);
+  border-radius: var(--raio);
+  padding: 1.25rem 1.375rem;
+  box-shadow: var(--sombra);
+  animation: surgirSuave var(--transicao-media) both;
+  transition: transform var(--transicao-rapida), box-shadow var(--transicao-rapida),
+    border-color var(--transicao-rapida);
+}
+:is(.app-aluno, .app-docente) .numero__rotulo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+}
+:is(.app-aluno, .app-docente) .numero__valor {
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.125rem;
+}
+:is(.app-aluno, .app-docente) .numero:nth-child(2) { animation-delay: 45ms; }
+:is(.app-aluno, .app-docente) .numero:nth-child(3) { animation-delay: 90ms; }
+:is(.app-aluno, .app-docente) .numero:nth-child(4) { animation-delay: 135ms; }
+:is(.app-aluno, .app-docente) .numero:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-cartao-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

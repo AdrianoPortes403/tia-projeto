@@ -4,20 +4,26 @@
  * redefinir as variáveis abaixo (por exemplo, no CSS do tema: .tia-ebaula { --tia-cor-primaria: ... }).
  * Contraste dos textos sobre as cores padrão: pelo menos 4.5:1 (WCAG AA).
  */
+@keyframes tiaSurgirPainel {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .tia-ebaula {
-  --tia-cor-primaria: #1f5fa8;
-  --tia-cor-primaria-escura: #174a84;
+  --tia-cor-primaria: #1a3324;
+  --tia-cor-primaria-escura: #102217;
   --tia-cor-sobre-primaria: #ffffff;
-  --tia-cor-superficie: #ffffff;
-  --tia-cor-texto: #1c2430;
-  --tia-cor-texto-suave: #4a5565;
-  --tia-cor-borda: #c9d0da;
-  --tia-cor-foco: #f2a900;
-  --tia-fonte: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --tia-raio: 10px;
-  --tia-sombra: 0 6px 24px rgba(20, 30, 45, 0.28);
+  --tia-cor-superficie: #f5f7f6;
+  --tia-cor-texto: #111c15;
+  --tia-cor-texto-suave: #4a5a50;
+  --tia-cor-borda: #cfd9d3;
+  --tia-cor-foco: #d9a520;
+  --tia-fonte: "Inter", "Plus Jakarta Sans", "Segoe UI Variable Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --tia-raio: 14px;
+  --tia-sombra: 0 16px 40px -8px rgba(16, 34, 23, 0.22), 0 4px 12px rgba(16, 34, 23, 0.08);
   --tia-z: 1100;
-  --tia-margem: 1rem;
+  --tia-margem: 1.25rem;
+  --tia-transicao: 200ms cubic-bezier(0.22, 1, 0.36, 1);
 
   position: fixed;
   bottom: var(--tia-margem);
@@ -34,35 +40,44 @@
 .tia-ebaula__botao {
   display: block;
   margin: 0;
-  padding: 0.7rem 1.1rem;
+  padding: 0.75rem 1.35rem;
   border: 0;
   border-radius: 999px;
-  background: var(--tia-cor-primaria);
+  background: linear-gradient(180deg, #21402d 0%, #152b1e 100%);
   color: var(--tia-cor-sobre-primaria);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   box-shadow: var(--tia-sombra);
+  transition: transform var(--tia-transicao), box-shadow var(--tia-transicao), background var(--tia-transicao);
 }
-.tia-ebaula__botao:hover { background: var(--tia-cor-primaria-escura); }
+.tia-ebaula__botao:hover {
+  background: var(--tia-cor-primaria-escura);
+  transform: translateY(-2px);
+}
+.tia-ebaula__botao:active {
+  transform: translateY(0) scale(0.97);
+}
 .tia-ebaula--direita .tia-ebaula__botao { margin-left: auto; }
-.tia-ebaula--aberto .tia-ebaula__botao { margin-top: 0.5rem; }
+.tia-ebaula--aberto .tia-ebaula__botao { margin-top: 0.625rem; }
 
 .tia-ebaula__painel {
   display: flex;
   flex-direction: column;
-  width: 26rem;
+  width: 28rem;
   max-width: calc(100vw - 2 * var(--tia-margem));
-  height: min(40rem, calc(100vh - 6rem));
+  height: min(42rem, calc(100vh - 6rem));
   background: var(--tia-cor-superficie);
   border: 1px solid var(--tia-cor-borda);
   border-radius: var(--tia-raio);
   box-shadow: var(--tia-sombra);
   overflow: hidden;
+  animation: tiaSurgirPainel var(--tia-transicao) both;
+  transition: width var(--tia-transicao), height var(--tia-transicao);
 }
 .tia-ebaula__painel[hidden] { display: none; }
 .tia-ebaula--ampliado .tia-ebaula__painel {
-  width: min(60rem, calc(100vw - 2 * var(--tia-margem)));
+  width: min(64rem, calc(100vw - 2 * var(--tia-margem)));
   height: calc(100vh - 5rem);
 }
 
@@ -72,25 +87,27 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.25rem 0.75rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--tia-cor-primaria);
+  padding: 0.7rem 1rem;
+  background: linear-gradient(180deg, #1b3626 0%, #122419 100%);
   color: var(--tia-cor-sobre-primaria);
 }
-.tia-ebaula__titulo { margin: 0; font-size: 1rem; font-weight: 700; color: inherit; }
-.tia-ebaula__acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+.tia-ebaula__titulo { margin: 0; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em; color: inherit; }
+.tia-ebaula__acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
 .tia-ebaula__acao {
   margin: 0;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  padding: 0.3rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 6px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.08);
   color: var(--tia-cor-sobre-primaria);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
+  transition: background-color var(--tia-transicao), border-color var(--tia-transicao);
 }
-.tia-ebaula__acao:hover { background: rgba(255, 255, 255, 0.18); }
+.tia-ebaula__acao:hover { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.75); }
 
 .tia-ebaula__corpo { position: relative; flex: 1 1 auto; min-height: 0; background: var(--tia-cor-superficie); }
 .tia-ebaula__iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--tia-cor-superficie); }
