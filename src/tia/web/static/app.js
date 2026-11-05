@@ -103,15 +103,19 @@
 
   // --- login (1.4.6) ---
 
-  function mostrarLogin(mensagem, paraDocente) {
+  // papelDaSessao: conectado com outro perfil (docente, admin) — no lugar do formulário, a mensagem e o
+  // botão Sair (o menu, onde fica o outro Sair, some no login); o link do painel só para o docente
+  function mostrarLogin(mensagem, papelDaSessao) {
     definirAluno(null);
     $("login-mensagem").textContent = mensagem || "";
     $("login-mensagem").hidden = !mensagem;
-    $("form-login").hidden = !!paraDocente;
+    $("form-login").hidden = !!papelDaSessao;
+    $("login-outro-papel").hidden = !papelDaSessao;
     TIA.esconderTrocaDeSenha();
-    $("login-painel").hidden = !paraDocente;
+    $("login-painel").hidden = papelDaSessao !== "docente";
     irPara("login");
-    if (!paraDocente) $("campo-login").focus();
+    if (papelDaSessao) $("sair-outro-papel").focus();
+    else $("campo-login").focus();
   }
 
   function mostrarTrocaDeSenha() {
@@ -137,7 +141,7 @@
     if (!situacao.usuario) { mostrarLogin(); return; }
     if (situacao.usuario.trocar_senha) { mostrarTrocaDeSenha(); return; }
     if (situacao.usuario.papel !== "aluno") {
-      mostrarLogin("Esta aplicação é para alunos. Você entrou como " + situacao.usuario.papel + ".", true);
+      mostrarLogin(TIA.mensagemOutroPapel(situacao.usuario.papel, "aluno"), situacao.usuario.papel);
       return;
     }
     estado.autenticado = true;
@@ -166,7 +170,7 @@
   }
 
   async function encerrarSessao() {
-    try { await TIA.sair(); } catch (erro) { mostrarErro(erro); }
+    try { await TIA.sair(); } catch (erro) { mostrarErro(erro); return; } // não saiu: continua onde estava
     TIA.mostrarSessao({ autenticacao: "ligada", usuario: null });
     mostrarLogin("Você saiu.");
   }
@@ -1086,6 +1090,7 @@
     $("form-login").addEventListener("submit", entrarComSenha);
     TIA.ligarTrocaDeSenha(iniciar);
     $("sair").addEventListener("click", encerrarSessao);
+    $("sair-outro-papel").addEventListener("click", encerrarSessao);
     $("form-entrada").addEventListener("submit", entrar);
     $("pular-onboarding").addEventListener("click", () => enviarFala("pular").catch(mostrarErro));
     // mostrar a senha: o tipo original vem do HTML (o campo volta a ele ao esconder e depois do envio)

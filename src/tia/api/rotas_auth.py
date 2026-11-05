@@ -6,7 +6,9 @@ Rotas de autenticação (EAP 1.4.6) e de gestão de usuários (papel admin).
                          Exige o cabeçalho X-CSRF-Token (qualquer valor: um site de
                          terceiros não consegue enviá-lo). Limite de falhas por usuário
                          e por IP (429), atraso em cada falha; falha e bloqueio vão para
-                         a auditoria agregados por origem e janela (seguranca.anonimos)
+                         a auditoria agregados por origem e janela (seguranca.anonimos).
+                         Com sucesso, a sessão anterior do cookie (se ainda válida)
+                         é encerrada e auditada antes de abrir a nova
     POST /auth/logout    encerra a sessão (exige o token anti-CSRF da sessão)
     POST /auth/senha     {senha_atual, nova_senha}: o próprio usuário troca a senha
                          (obrigatório no primeiro acesso com senha temporária); abre
@@ -121,6 +123,19 @@ def _abrir_sessao(response: Response, usuario_id: str) -> str:
     return csrf
 
 
+def _encerrar_sessao_anterior(request: Request):
+    """Login bem-sucedido com o cookie de uma sessão ainda válida (outro perfil ou o mesmo
+    usuário, neste navegador): encerra essa sessão no servidor e audita em nome de quem
+    era o dono dela. Cookie ausente, inválido ou vencido: nada a fazer, o login segue."""
+    token = request.cookies.get(NOME_COOKIE)
+    anterior = sessoes.ler_sessao(token, renovar=False) if token else None
+    if anterior is None:
+        return
+    sessoes.encerrar_sessao(token)
+    auditoria.definir_usuario(anterior["id"], anterior["papel"])
+    _auditar("logout", "sessao", "sessão anterior encerrada por um novo login neste navegador")
+
+
 def _publico(sessao: dict) -> UsuarioPublico:
     return UsuarioPublico(id=sessao["id"], papel=sessao["papel"], aluno_id=sessao["aluno_id"],
                           trocar_senha=sessao["trocar_senha"])
@@ -147,6 +162,7 @@ def entrar(dados: Login, request: Request, response: Response) -> Situacao:
         # o bloqueio continua contando cada falha em auth_tentativas
         anonimos.registrar("login_falha", ip, None, "401", f"login={login}")
         raise HTTPException(status_code=401, detail="Usuário ou senha incorretos.")
+    _encerrar_sessao_anterior(request)
     csrf = _abrir_sessao(response, usuario.id)
     auditoria.definir_usuario(usuario.id, usuario.papel)
     _auditar("login", obter_autenticador().nome,
