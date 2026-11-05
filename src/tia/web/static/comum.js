@@ -6,10 +6,12 @@
  *   chamar        fetch com faixa "Aguardando…", contador de segundos, botões
  *                 .acao desativados durante a chamada e erro claro (ErroApi)
  *   mostrarErro   faixa de erro (role=alert) com o detail da API
- *   sessão (1.4.6) obterSessao, entrar, sair, mostrarSessao: login com cookie de
+ *   sessão (1.4.6) obterSessao, entrar, sair, mensagemOutroPapel, mostrarSessao: login com cookie de
  *                 sessão HttpOnly (o JavaScript nunca vê o cookie); o token
  *                 anti-CSRF fica só em memória e vai no cabeçalho X-CSRF-Token
- *                 de toda escrita; 401 chama configurar({ aoExigirLogin })
+ *                 de toda escrita; 401 chama configurar({ aoExigirLogin }) (menos no
+ *                 login e na saída). Sessão de outro perfil na tela de login: as
+ *                 páginas mostram mensagemOutroPapel com um botão Sair.
  *   troca de senha mostrarTrocaDeSenha, esconderTrocaDeSenha, ligarTrocaDeSenha:
  *                 troca obrigatória da senha temporária (form-senha dentro da
  *                 tela de login)
@@ -31,6 +33,7 @@ window.TIA = (function () {
   const CABECALHO_CSRF = "X-CSRF-Token";
   const METODOS_SEGUROS = ["GET", "HEAD", "OPTIONS"];
   const PAPEL = { aluno: "aluno", docente: "docente", admin: "administrador" };
+  const ROTAS_SEM_AVISO_401 = ["/auth/login", "/auth/logout"];
   let ocupado = false;
   let csrf = null; // token anti-CSRF da sessão: só em memória, nunca em armazenamento
 
@@ -140,7 +143,8 @@ window.TIA = (function () {
       try { dados = await resposta.json(); } catch (_) { dados = null; }
       if (!resposta.ok) {
         const erro = new ErroApi(detalheDoErro(dados, resposta.status), resposta.status);
-        if (resposta.status === 401 && caminho !== "/auth/login" && config.aoExigirLogin) {
+        // no login e na saída, o 401 é tratado por quem chamou (não é "sessão terminou")
+        if (resposta.status === 401 && !ROTAS_SEM_AVISO_401.includes(caminho) && config.aoExigirLogin) {
           csrf = null;
           setTimeout(() => config.aoExigirLogin(erro.message), 0);
         }
@@ -178,8 +182,21 @@ window.TIA = (function () {
     return situacao;
   }
 
+  // encerra a sessão no servidor (que apaga o cookie); 401 = a sessão já tinha acabado, então já saiu.
+  // Outro erro (rede, 403): propaga, e a sessão continua como estava (a página não diz "Você saiu.")
   async function sair() {
-    try { await chamar("POST", "/auth/logout", null, "Saindo…"); } finally { csrf = null; }
+    try {
+      await chamar("POST", "/auth/logout", null, "Saindo…");
+    } catch (erro) {
+      if (!(erro instanceof ErroApi && erro.status === 401)) throw erro;
+    }
+    csrf = null;
+  }
+
+  // tela de login com sessão de outro perfil: "Você está conectado como docente. Sair para entrar como aluno."
+  function mensagemOutroPapel(papelDaSessao, papelDaPagina) {
+    return "Você está conectado como " + (PAPEL[papelDaSessao] || papelDaSessao) + ". Sair para entrar como " +
+      (PAPEL[papelDaPagina] || papelDaPagina) + ".";
   }
 
   // --- troca obrigatória da senha temporária ---
@@ -251,5 +268,5 @@ window.TIA = (function () {
   }
 
   return { configurar, estaOcupado, $, el, svg, tempo, porcento, ErroApi, chamar, mostrarErro, esconderErro,
-    obterSessao, entrar, sair, mostrarSessao, mostrarTrocaDeSenha, esconderTrocaDeSenha, ligarTrocaDeSenha };
+    obterSessao, entrar, sair, mensagemOutroPapel, mostrarSessao, mostrarTrocaDeSenha, esconderTrocaDeSenha, ligarTrocaDeSenha };
 })();
